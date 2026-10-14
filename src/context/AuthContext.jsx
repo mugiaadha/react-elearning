@@ -7,7 +7,8 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Only start in loading state if there is actually a stored token to verify; otherwise render immediately!
+  const [loading, setLoading] = useState(() => !!localStorage.getItem('nac_auth_token'));
 
   // Initialize user profile from backend API if token exists
   const loadUser = useCallback(async () => {
@@ -15,17 +16,19 @@ export const AuthProvider = ({ children }) => {
     if (!token) {
       setUser(null);
       setLoading(false);
-      return;
+      return null;
     }
 
     try {
       setLoading(true);
       const profile = await userService.getProfile();
       setUser(profile);
+      return profile;
     } catch (err) {
       console.warn('Failed to load user profile or token expired', err);
       localStorage.removeItem('nac_auth_token');
       setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -75,9 +78,13 @@ export const AuthProvider = ({ children }) => {
         amount,
       });
 
-      // We do not immediately set user and token in AuthContext here,
-      // so RequireGuest does not prematurely navigate away before the user
-      // completes the 6-digit OTP email verification modal.
+      if (response.token) {
+        localStorage.setItem('nac_auth_token', response.token);
+      }
+      if (response.data) {
+        setUser(response.data);
+      }
+
       return {
         ...response.data,
         token: response.token,
@@ -85,6 +92,29 @@ export const AuthProvider = ({ children }) => {
       };
     } catch (err) {
       console.error('Registration error', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Login or register using Google credentials/token
+   */
+  const loginWithGoogle = async (googlePayload) => {
+    setLoading(true);
+    try {
+      const response = await apiClient.post(ENDPOINTS.AUTH_GOOGLE, googlePayload);
+
+      if (response.token) {
+        localStorage.setItem('nac_auth_token', response.token);
+      }
+      if (response.data) {
+        setUser(response.data);
+      }
+      return response;
+    } catch (err) {
+      console.error('Google login error', err);
       throw err;
     } finally {
       setLoading(false);
@@ -156,6 +186,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!user,
         login,
         registerStudent,
+        loginWithGoogle,
         logout,
         updateProfile,
         switchRole,

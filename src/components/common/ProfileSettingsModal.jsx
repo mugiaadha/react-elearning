@@ -78,8 +78,13 @@ export const ProfileSettingsModal = ({ isOpen, onClose }) => {
 
         <div className="flex items-center gap-4">
           <img
-            src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'}
+            src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`}
             alt={user.name}
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`;
+            }}
             className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-200 shadow-sm"
           />
           <div>

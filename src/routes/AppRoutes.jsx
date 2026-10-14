@@ -24,6 +24,7 @@ import BlogPage from '../pages/public/BlogPage';
 import ContactPage from '../pages/public/ContactPage';
 import LoginPage from '../pages/public/LoginPage';
 import RegisterPage from '../pages/public/RegisterPage';
+import VerifyEmailPage from '../pages/public/VerifyEmailPage';
 import CertificateVerifyPage from '../pages/public/CertificateVerifyPage';
 
 // Onboarding Pre-Approval Page
@@ -64,6 +65,7 @@ export const AppRoutes = () => {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<RequireGuest><LoginPage /></RequireGuest>} />
         <Route path="/register" element={<RequireGuest><RegisterPage /></RequireGuest>} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route
           path="/verify-certificate/:certId?"
           element={<CertificateVerifyPage />}

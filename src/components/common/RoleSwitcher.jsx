@@ -11,13 +11,15 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import isDevMode from '../../config/devMode';
 
 export const RoleSwitcher = () => {
   const { user, switchRole } = useAuth();
   const navigate = useNavigate();
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
-  if (!user) return null;
+  // In production / DEV_MODE=false, hide the RBAC simulator bar entirely
+  if (!isDevMode || !user) return null;
 
   const isStudent = user.role === 'student';
   const isApproved = user.payment_status === 'APPROVED';

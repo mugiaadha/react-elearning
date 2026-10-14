@@ -90,6 +90,11 @@ export const BackofficeTopbar = ({ title = 'Panel Kontrol Admin', onToggleMobile
               <img
                 src={user?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=100&q=80'}
                 alt={user?.name || 'Admin'}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=0284c7&color=fff`;
+                }}
                 className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0"
               />
               <div className="hidden sm:block text-left max-w-[120px] truncate">

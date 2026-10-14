@@ -6,12 +6,9 @@ import {
   ShieldCheck,
   XCircle,
   Award,
-  CheckCircle2,
-  Calendar,
-  User,
   Search,
-  BookOpen,
-  Loader2
+  Loader2,
+  ArrowLeft
 } from 'lucide-react';
 
 export const CertificateVerifyPage = () => {
@@ -41,7 +38,7 @@ export const CertificateVerifyPage = () => {
         }
       }
     } catch (err) {
-      console.error(err);
+      console.warn('[CertificateVerify error]', err);
       if (isManual) {
         showToast('Gagal memverifikasi ke pangkalan data.', 'error');
       }
@@ -64,7 +61,18 @@ export const CertificateVerifyPage = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 space-y-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 space-y-8">
+      {/* Back button */}
+      <div>
+        <Link
+          to="/dashboard/student/certificates"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-900 border border-slate-200 transition shadow-sm"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Kembali ke Sertifikat Saya</span>
+        </Link>
+      </div>
+
       {/* Page Header */}
       <div className="text-center space-y-3">
         <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200">

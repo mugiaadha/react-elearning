@@ -101,6 +101,21 @@ export const AdminEmailTemplatesPage = () => {
     for (const [key, val] of Object.entries(mocks)) {
       html = html.replaceAll(key, val);
     }
+
+    // Inject preview normalization styles so the email banner sits flush at top: 0 with zero awkward padding
+    const previewStyles = `
+      <style>
+        html, body { margin: 0 !important; padding: 0 !important; background-color: #ffffff !important; }
+        .container { max-width: 100% !important; margin: 0 !important; border-radius: 0 !important; border: none !important; box-shadow: none !important; }
+      </style>
+    `;
+
+    if (html.includes('</head>')) {
+      html = html.replace('</head>', `${previewStyles}</head>`);
+    } else {
+      html = previewStyles + html;
+    }
+
     return html;
   };
 
@@ -274,21 +289,57 @@ export const AdminEmailTemplatesPage = () => {
                 )}
 
                 {/* Body Content */}
-                <div className="p-4 sm:p-6 flex-1 min-h-[460px]">
+                <div className="p-4 sm:p-5 flex-1 min-h-[460px]">
                   {activeTab === 'preview' ? (
-                    <div className="bg-slate-100 rounded-xl p-4 overflow-auto border border-slate-700/50 shadow-inner max-h-[550px]">
-                      <div
-                        dangerouslySetInnerHTML={{ __html: getPreviewHtml(selectedTemplate) }}
+                    <div className="bg-white rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                      {/* Simulated Email Client Topbar */}
+                      <div className="bg-slate-900/90 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400 select-none">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80 inline-block"></span>
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block"></span>
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block"></span>
+                          </div>
+                          <span className="text-[11px] font-mono text-slate-400 ml-2 hidden sm:inline">
+                            Pratinjau Klien Email (Webmail)
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+                          <span>Dari:</span>
+                          <span className="text-slate-200 font-semibold">no-reply@nactaxcenter.id</span>
+                        </div>
+                      </div>
+
+                      {/* Isolated Iframe: Total CSS isolation & Zero padding */}
+                      <iframe
+                        title="Live Email Preview"
+                        srcDoc={getPreviewHtml(selectedTemplate)}
+                        className="w-full h-[580px] border-0 bg-white block"
                       />
                     </div>
                   ) : (
                     <div className="relative">
-                      <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-emerald-400 overflow-auto max-h-[550px] leading-relaxed whitespace-pre-wrap">
+                      <div className="flex items-center justify-between bg-slate-900 px-4 py-2 rounded-t-xl border border-slate-800 border-b-0 text-xs">
+                        <span className="text-slate-400 font-mono text-[11px]">Source HTML Template</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedTemplate.body_html);
+                            showToast('Kode HTML berhasil disalin ke clipboard!', 'success', 2000);
+                          }}
+                          className="text-amber-400 hover:text-amber-300 font-bold inline-flex items-center gap-1 text-[11px]"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Salin Kode HTML</span>
+                        </button>
+                      </div>
+                      <pre className="p-4 rounded-b-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-emerald-400 overflow-auto max-h-[540px] leading-relaxed whitespace-pre-wrap">
                         {selectedTemplate.body_html}
                       </pre>
                     </div>
                   )}
                 </div>
+
               </>
             ) : (
               <div className="p-12 text-center text-slate-500">

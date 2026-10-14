@@ -44,19 +44,13 @@ class MailService
         }
 
         try {
-            $mailable = new DynamicTemplateMail(
-                $rendered['subject'],
-                $rendered['body_html'],
-                $rendered['body_text']
-            );
+            \App\Jobs\SendTemplateEmailJob::dispatch($toEmail, $templateSlug, $rendered, $toName);
 
-            Mail::to($toEmail, $toName)->send($mailable);
-
-            Log::info("Email successfully sent to {$toEmail} using template '{$templateSlug}' via SMTP/Mailer.");
+            Log::info("Email queued for {$toEmail} using template '{$templateSlug}' via SendTemplateEmailJob (ShouldBeUnique protected).");
 
             return [
                 'success' => true,
-                'message' => 'Email berhasil dikirim.',
+                'message' => 'Email telah dijadwalkan ke sistem antrean (queue) untuk dikirim.',
                 'subject' => $rendered['subject'],
                 'body_html' => $rendered['body_html'],
             ];
@@ -88,8 +82,8 @@ class MailService
         $user->email_verification_expires_at = $expiresAt;
         $user->save();
 
-        $appUrl = config('app.url', 'http://localhost:5173');
-        $verificationUrl = "{$appUrl}/verify-email?email=" . urlencode($user->email) . "&code={$code}";
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+        $verificationUrl = "{$frontendUrl}/verify-email?email=" . urlencode($user->email) . "&code={$code}";
 
         $variables = [
             'name' => $user->name,
@@ -108,6 +102,25 @@ class MailService
             'expires_at' => $expiresAt->toIso8601String(),
             'smtp_status' => $result['success'] ? 'SENT' : 'LOGGED_OR_SIMULATED',
         ];
+    }
+
+    /**
+     * Send welcome email to a student after verification or Google registration.
+     *
+     * @param User $user
+     * @return array
+     */
+    public function sendWelcomeEmail(User $user): array
+    {
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+        return $this->sendTemplateEmail($user->email, 'welcome-student', [
+            'name' => $user->name,
+            'student_name' => $user->name,
+            'user_name' => $user->name,
+            'email' => $user->email,
+            'login_url' => $frontendUrl . '/login',
+            'portal_url' => $frontendUrl . '/dashboard/student',
+        ], $user->name);
     }
 
     /**

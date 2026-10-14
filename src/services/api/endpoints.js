@@ -14,6 +14,8 @@ export const ENDPOINTS = {
   // Auth & User Profile
   AUTH_LOGIN: '/auth/login',
   AUTH_REGISTER: '/auth/register',
+  AUTH_GOOGLE: '/auth/google',
+  AUTH_GOOGLE_URL: '/auth/google/url',
   AUTH_LOGOUT: '/auth/logout',
   AUTH_SWITCH_ROLE: '/auth/switch-role',
   AUTH_SEND_VERIFICATION: '/auth/send-verification',

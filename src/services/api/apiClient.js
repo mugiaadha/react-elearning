@@ -64,7 +64,11 @@ apiClient.interceptors.response.use(
         'Terjadi kesalahan saat menghubungi server.',
       details: error.response?.data || null,
     };
-    console.error('[API Client Response Error]', customError);
+    if (customError.status >= 500) {
+      console.error('[API Server Error]', customError);
+    } else {
+      console.warn(`[API Client ${customError.status}]`, customError.message);
+    }
     return Promise.reject(customError);
   }
 );

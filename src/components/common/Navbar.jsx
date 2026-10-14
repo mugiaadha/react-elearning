@@ -112,8 +112,13 @@ export const Navbar = () => {
         <div className="pt-3 border-t border-slate-100 space-y-3">
           <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <img
-              src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'}
+              src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`}
               alt={user.name}
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`;
+              }}
               className="w-10 h-10 rounded-full object-cover border border-slate-300 shrink-0"
             />
             <div className="truncate flex-1">
@@ -174,8 +179,13 @@ export const Navbar = () => {
             aria-expanded={userDropdownOpen}
           >
             <img
-              src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'}
+              src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`}
               alt={user.name}
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`;
+              }}
               className="w-8 h-8 rounded-full object-cover border border-slate-300 shrink-0"
             />
             <div className="text-left hidden sm:block max-w-[110px] truncate">
@@ -192,8 +202,13 @@ export const Navbar = () => {
             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70">
               <div className="flex items-center gap-3">
                 <img
-                  src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'}
+                  src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`}
                   alt={user.name}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`;
+                  }}
                   className="w-10 h-10 rounded-full object-cover border border-slate-300 shrink-0"
                 />
                 <div className="overflow-hidden">

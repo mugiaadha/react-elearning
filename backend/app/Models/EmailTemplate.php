@@ -32,10 +32,13 @@ class EmailTemplate extends Model
      */
     public function render(array $variables = []): array
     {
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+
         // Global default placeholders
         $defaults = [
             'app_name' => config('app.name', 'NAC Tax Center'),
-            'app_url' => config('app.url', 'http://localhost:5173'),
+            'app_url' => $frontendUrl,
+            'frontend_url' => $frontendUrl,
             'year' => date('Y'),
             'support_email' => 'admisi@nactaxcenter.id',
             'support_phone' => '+62 812-8890-4123',

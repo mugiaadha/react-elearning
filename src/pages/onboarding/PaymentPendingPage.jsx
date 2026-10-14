@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import paymentService from '../../services/paymentService';
+import isDevMode from '../../config/devMode';
 import Badge from '../../components/common/Badge';
 import {
   FileText,
@@ -23,7 +24,7 @@ import {
 } from 'lucide-react';
 
 export const PaymentPendingPage = () => {
-  const { user, refreshProfile, switchRole } = useAuth();
+  const { user, refreshProfile, switchRole, logout } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -172,7 +173,49 @@ export const PaymentPendingPage = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+      {/* 3-Step Visual Progress Breadcrumb */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1">
+          <div className="flex items-center gap-1.5 text-emerald-600">
+            <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">
+              ✓
+            </div>
+            <span className="text-xs font-semibold text-emerald-700">1. Pendaftaran</span>
+          </div>
+          <div className="flex-1 h-0.5 bg-emerald-200 max-w-[60px]"></div>
+          <div className="flex items-center gap-1.5 text-emerald-600">
+            <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">
+              ✓
+            </div>
+            <span className="text-xs font-semibold text-emerald-700">2. Email Terverifikasi</span>
+          </div>
+          <div className="flex-1 h-0.5 bg-emerald-200 max-w-[60px]"></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-6 rounded-full bg-nac-primary text-white text-xs font-bold flex items-center justify-center shadow-sm">
+              3
+            </div>
+            <span className="text-xs font-bold text-slate-900">3. Pembayaran</span>
+          </div>
+        </div>
+
+        {user && (
+          <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 text-xs text-slate-500 shrink-0">
+            <span>Akun: <strong>{user.email}</strong></span>
+            <button
+              type="button"
+              onClick={async () => {
+                await logout();
+                navigate('/login');
+              }}
+              className="text-slate-500 hover:text-rose-600 font-medium ml-2 transition"
+            >
+              (Ganti Akun)
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Top Banner Notice */}
       <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-l-4 border-amber-500 p-5 rounded-r-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -462,42 +505,45 @@ export const PaymentPendingPage = () => {
               </button>
             </form>
 
-            {/* Interactive Testing Helper for Reviewer */}
-            <div className="mt-6 pt-5 border-t border-slate-100 bg-amber-50/60 -mx-6 -mb-6 p-5 rounded-b-2xl">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 mb-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                Simulasi Evaluator / Admin Review
+            {/* Interactive Testing Helper for Reviewer (Only visible when DEV_MODE=true) */}
+            {isDevMode && (
+              <div className="mt-6 pt-5 border-t border-slate-100 bg-amber-50/60 -mx-6 -mb-6 p-5 rounded-b-2xl">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 mb-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  Simulasi Evaluator / Admin Review
+                </div>
+                <p className="text-[11px] text-amber-800 mb-3">
+                  Untuk menguji alur verifikasi admin tanpa menunggu:
+                </p>
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    disabled={simulating}
+                    onClick={handleInstantApprovalSimulation}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition disabled:opacity-60"
+                  >
+                    {simulating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Memproses Persetujuan...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Simulasikan Persetujuan Admin Seketika (Buka Dashboard)</span>
+                      </>
+                    )}
+                  </button>
+                  <Link
+                    to="/admin/payments"
+                    className="text-center text-[11px] text-slate-700 hover:text-slate-900 font-semibold underline"
+                  >
+                    Atau buka Panel Admin Backoffice (/admin/payments) &rarr;
+                  </Link>
+                </div>
               </div>
-              <p className="text-[11px] text-amber-800 mb-3">
-                Untuk menguji alur verifikasi admin tanpa menunggu:
-              </p>
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  disabled={simulating}
-                  onClick={handleInstantApprovalSimulation}
-                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition disabled:opacity-60"
-                >
-                  {simulating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Memproses Persetujuan...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Simulasikan Persetujuan Admin Seketika (Buka Dashboard)</span>
-                    </>
-                  )}
-                </button>
-                <Link
-                  to="/admin/payments"
-                  className="text-center text-[11px] text-slate-700 hover:text-slate-900 font-semibold underline"
-                >
-                  Atau buka Panel Admin Backoffice (/admin/payments) &rarr;
-                </Link>
-              </div>
-            </div>
+            )}
+
           </div>
         </div>
       </div>

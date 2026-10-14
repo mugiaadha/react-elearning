@@ -9,7 +9,7 @@ export const FrontofficePublicLayout = () => {
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
       <RoleSwitcher />
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 min-h-[calc(100vh-140px)] flex flex-col justify-center">
         <Outlet />
       </main>
       <Footer />

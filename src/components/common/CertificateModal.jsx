@@ -16,6 +16,19 @@ export const CertificateModal = ({ isOpen, onClose, certificate }) => {
     }
   }, [isOpen]);
 
+  // Keyboard shortcut: Escape to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen || !certificate) return null;
 
   const handlePrint = () => {
@@ -23,8 +36,13 @@ export const CertificateModal = ({ isOpen, onClose, certificate }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden my-4 sm:my-8">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden my-4 sm:my-8 animate-in zoom-in-95 duration-200">
         {/* Header toolbar */}
         <div className="bg-slate-900 text-white px-4 sm:px-6 py-3.5 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2 truncate">
@@ -34,17 +52,18 @@ export const CertificateModal = ({ isOpen, onClose, certificate }) => {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-sm"
             >
               <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden xs:inline">Cetak /</span> PDF
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600/90 hover:bg-rose-600 text-white transition shadow-sm"
               aria-label="Tutup Sertifikat"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
+              <span>Tutup</span>
             </button>
           </div>
         </div>
@@ -131,9 +150,30 @@ export const CertificateModal = ({ isOpen, onClose, certificate }) => {
           </div>
         </div>
 
-        {/* Modal footer note */}
-        <div className="bg-slate-50 px-4 sm:px-6 py-2.5 sm:py-3 border-t border-slate-200 text-center text-[10px] sm:text-xs text-slate-500">
-          Sertifikat ini diakui oleh mitra industri & korporasi sebagai bukti kecakapan teknis Brevet Pajak terapan.
+        {/* Modal footer toolbar & note */}
+        <div className="bg-slate-50 px-4 sm:px-6 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <p className="text-[11px] text-slate-500 text-center sm:text-left leading-relaxed">
+            Sertifikat resmi terdaftar di database NAC Tax Center & diakui mitra industri.
+          </p>
+          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-sm"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Cetak / PDF</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 transition"
+              aria-label="Tutup Pratinjau Sertifikat"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Tutup Pratinjau</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

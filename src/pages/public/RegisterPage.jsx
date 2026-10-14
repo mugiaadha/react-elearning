@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import brevetService from '../../services/brevetService';
 import userService from '../../services/userService';
+import GoogleAuthButton from '../../components/auth/GoogleAuthButton';
+import isDevMode from '../../config/devMode';
 import {
   FileText,
   Mail,
@@ -17,8 +19,8 @@ import {
   Loader2,
   AlertCircle,
   X,
-  RotateCw,
-  Send
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export const RegisterPage = () => {
@@ -34,13 +36,15 @@ export const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Email Verification Step State
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [inputOtp, setInputOtp] = useState('');
-  const [smtpStatus, setSmtpStatus] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
@@ -75,6 +79,18 @@ export const RegisterPage = () => {
       showToast('Nomor WhatsApp wajib diisi.', 'warning');
       return;
     }
+    if (!password) {
+      showToast('Kata sandi wajib diisi.', 'warning');
+      return;
+    }
+    if (password.length < 6) {
+      showToast('Kata sandi minimal 6 karakter demi keamanan akun Anda.', 'warning');
+      return;
+    }
+    if (password !== confirmPassword) {
+      showToast('Konfirmasi kata sandi tidak cocok. Harap periksa kembali.', 'warning');
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -91,17 +107,14 @@ export const RegisterPage = () => {
         amount: selectedBrevet?.price || 2750000,
       });
 
-      // Extract generated OTP code & status from backend response
-      const serverCode = response?.verification?.code || '';
-      const status = response?.verification?.smtp_status || 'SENT';
-      setOtpCode(serverCode);
-      setInputOtp(serverCode); // Pre-fill for reviewer test convenience, fully editable
-      setSmtpStatus(status);
-      setShowOtpModal(true);
-      setResendCooldown(60);
-      showToast(`Email verifikasi resmi telah dikirim ke ${email}.`, 'success', 5000);
+      showToast(`Pendaftaran berhasil! Mengarahkan ke halaman verifikasi email...`, 'success', 3500);
+
+      // Navigate to dedicated verification page where user can input OTP or click email link
+      setTimeout(() => {
+        navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+      }, 800);
     } catch (err) {
-      console.error(err);
+      console.warn('[Registration failed]', err);
       const msg = err.message || 'Pendaftaran gagal. Periksa kembali data Anda.';
       setRegError(msg);
       showToast(msg, 'error', 4500);
@@ -190,11 +203,35 @@ export const RegisterPage = () => {
         </div>
 
         {/* Right Side: Registration Form */}
-        <div className="md:col-span-7 p-8 space-y-6">
+        <div className="md:col-span-7 p-8 space-y-5">
+          {/* 3-Step Visual Progress Breadcrumb */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded-full bg-nac-primary text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
+                1
+              </div>
+              <span className="text-[11px] font-bold text-slate-900">1. Pendaftaran</span>
+            </div>
+            <div className="flex-1 h-0.5 bg-slate-200 mx-2"></div>
+            <div className="flex items-center gap-1.5 opacity-50">
+              <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">
+                2
+              </div>
+              <span className="text-[11px] font-medium text-slate-500">2. Verifikasi OTP</span>
+            </div>
+            <div className="flex-1 h-0.5 bg-slate-200 mx-2"></div>
+            <div className="flex items-center gap-1.5 opacity-50">
+              <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">
+                3
+              </div>
+              <span className="text-[11px] font-medium text-slate-500">3. Pembayaran</span>
+            </div>
+          </div>
+
           <div>
             <h3 className="text-xl font-bold text-slate-900">Formulir Pendaftaran Siswa</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Lengkapi informasi data diri untuk penerbitan akun dan sertifikat resmi
+              Lengkapi informasi data diri dan buat kata sandi akun portal Anda
             </p>
           </div>
 
@@ -205,7 +242,7 @@ export const RegisterPage = () => {
             </div>
           )}
 
-          <form onSubmit={handleStartRegistration} className="space-y-4 text-xs">
+          <form onSubmit={handleStartRegistration} className="space-y-3.5 text-xs">
             <div>
               <label className="block font-semibold text-slate-700 mb-1">Pilih Program Brevet</label>
               <select
@@ -272,6 +309,78 @@ export const RegisterPage = () => {
               </div>
             </div>
 
+            {/* Password & Confirm Password */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Kata Sandi (Password)
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    disabled={submitting}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Min. 6 karakter"
+                    className="w-full rounded-xl border border-slate-300 pl-9 pr-9 py-2.5 focus:ring-2 focus:ring-nac-primary focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition"
+                    aria-label="Toggle password"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-semibold text-slate-700">Konfirmasi Sandi</label>
+                  {confirmPassword && (
+                    <span
+                      className={`text-[10px] font-bold ${
+                        password === confirmPassword ? 'text-emerald-600' : 'text-rose-500'
+                      }`}
+                    >
+                      {password === confirmPassword ? '✓ Cocok' : '✕ Tidak cocok'}
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    disabled={submitting}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Ulangi kata sandi"
+                    className="w-full rounded-xl border border-slate-300 pl-9 pr-9 py-2.5 focus:ring-2 focus:ring-nac-primary focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition"
+                    aria-label="Toggle confirm password"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Resume tip banner */}
+            <div className="bg-sky-50/70 border border-sky-200/70 rounded-xl p-2.5 text-[11px] text-sky-900 flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+              <p className="leading-relaxed">
+                <strong>Simpan sandi ini baik-baik!</strong> Jika browser tertutup di tengah proses, Anda dapat masuk kembali kapan saja dengan email & sandi ini untuk melanjutkan verifikasi atau pembayaran.
+              </p>
+            </div>
+
             <div className="pt-2">
               <button
                 type="submit"
@@ -285,14 +394,30 @@ export const RegisterPage = () => {
                   </>
                 ) : (
                   <>
-                    <span>Lanjutkan & Verifikasi Email</span>
+                    <span>Lanjutkan ke Langkah 2: Verifikasi OTP</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
             </div>
 
-            <p className="text-center text-[11px] text-slate-500 pt-2">
+            {/* Divider */}
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-slate-200"></div>
+              <span className="flex-shrink mx-3 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                atau daftar instan dengan
+              </span>
+              <div className="flex-grow border-t border-slate-200"></div>
+            </div>
+
+            {/* Google Quick Registration */}
+            <GoogleAuthButton
+              text="Daftar Cepat dengan Akun Google"
+              mode="register"
+              brevetId={selectedBrevetId}
+            />
+
+            <p className="text-center text-[11px] text-slate-500 pt-1">
               Sudah memiliki akun?{' '}
               <Link to="/login" className="text-nac-primary font-bold hover:underline">
                 Masuk di sini
@@ -359,17 +484,18 @@ export const RegisterPage = () => {
               </div>
             </div>
 
-            {otpCode && (
+            {isDevMode && otpCode && (
               <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-2.5 text-[11px] text-amber-900 flex items-center justify-between">
                 <span className="flex items-center gap-1.5 font-medium">
                   <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  Kode OTP Terkirim:
+                  Kode OTP Terkirim (Dev Helper):
                 </span>
                 <span className="font-mono font-bold tracking-wider text-xs bg-amber-100/90 px-2 py-0.5 rounded text-amber-950">
                   {otpCode}
                 </span>
               </div>
             )}
+
 
             {regError && (
               <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2 text-left">

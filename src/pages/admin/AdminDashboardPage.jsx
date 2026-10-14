@@ -8,10 +8,7 @@ import {
   Award,
   TrendingUp,
   Clock,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  DollarSign
+  ShieldCheck
 } from 'lucide-react';
 
 export const AdminDashboardPage = () => {
@@ -26,7 +23,7 @@ export const AdminDashboardPage = () => {
       const res = await apiClient.get(ENDPOINTS.ADMIN_STATS);
       setStats(res.data);
     } catch (err) {
-      console.error(err);
+      console.warn('[AdminStats error]', err);
       setError(err.message || 'Gagal memuat statistik backoffice.');
     } finally {
       setLoading(false);

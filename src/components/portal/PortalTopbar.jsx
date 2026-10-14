@@ -118,9 +118,14 @@ export const PortalTopbar = ({ title, onToggleMobileMenu }) => {
                   user.avatar ||
                   (isTeacher
                     ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'
-                    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80')
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`)
                 }
                 alt={user.name}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0284c7&color=fff`;
+                }}
                 className="w-8 h-8 rounded-full object-cover border border-slate-300 shrink-0"
               />
               <div className="hidden sm:block text-left max-w-[120px] truncate">

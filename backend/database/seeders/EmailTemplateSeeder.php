@@ -25,8 +25,8 @@ class EmailTemplateSeeder extends Seeder
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verifikasi Alamat Email</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
-    .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01); border: 1px solid #e2e8f0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
     .header { background: linear-gradient(135deg, #091e42 0%, #0284c7 100%); padding: 32px 24px; text-align: center; color: #ffffff; }
     .brand-badge { display: inline-block; background: #f59e0b; color: #091e42; font-weight: 900; font-size: 16px; padding: 4px 12px; border-radius: 8px; margin-bottom: 8px; }
     .header h1 { margin: 8px 0 4px; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
@@ -90,8 +90,8 @@ HTML,
   <meta charset="UTF-8">
   <title>Selamat Datang di NAC Tax Center</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
-    .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 0; overflow: hidden; }
     .header { background: #091e42; padding: 28px; text-align: center; color: #ffffff; }
     .content { padding: 32px 28px; font-size: 14px; line-height: 1.6; }
     .btn { display: inline-block; background: #0284c7; color: #ffffff !important; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; }
@@ -135,8 +135,8 @@ HTML,
   <meta charset="UTF-8">
   <title>Pembayaran Terverifikasi</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
-    .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 0; overflow: hidden; border: 1px solid #e2e8f0; }
     .header { background: #047857; padding: 28px; text-align: center; color: #ffffff; }
     .content { padding: 32px 28px; font-size: 14px; line-height: 1.6; }
     .invoice-card { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; margin: 20px 0; }
@@ -188,8 +188,8 @@ HTML,
   <meta charset="UTF-8">
   <title>Sertifikat Kelulusan Diterbitkan</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #1e293b; }
-    .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 0; overflow: hidden; border: 1px solid #e2e8f0; }
     .header { background: #1e1b4b; padding: 28px; text-align: center; color: #ffffff; }
     .content { padding: 32px 28px; font-size: 14px; line-height: 1.6; }
     .cert-card { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 12px; padding: 18px; margin: 20px 0; text-align: center; }

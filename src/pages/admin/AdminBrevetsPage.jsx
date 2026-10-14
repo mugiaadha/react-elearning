@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import brevetService from '../../services/brevetService';
-import { BookOpen, Tag, Users, CheckCircle } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 export const AdminBrevetsPage = () => {
   const [brevets, setBrevets] = useState([]);
@@ -11,7 +11,7 @@ export const AdminBrevetsPage = () => {
     brevetService.getAllBrevets()
       .then(setBrevets)
       .catch((err) => {
-        console.error(err);
+        console.warn('[AdminBrevets error]', err);
         setError(err.message || 'Gagal memuat kurikulum.');
       })
       .finally(() => setLoading(false));

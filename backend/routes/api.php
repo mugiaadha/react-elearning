@@ -14,6 +14,11 @@ $registerRoutes = function () {
     // 1. Auth & User Profile
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::get('/auth/google/url', [AuthController::class, 'googleAuthUrl']);
+    Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect']);
+    Route::post('/auth/google/config', [AuthController::class, 'saveGoogleConfig']);
+    Route::post('/auth/google', [AuthController::class, 'googleLogin']);
+    Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/switch-role', [AuthController::class, 'switchRole']);
     Route::get('/user/profile', [AuthController::class, 'profile']);

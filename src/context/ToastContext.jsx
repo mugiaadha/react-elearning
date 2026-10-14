@@ -31,7 +31,18 @@ export const ToastProvider = ({ children }) => {
       duration,
     };
 
-    setToasts((prev) => [...prev, newToast]);
+    setToasts((prev) => {
+      // Prevent duplicate toasts with identical message within 2.5s
+      const isDuplicate = prev.some((t) => t.message === message && Date.now() - t.createdAt < 2500);
+      if (isDuplicate) return prev;
+
+      // When showing success/error, remove any active loading toast so multiple toasts don't stack
+      const filtered = (type === 'success' || type === 'error')
+        ? prev.filter((t) => t.type !== 'loading')
+        : prev;
+
+      return [...filtered, newToast];
+    });
 
     if (duration > 0) {
       setTimeout(() => {
