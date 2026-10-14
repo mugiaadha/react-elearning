@@ -24,7 +24,7 @@ import {
 export const RegisterPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { registerStudent } = useAuth();
+  const { registerStudent, refreshProfile } = useAuth();
   const { showToast } = useToast();
 
   const brevetParamId = searchParams.get('brevet_id') || 'brevet-ab';
@@ -40,6 +40,7 @@ export const RegisterPage = () => {
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [inputOtp, setInputOtp] = useState('');
+  const [smtpStatus, setSmtpStatus] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
@@ -90,10 +91,12 @@ export const RegisterPage = () => {
         amount: selectedBrevet?.price || 2750000,
       });
 
-      // Extract generated OTP code from backend response
-      const serverCode = response?.verification?.code || '882190';
+      // Extract generated OTP code & status from backend response
+      const serverCode = response?.verification?.code || '';
+      const status = response?.verification?.smtp_status || 'SENT';
       setOtpCode(serverCode);
       setInputOtp(serverCode); // Pre-fill for reviewer test convenience, fully editable
+      setSmtpStatus(status);
       setShowOtpModal(true);
       setResendCooldown(60);
       showToast(`Email verifikasi resmi telah dikirim ke ${email}.`, 'success', 5000);
@@ -136,7 +139,11 @@ export const RegisterPage = () => {
     setRegError('');
     try {
       showToast('Memverifikasi kode dengan database...', 'loading', 1500);
-      await userService.verifyEmail(email.trim(), inputOtp.trim());
+      const verifyRes = await userService.verifyEmail(email.trim(), inputOtp.trim());
+      if (verifyRes?.token) {
+        localStorage.setItem('nac_auth_token', verifyRes.token);
+      }
+      await refreshProfile();
       showToast('Email berhasil diverifikasi secara sah! Membuka halaman pembayaran...', 'success', 3500);
       setShowOtpModal(false);
       navigate('/onboarding/payment-pending');
@@ -351,6 +358,18 @@ export const RegisterPage = () => {
                 </button>
               </div>
             </div>
+
+            {otpCode && (
+              <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-2.5 text-[11px] text-amber-900 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  Kode OTP Terkirim:
+                </span>
+                <span className="font-mono font-bold tracking-wider text-xs bg-amber-100/90 px-2 py-0.5 rounded text-amber-950">
+                  {otpCode}
+                </span>
+              </div>
+            )}
 
             {regError && (
               <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2 text-left">
