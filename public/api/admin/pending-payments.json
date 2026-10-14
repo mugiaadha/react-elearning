@@ -1,0 +1,63 @@
+{
+  "success": true,
+  "message": "Daftar transaksi pembayaran menunggu verifikasi berhasil diambil.",
+  "data": [
+    {
+      "id": "PAY-2026-0892",
+      "invoice_number": "INV-NAC-2026-0892",
+      "student_id": "usr-student-01",
+      "student_name": "Dimas Anindito Pratama",
+      "student_email": "dimas.pratama@gmail.com",
+      "student_phone": "+62 812-8890-4123",
+      "brevet_id": "brevet-ab",
+      "brevet_title": "Brevet Pajak A & B Terpadu",
+      "amount": 2750000,
+      "payment_method": "QRIS Dinamis (GoPay / ShopeePay / BCA)",
+      "transaction_time": "2026-10-12T09:30:15Z",
+      "proof_image_url": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80",
+      "status": "PENDING_APPROVAL",
+      "sender_account_name": "Dimas Anindito Pratama",
+      "notes": "Konfirmasi transfer QRIS untuk batch November 2026"
+    },
+    {
+      "id": "PAY-2026-0893",
+      "invoice_number": "INV-NAC-2026-0893",
+      "student_id": "usr-student-02",
+      "student_name": "Siti Sarah Nurhaliza",
+      "student_email": "sarah.nurhaliza@taxcorp.id",
+      "student_phone": "+62 813-1122-3344",
+      "brevet_id": "brevet-c",
+      "brevet_title": "Brevet Pajak C Eksekutif",
+      "amount": 3850000,
+      "payment_method": "Transfer Bank Mandiri VA",
+      "transaction_time": "2026-10-12T11:15:40Z",
+      "proof_image_url": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=800&q=80",
+      "status": "PENDING_APPROVAL",
+      "sender_account_name": "PT Sinergi Mandiri Corp",
+      "notes": "Pembayaran sponsorship korporasi untuk karyawan"
+    },
+    {
+      "id": "PAY-2026-0894",
+      "invoice_number": "INV-NAC-2026-0894",
+      "student_id": "usr-student-03",
+      "student_name": "Muhammad Faisal Reza",
+      "student_email": "faisal.reza@gmail.com",
+      "student_phone": "+62 856-7788-9900",
+      "brevet_id": "coretax-mastery",
+      "brevet_title": "Mastery & Simulasi Coretax DJP",
+      "amount": 1250000,
+      "payment_method": "BCA Virtual Account",
+      "transaction_time": "2026-10-13T08:05:22Z",
+      "proof_image_url": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=800&q=80",
+      "status": "PENDING_APPROVAL",
+      "sender_account_name": "M Faisal Reza",
+      "notes": "Daftar kelas intensif malam Coretax DJP"
+    }
+  ],
+  "meta": {
+    "total_pending": 3,
+    "total_amount_pending": 7850000,
+    "page": 1,
+    "per_page": 10
+  }
+}

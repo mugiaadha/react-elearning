@@ -1,0 +1,30 @@
+{
+  "success": true,
+  "message": "Daftar sertifikat kelulusan NAC Tax Center.",
+  "data": [
+    {
+      "certificate_id": "NAC-CERT-2026-AB-88219",
+      "recipient_name": "Dimas Anindito Pratama",
+      "course_title": "Brevet Pajak A & B Terpadu (Angkatan 42)",
+      "issue_date": "2026-10-13",
+      "expiry_date": "Seumur Hidup",
+      "grade": "Sangat Memuaskan (A)",
+      "score": 92.5,
+      "director_name": "Dr. Hendrawan Kartiko, S.E., S.H., LL.M., BKP C",
+      "status": "VALID",
+      "verification_url": "https://nactaxcenter.id/verify-certificate/NAC-CERT-2026-AB-88219"
+    },
+    {
+      "certificate_id": "NAC-CERT-2026-C-99014",
+      "recipient_name": "Maya Anggraini, S.Ak.",
+      "course_title": "Brevet Pajak C Eksekutif (Angkatan 18)",
+      "issue_date": "2026-09-28",
+      "expiry_date": "Seumur Hidup",
+      "grade": "Cum Laude (A+)",
+      "score": 96.0,
+      "director_name": "Dr. Hendrawan Kartiko, S.E., S.H., LL.M., BKP C",
+      "status": "VALID",
+      "verification_url": "https://nactaxcenter.id/verify-certificate/NAC-CERT-2026-C-99014"
+    }
+  ]
+}

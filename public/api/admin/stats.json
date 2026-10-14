@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "message": "Statistik backoffice berhasil diambil.",
+  "data": {
+    "summary": {
+      "total_students": 5420,
+      "active_students": 1280,
+      "pending_approvals": 3,
+      "total_revenue_idr": 485250000,
+      "completion_rate_percentage": 94.2
+    },
+    "course_popularity": [
+      { "id": "brevet-ab", "title": "Brevet AB Terpadu", "enrolled": 3840, "active": 890 },
+      { "id": "brevet-c", "title": "Brevet C Eksekutif", "enrolled": 1450, "active": 270 },
+      { "id": "coretax-mastery", "title": "Simulasi Coretax DJP", "enrolled": 2100, "active": 620 }
+    ],
+    "monthly_revenue": [
+      { "month": "May 2026", "revenue": 62500000 },
+      { "month": "Jun 2026", "revenue": 74000000 },
+      { "month": "Jul 2026", "revenue": 81500000 },
+      { "month": "Aug 2026", "revenue": 95000000 },
+      { "month": "Sep 2026", "revenue": 105250000 },
+      { "month": "Oct 2026", "revenue": 67000000 }
+    ]
+  }
+}

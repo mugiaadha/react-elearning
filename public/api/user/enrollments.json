@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "message": "Daftar kursus terdaftar pengguna berhasil diperoleh.",
+  "data": [
+    {
+      "brevet_id": "brevet-ab",
+      "slug": "brevet-ab-terpadu",
+      "title": "Brevet Pajak A & B Terpadu",
+      "enrolled_date": "2026-10-12T09:30:00Z",
+      "payment_status": "PENDING_APPROVAL",
+      "status": "AWAITING_VERIFICATION",
+      "progress_percentage": 0,
+      "completed_modules": 0,
+      "total_modules": 5,
+      "certificate_earned": false,
+      "certificate_id": null
+    }
+  ]
+}

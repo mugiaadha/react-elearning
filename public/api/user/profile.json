@@ -1,0 +1,28 @@
+{
+  "success": true,
+  "message": "Profil pengguna berhasil diperoleh.",
+  "data": {
+    "id": "usr-student-01",
+    "name": "Dimas Anindito Pratama",
+    "email": "dimas.pratama@gmail.com",
+    "phone": "+62 812-8890-4123",
+    "role": "student",
+    "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80",
+    "registered_at": "2026-10-10T08:00:00Z",
+    "payment_status": "PENDING_APPROVAL",
+    "active_brevet": {
+      "id": "brevet-ab",
+      "slug": "brevet-ab-terpadu",
+      "title": "Brevet Pajak A & B Terpadu",
+      "invoice_id": "INV-NAC-2026-0892",
+      "amount": 2750000,
+      "registered_date": "2026-10-12T09:30:00Z",
+      "payment_method": "QRIS Dinamis / Virtual Account BCA",
+      "payment_proof_url": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
+      "proof_uploaded": true,
+      "progress_percentage": 0
+    },
+    "completed_brevets": [],
+    "certificates": []
+  }
+}
