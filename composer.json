@@ -2,6 +2,9 @@
     "name": "nac/elearning-react",
     "description": "Unified development runner for NAC Tax Center E-Learning Platform",
     "scripts": {
-        "dev": "npx concurrently -n \"FE,BE,QUEUE\" -c \"blue,green,yellow\" \"npm run dev:fe\" \"cd backend && php artisan serve\" \"cd backend && php artisan queue:listen --tries=2 --backoff=1800\""
+        "dev:fe": "vite",
+        "dev:be": "cd backend && php artisan serve",
+        "dev:queue": "cd backend && php artisan queue:listen",
+        "dev": "concurrently -n \"FE,BE,QUEUE\" -c \"blue,green,yellow\" \"npm run dev:fe\" \"npm run dev:be\" \"npm run dev:queue\""
     }
 }

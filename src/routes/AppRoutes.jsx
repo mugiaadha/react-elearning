@@ -46,6 +46,7 @@ import TeacherStudentsPage from '../pages/teacher/TeacherStudentsPage';
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminPaymentsPage from '../pages/admin/AdminPaymentsPage';
 import AdminStudentsPage from '../pages/admin/AdminStudentsPage';
+import AdminTeachersPage from '../pages/admin/AdminTeachersPage';
 import AdminBrevetsPage from '../pages/admin/AdminBrevetsPage';
 import AdminCertificatesPage from '../pages/admin/AdminCertificatesPage';
 import AdminEmailTemplatesPage from '../pages/admin/AdminEmailTemplatesPage';
@@ -191,6 +192,7 @@ export const AppRoutes = () => {
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="payments" element={<AdminPaymentsPage />} />
         <Route path="students" element={<AdminStudentsPage />} />
+        <Route path="teachers" element={<AdminTeachersPage />} />
         <Route path="brevets" element={<AdminBrevetsPage />} />
         <Route path="certificates" element={<AdminCertificatesPage />} />
         <Route path="email-templates" element={<AdminEmailTemplatesPage />} />

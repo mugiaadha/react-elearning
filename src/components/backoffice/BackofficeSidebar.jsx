@@ -14,7 +14,8 @@ import {
   CheckCircle,
   Clock,
   X,
-  Mail
+  Mail,
+  GraduationCap
 } from 'lucide-react';
 
 export const BackofficeSidebar = ({ isOpen = false, onClose }) => {
@@ -46,6 +47,11 @@ export const BackofficeSidebar = ({ isOpen = false, onClose }) => {
       name: 'Manajemen Siswa',
       path: '/admin/students',
       icon: Users,
+    },
+    {
+      name: 'Manajemen Pengajar',
+      path: '/admin/teachers',
+      icon: GraduationCap,
     },
     {
       name: 'Kurikulum & Program Brevet',

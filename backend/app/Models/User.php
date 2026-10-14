@@ -19,6 +19,8 @@ class User extends Authenticatable
         'google_id',
         'phone',
         'role',
+        'specialization',
+        'invited_by_admin',
         'avatar',
         'payment_status',
         'email_verified_at',

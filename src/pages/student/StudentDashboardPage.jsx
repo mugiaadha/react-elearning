@@ -18,8 +18,12 @@ import {
 } from 'lucide-react';
 
 export const StudentDashboardPage = () => {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [brevet, setBrevet] = useState(null);
+
+  useEffect(() => {
+    refreshProfile?.();
+  }, []);
 
   useEffect(() => {
     brevetService.getBrevetBySlug(user?.active_brevet?.slug || 'brevet-ab-terpadu')
@@ -30,8 +34,10 @@ export const StudentDashboardPage = () => {
   const activeBrevet = user?.active_brevet || {
     title: 'Brevet Pajak A & B Terpadu',
     slug: 'brevet-ab-terpadu',
-    progress_percentage: 20,
+    progress_percentage: 0,
   };
+
+  const progress = Number(activeBrevet.progress_percentage ?? 0);
 
   return (
     <div className="space-y-8">
@@ -111,10 +117,15 @@ export const StudentDashboardPage = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700">Progres Pembelajaran Keseluruhan</span>
-              <span className="font-bold text-emerald-600">Terbuka Penuh</span>
+              <span className={`font-bold ${progress === 100 ? 'text-emerald-600' : progress > 0 ? 'text-nac-primary' : 'text-slate-400'}`}>
+                {progress === 100 ? '100% Selesai (Lulus)' : progress > 0 ? `${progress}% Selesai` : '0% (Belum Dimulai)'}
+              </span>
             </div>
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full w-2/5"></div>
+              <div
+                className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              ></div>
             </div>
           </div>
         </div>

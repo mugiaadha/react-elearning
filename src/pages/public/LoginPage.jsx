@@ -42,6 +42,11 @@ export const LoginPage = () => {
     const params = new URLSearchParams(location.search);
     const googleToken = params.get('google_token');
     const authError = params.get('error');
+    const emailParam = params.get('email');
+
+    if (emailParam && !email) {
+      setEmail(emailParam);
+    }
 
     if (hasProcessedGoogleRef.current) return;
 

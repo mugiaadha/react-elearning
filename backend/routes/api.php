@@ -25,6 +25,9 @@ $registerRoutes = function () {
     Route::match(['put', 'post'], '/user/profile', [AuthController::class, 'updateProfile']);
     Route::get('/user/enrollments', [AuthController::class, 'enrollments']);
     Route::post('/user/course-progress', [AuthController::class, 'updateProgress']);
+    Route::post('/user/course-progress/reset', [AuthController::class, 'resetCourseProgress']);
+    Route::get('/user/submissions', [AuthController::class, 'userSubmissions']);
+    Route::post('/user/submissions', [AuthController::class, 'submitExam']);
 
     // 2. Email Verification & Master Template Mailing
     Route::post('/auth/send-verification', [EmailVerificationController::class, 'send']);
@@ -54,12 +57,25 @@ $registerRoutes = function () {
     // 6. Admin Backoffice CMS
     Route::get('/admin/stats', [AdminController::class, 'stats']);
     Route::get('/admin/students', [AdminController::class, 'students']);
+    Route::get('/admin/teachers', [AdminController::class, 'teachers']);
+    Route::post('/admin/teachers', [AdminController::class, 'createTeacher']);
+    Route::post('/admin/teachers/{id}/resend-invitation', [AdminController::class, 'resendTeacherInvitation']);
+    Route::delete('/admin/teachers/{id}', [AdminController::class, 'deleteTeacher']);
 
     // 7. Teacher Portal
     Route::get('/teacher/students', [TeacherController::class, 'students']);
+    Route::get('/teacher/brevets', [TeacherController::class, 'brevets']);
+    Route::post('/teacher/brevets', [TeacherController::class, 'storeBrevet']);
+    Route::post('/teacher/brevets/{id}/modules', [TeacherController::class, 'storeModule']);
+    Route::put('/teacher/brevets/{id}/modules/{moduleId}', [TeacherController::class, 'updateModule']);
+    Route::delete('/teacher/brevets/{id}/modules/{moduleId}', [TeacherController::class, 'deleteModule']);
+    Route::post('/teacher/brevets/{id}/modules/{moduleId}/lessons', [TeacherController::class, 'storeLesson']);
+    Route::delete('/teacher/brevets/{id}/modules/{moduleId}/lessons/{lessonId}', [TeacherController::class, 'deleteLesson']);
     Route::get('/teacher/materials', [TeacherController::class, 'materials']);
     Route::post('/teacher/materials', [TeacherController::class, 'storeMaterial']);
     Route::get('/teacher/dashboard', [TeacherController::class, 'dashboard']);
+    Route::get('/teacher/submissions', [TeacherController::class, 'submissions']);
+    Route::post('/teacher/submissions/{id}/review', [TeacherController::class, 'reviewSubmission']);
     Route::post('/teacher/submissions/{id}/grade', [TeacherController::class, 'gradeSubmission']);
 
     // 8. Contact

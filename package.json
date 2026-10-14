@@ -4,8 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n \"FE,BE,QUEUE\" -c \"blue,green,yellow\" \"vite\" \"cd backend && php artisan serve\" \"cd backend && php artisan queue:listen --tries=2 --backoff=1800\"",
+    "dev": "concurrently -n \"FE,BE,QUEUE\" -c \"blue,green,yellow\" \"npm run dev:fe\" \"npm run dev:be\" \"npm run dev:queue\"",
     "dev:fe": "vite",
+    "dev:be": "cd backend && php artisan serve",
+    "dev:queue": "cd backend && php artisan queue:listen --tries=2 --backoff=1800",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"

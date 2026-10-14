@@ -38,12 +38,24 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, [loadUser]);
 
+  // Purge any stale localStorage lesson progress caches across users
+  const purgeLessonCache = () => {
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('nac_completed_lessons_')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (e) {}
+  };
+
   /**
    * Login using real Laravel API endpoint
    */
   const login = async (email, password) => {
     setLoading(true);
     try {
+      purgeLessonCache();
       const response = await apiClient.post(ENDPOINTS.AUTH_LOGIN, {
         email,
         password,
@@ -68,6 +80,7 @@ export const AuthProvider = ({ children }) => {
   const registerStudent = async ({ name, email, phone, password, brevetId, brevetTitle, amount }) => {
     setLoading(true);
     try {
+      purgeLessonCache();
       const response = await apiClient.post(ENDPOINTS.AUTH_REGISTER, {
         name,
         email,
@@ -104,6 +117,7 @@ export const AuthProvider = ({ children }) => {
   const loginWithGoogle = async (googlePayload) => {
     setLoading(true);
     try {
+      purgeLessonCache();
       const response = await apiClient.post(ENDPOINTS.AUTH_GOOGLE, googlePayload);
 
       if (response.token) {
@@ -130,6 +144,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.warn('Backend logout warning:', err);
     } finally {
+      purgeLessonCache();
       localStorage.removeItem('nac_auth_token');
       setUser(null);
     }
@@ -150,6 +165,7 @@ export const AuthProvider = ({ children }) => {
   const switchRole = async (newRole, newPaymentStatus = null) => {
     try {
       setLoading(true);
+      purgeLessonCache();
       const updated = await userService.switchRole(newRole, newPaymentStatus);
       setUser(updated);
       return updated;
@@ -192,6 +208,7 @@ export const AuthProvider = ({ children }) => {
         switchRole,
         setPaymentStatus,
         refreshProfile,
+        refreshUser: refreshProfile,
       }}
     >
       {children}

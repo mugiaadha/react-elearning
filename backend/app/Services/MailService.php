@@ -124,6 +124,31 @@ class MailService
     }
 
     /**
+     * Send credential invitation email to newly created teacher.
+     *
+     * @param User $teacher
+     * @param string $plainPassword
+     * @return array
+     */
+    public function sendTeacherInvitationEmail(User $teacher, string $plainPassword): array
+    {
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+        $loginUrl = "{$frontendUrl}/login?email=" . urlencode($teacher->email);
+
+        $variables = [
+            'name' => $teacher->name,
+            'email' => $teacher->email,
+            'password' => $plainPassword,
+            'login_url' => $loginUrl,
+            'app_name' => config('app.name', 'NAC Tax Center'),
+            'year' => date('Y'),
+            'support_email' => env('MAIL_FROM_ADDRESS', 'no-reply@nactaxcenter.id'),
+        ];
+
+        return $this->sendTemplateEmail($teacher->email, 'teacher-invitation', $variables, $teacher->name);
+    }
+
+    /**
      * Verify email with 6-digit OTP code.
      *
      * @param string $email

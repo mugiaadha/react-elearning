@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brevet;
 use App\Models\Enrollment;
 use App\Models\Payment;
+use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -301,16 +302,16 @@ class AuthController extends Controller
             $currentCompleted = array_values(array_diff($currentCompleted, [$lessonId]));
         }
 
-        // Count total lessons in brevet curriculum
-        $totalLessons = 0;
+        // Count total items (lessons + 1 final exam per module) in brevet curriculum
+        $totalItems = 0;
         if (!empty($brevet->curriculum) && is_array($brevet->curriculum)) {
             foreach ($brevet->curriculum as $mod) {
-                $totalLessons += count($mod['lessons'] ?? []);
+                $totalItems += count($mod['lessons'] ?? []) + 1;
             }
         }
-        if ($totalLessons <= 0) $totalLessons = 6;
+        if ($totalItems <= 0) $totalItems = 6;
 
-        $progressPercentage = min(100, (int) round((count($currentCompleted) / $totalLessons) * 100));
+        $progressPercentage = min(100, (int) round((count($currentCompleted) / $totalItems) * 100));
 
         $enrollment->update([
             'completed_lessons' => $currentCompleted,
@@ -323,6 +324,201 @@ class AuthController extends Controller
             'data' => [
                 'completed_lessons' => $currentCompleted,
                 'progress_percentage' => $progressPercentage,
+            ],
+        ]);
+    }
+
+    /**
+     * Get current student's exam submissions
+     */
+    public function userSubmissions(Request $request)
+    {
+        $user = $this->resolveAuthUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $brevetId = $request->query('brevet_id');
+        $query = Submission::where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhere('student_email', $user->email);
+        });
+
+        if ($brevetId) {
+            $query->where('brevet_id', $brevetId);
+        }
+
+        $submissions = $query->orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $submissions,
+        ]);
+    }
+
+    /**
+     * Student submits exam / assignment link for a module
+     */
+    public function submitExam(Request $request)
+    {
+        $user = $this->resolveAuthUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $rawUrl = trim($request->input('submission_url', ''));
+        if (!empty($rawUrl) && !preg_match('/^https?:\/\//i', $rawUrl)) {
+            $rawUrl = 'https://' . $rawUrl;
+        }
+
+        $validated = $request->validate([
+            'brevet_id' => 'required|string',
+            'module_id' => 'required|string',
+            'module_title' => 'nullable|string',
+            'submission_url' => 'nullable|string',
+            'file' => 'nullable|file|max:35840', // up to 35MB
+            'notes' => 'nullable|string',
+        ]);
+
+        $submissionUrl = $rawUrl;
+        $fileSizeText = 'Link Google Drive / Docs';
+
+        // Handle direct file upload from student
+        if ($request->hasFile('file')) {
+            $uploadedFile = $request->file('file');
+            $extension = strtolower($uploadedFile->getClientOriginalExtension());
+            $cleanName = Str::slug(pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME));
+            $filename = 'jawaban_' . Str::slug($user->name) . '_' . $cleanName . '_' . time() . '.' . $extension;
+            
+            $path = $uploadedFile->storeAs('submissions', $filename, 'public');
+            $submissionUrl = asset('storage/' . $path);
+            
+            $bytes = $uploadedFile->getSize();
+            if ($bytes >= 1048576) {
+                $fileSizeText = round($bytes / 1048576, 2) . ' MB (' . strtoupper($extension) . ')';
+            } else {
+                $fileSizeText = round($bytes / 1024, 1) . ' KB (' . strtoupper($extension) . ')';
+            }
+        }
+
+        if (empty($submissionUrl)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Silakan unggah file lembar jawaban Anda atau cantumkan tautan Google Drive.',
+            ], 422);
+        }
+
+        $brevet = Brevet::find($validated['brevet_id']) ?? Brevet::where('slug', $validated['brevet_id'])->first();
+        $courseTitle = $brevet?->title ?? 'Brevet Pajak';
+
+        // Check if previous submission exists for this module
+        $submission = Submission::where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhere('student_email', $user->email);
+        })->where('module_id', $validated['module_id'])->first();
+
+        if (!$submission) {
+            $submission = new Submission();
+            $submission->id = 'sub-' . rand(1000, 9999);
+        }
+
+        $submission->user_id = $user->id;
+        $submission->student_name = $user->name;
+        $submission->student_email = $user->email;
+        $submission->brevet_id = $brevet?->id ?? $validated['brevet_id'];
+        $submission->course = $courseTitle;
+        $submission->module_id = $validated['module_id'];
+        $submission->module_title = $validated['module_title'] ?? ('Ujian ' . $validated['module_id']);
+        $submission->task = $validated['module_title'] ?? 'Ujian Modul & Studi Kasus';
+        $submission->submission_url = $submissionUrl;
+        $submission->submission_notes = $validated['notes'] ?? null;
+        $submission->submitted_at = 'Hari ini, ' . date('H:i') . ' WIB';
+        $submission->file_size = $fileSizeText;
+        $submission->status = 'PENDING'; // Submitted, pending teacher review
+        $submission->score = null;
+        $submission->teacher_feedback = null;
+        $submission->save();
+
+        // Also record this exam in completed lessons of enrollment so next module is unlocked
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where(function ($q) use ($brevet, $validated) {
+                if ($brevet) {
+                    $q->where('brevet_id', $brevet->id)->orWhere('brevet_id', $brevet->slug);
+                }
+                $q->orWhere('brevet_id', $validated['brevet_id']);
+            })
+            ->first();
+
+        if ($enrollment) {
+            $completed = $enrollment->completed_lessons ?: [];
+            $examLessonKey = 'exam-' . $validated['module_id'];
+            if (!in_array($examLessonKey, $completed)) {
+                $completed[] = $examLessonKey;
+                $enrollment->completed_lessons = $completed;
+            }
+
+            // Recalculate progress percentage accurately
+            $totalItems = 0;
+            if (!empty($brevet?->curriculum) && is_array($brevet->curriculum)) {
+                foreach ($brevet->curriculum as $mod) {
+                    $totalItems += count($mod['lessons'] ?? []) + 1;
+                }
+            }
+            if ($totalItems <= 0) $totalItems = 6;
+            $enrollment->progress_percentage = min(100, (int) round((count($completed) / $totalItems) * 100));
+            $enrollment->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lembar jawaban ujian modul berhasil dikirim! Modul berikutnya kini telah terbuka.',
+            'data' => $submission,
+        ], 201);
+    }
+
+    /**
+     * Reset student's course progress & submissions back to Bab 1 (Tester/Dev Support)
+     */
+    public function resetCourseProgress(Request $request)
+    {
+        $user = $this->resolveAuthUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $slug = $request->input('slug', 'brevet-ab-terpadu');
+        $brevet = Brevet::where('slug', $slug)->orWhere('id', $slug)->first();
+
+        if ($brevet) {
+            $enrollment = Enrollment::where('user_id', $user->id)
+                ->where(function ($q) use ($brevet) {
+                    $q->where('brevet_id', $brevet->id)->orWhere('brevet_id', $brevet->slug);
+                })
+                ->first();
+
+            if ($enrollment) {
+                $enrollment->update([
+                    'completed_lessons' => [],
+                    'progress_percentage' => 0,
+                ]);
+            }
+
+            // Remove submissions for this brevet so user can test uploading again
+            Submission::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)->orWhere('student_email', $user->email);
+            })
+            ->where(function ($q) use ($brevet) {
+                $q->where('brevet_id', $brevet->id)->orWhere('brevet_id', $brevet->slug);
+            })
+            ->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Progres kelas berhasil direset ke awal (Bab 1).',
+            'data' => [
+                'completed_lessons' => [],
+                'progress_percentage' => 0,
             ],
         ]);
     }

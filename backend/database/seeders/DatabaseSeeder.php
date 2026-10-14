@@ -133,9 +133,9 @@ class DatabaseSeeder extends Seeder
                 'payment_status' => 'APPROVED',
                 'payment_proof_url' => 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
                 'payment_notes' => 'Konfirmasi transfer QRIS untuk batch November 2026',
-                'progress_percentage' => 20,
-                'completed_lessons' => ['les-01-01'],
-                'is_active' => false,
+                'progress_percentage' => 0,
+                'completed_lessons' => [],
+                'is_active' => true,
                 'registered_date' => now()->subDays(2),
             ]
         );
@@ -150,9 +150,9 @@ class DatabaseSeeder extends Seeder
                 'payment_status' => 'APPROVED',
                 'payment_proof_url' => 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=800&q=80',
                 'payment_notes' => 'Pembayaran sponsorship korporasi untuk karyawan',
-                'progress_percentage' => 85,
+                'progress_percentage' => 0,
                 'completed_lessons' => [],
-                'is_active' => false,
+                'is_active' => true,
                 'registered_date' => now()->subDays(4),
             ]
         );
@@ -167,7 +167,7 @@ class DatabaseSeeder extends Seeder
                 'payment_status' => 'APPROVED',
                 'payment_proof_url' => 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=800&q=80',
                 'payment_notes' => 'Daftar kelas intensif malam Coretax DJP',
-                'progress_percentage' => 100,
+                'progress_percentage' => 0,
                 'completed_lessons' => [],
                 'is_active' => true,
                 'registered_date' => now()->subDays(6),

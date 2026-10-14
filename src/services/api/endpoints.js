@@ -23,6 +23,7 @@ export const ENDPOINTS = {
   USER_PROFILE: IS_MOCK_MODE ? '/api/user/profile.json' : '/user/profile',
   USER_ENROLLMENTS: IS_MOCK_MODE ? '/api/user/enrollments.json' : '/user/enrollments',
   USER_COURSE_PROGRESS: '/user/course-progress',
+  USER_COURSE_PROGRESS_RESET: '/user/course-progress/reset',
 
   // Email Master Templates (SMTP)
   ADMIN_EMAIL_TEMPLATES: '/admin/email-templates',
@@ -38,6 +39,9 @@ export const ENDPOINTS = {
   // Admin CMS & Stats
   ADMIN_STATS: IS_MOCK_MODE ? '/api/admin/stats.json' : '/admin/stats',
   ADMIN_STUDENTS: '/admin/students',
+  ADMIN_TEACHERS: '/admin/teachers',
+  ADMIN_TEACHER_RESEND_INVITE: (id) => `/admin/teachers/${id}/resend-invitation`,
+  ADMIN_TEACHER_DELETE: (id) => `/admin/teachers/${id}`,
 
   // Certificates
   CERTIFICATES: IS_MOCK_MODE ? '/api/certificates.json' : '/certificates',
@@ -45,9 +49,21 @@ export const ENDPOINTS = {
 
   // Teacher Portal
   TEACHER_STUDENTS: '/teacher/students',
+  TEACHER_BREVETS: '/teacher/brevets',
+  TEACHER_STORE_MODULE: (brevetId) => `/teacher/brevets/${brevetId}/modules`,
+  TEACHER_UPDATE_MODULE: (brevetId, moduleId) => `/teacher/brevets/${brevetId}/modules/${moduleId}`,
+  TEACHER_DELETE_MODULE: (brevetId, moduleId) => `/teacher/brevets/${brevetId}/modules/${moduleId}`,
+  TEACHER_STORE_LESSON: (brevetId, moduleId) => `/teacher/brevets/${brevetId}/modules/${moduleId}/lessons`,
+  TEACHER_DELETE_LESSON: (brevetId, moduleId, lessonId) => `/teacher/brevets/${brevetId}/modules/${moduleId}/lessons/${lessonId}`,
   TEACHER_MATERIALS: '/teacher/materials',
   TEACHER_DASHBOARD: '/teacher/dashboard',
+  TEACHER_SUBMISSIONS: '/teacher/submissions',
+  TEACHER_REVIEW_SUBMISSION: (id) => `/teacher/submissions/${id}/review`,
   TEACHER_GRADE: (submissionId) => `/teacher/submissions/${submissionId}/grade`,
+
+  // Student Submissions & Exams
+  USER_SUBMISSIONS: '/user/submissions',
+  USER_SUBMIT_EXAM: '/user/submissions',
 
   // Public Contact
   CONTACT: '/contact',

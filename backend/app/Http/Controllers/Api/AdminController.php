@@ -81,4 +81,128 @@ class AdminController extends Controller
             'data' => $students,
         ]);
     }
+
+    /**
+     * Teacher database for AdminTeachersPage
+     */
+    public function teachers(Request $request)
+    {
+        $teachers = User::where('role', 'teacher')->orderBy('created_at', 'desc')->get()->map(function ($u) {
+            return [
+                'id' => $u->id,
+                'string_id' => $u->string_id ?? 'tch-' . $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'phone' => $u->phone ?? '-',
+                'specialization' => $u->specialization ?? 'Instruktur BKP & Praktisi Pajak',
+                'avatar' => $u->avatar,
+                'created_at' => $u->created_at ? $u->created_at->format('d M Y, H:i') : '14 Okt 2026',
+                'invited_by_admin' => (bool) $u->invited_by_admin,
+                'status' => 'ACTIVE',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar pengajar berhasil diambil.',
+            'data' => $teachers,
+        ]);
+    }
+
+    /**
+     * Admin creates a new teacher account and sends credentials via email
+     */
+    public function createTeacher(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'phone' => 'nullable|string|max:25',
+            'specialization' => 'nullable|string|max:255',
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        // Generate strong random password if not supplied
+        $plainPassword = !empty($validated['password'])
+            ? $validated['password']
+            : 'NacTeach#' . rand(1000, 9999);
+
+        $teacher = User::create([
+            'name' => $validated['name'],
+            'email' => strtolower(trim($validated['email'])),
+            'password' => \Illuminate\Support\Facades\Hash::make($plainPassword),
+            'phone' => $validated['phone'] ?? null,
+            'role' => 'teacher',
+            'specialization' => $validated['specialization'] ?? 'Konsultan Pajak & Instruktur Brevet',
+            'invited_by_admin' => true,
+            'email_verified_at' => now(),
+            'payment_status' => 'APPROVED',
+            'string_id' => 'tch-' . rand(1000, 9999),
+        ]);
+
+        // Send email invitation with login credentials via MailService queue
+        $mailService = new \App\Services\MailService();
+        $mailResult = $mailService->sendTeacherInvitationEmail($teacher, $plainPassword);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Akun instruktur untuk {$teacher->name} berhasil dibuat! Email kredensial telah dijadwalkan ke {$teacher->email}.",
+            'data' => [
+                'id' => $teacher->id,
+                'name' => $teacher->name,
+                'email' => $teacher->email,
+                'plain_password' => $plainPassword,
+                'specialization' => $teacher->specialization,
+                'mail_queued' => $mailResult['success'] ?? true,
+            ],
+        ], 201);
+    }
+
+    /**
+     * Re-send teacher invitation credentials email
+     */
+    public function resendTeacherInvitation(Request $request, $id)
+    {
+        $teacher = User::where('id', $id)->where('role', 'teacher')->first();
+        if (!$teacher) {
+            return response()->json(['success' => false, 'message' => 'Pengajar tidak ditemukan.'], 404);
+        }
+
+        // Generate new random password
+        $newPassword = 'NacTeach#' . rand(1000, 9999);
+        $teacher->password = \Illuminate\Support\Facades\Hash::make($newPassword);
+        $teacher->save();
+
+        $mailService = new \App\Services\MailService();
+        $mailResult = $mailService->sendTeacherInvitationEmail($teacher, $newPassword);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Email kredensial baru berhasil dikirimkan ke {$teacher->email}.",
+            'data' => [
+                'email' => $teacher->email,
+                'new_password' => $newPassword,
+                'mail_queued' => $mailResult['success'] ?? true,
+            ],
+        ]);
+    }
+
+    /**
+     * Delete teacher account
+     */
+    public function deleteTeacher($id)
+    {
+        $teacher = User::where('id', $id)->where('role', 'teacher')->first();
+        if (!$teacher) {
+            return response()->json(['success' => false, 'message' => 'Pengajar tidak ditemukan.'], 404);
+        }
+
+        $teacher->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Akun pengajar {$teacher->name} berhasil dihapus dari sistem.",
+        ]);
+    }
 }
+

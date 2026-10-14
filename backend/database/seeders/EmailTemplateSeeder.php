@@ -229,7 +229,75 @@ HTML,
                 'placeholders' => ['name', 'course_title', 'certificate_id', 'grade', 'score', 'app_name', 'app_url', 'year'],
                 'is_active' => true,
             ],
+            [
+                'slug' => 'teacher-invitation',
+                'name' => 'Undangan & Akses Akun Instruktur Baru',
+                'subject' => 'Undangan Resmi Akun Pengajar: Akses Portal Instruktur {{app_name}}',
+                'body_html' => <<<HTML
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Undangan Akun Pengajar - {{app_name}}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f1f5f9; margin: 0; padding: 0; color: #1e293b; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 0; overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background: linear-gradient(135deg, #091e42 0%, #0d9488 100%); padding: 32px 24px; text-align: center; color: #ffffff; }
+    .brand-badge { display: inline-block; background: #f59e0b; color: #091e42; font-weight: 900; font-size: 14px; padding: 4px 12px; border-radius: 8px; margin-bottom: 8px; }
+    .content { padding: 32px 28px; font-size: 14px; line-height: 1.6; }
+    .cred-card { background: #f0fdfa; border: 2px dashed #0d9488; border-radius: 12px; padding: 20px; margin: 24px 0; }
+    .cred-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ccfbf1; font-size: 13px; }
+    .cred-label { color: #0f766e; font-weight: 600; }
+    .cred-val { font-family: monospace; font-weight: bold; color: #134e4a; }
+    .btn { display: inline-block; background: #0d9488; color: #ffffff !important; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 13px; margin: 16px 0; text-align: center; }
+    .footer { background: #f8fafc; padding: 20px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="brand-badge">PORTAL PENGAJAR</span>
+      <h2 style="margin: 8px 0 4px; color: #ffffff;">SELAMAT BERGABUNG DI {{app_name}}</h2>
+      <p style="margin: 0; font-size: 12px; opacity: 0.9;">Akun Instruktur & Konsultan Pajak Anda Telah Dibuat</p>
+    </div>
+    <div class="content">
+      <p>Yth. Bapak/Ibu <strong>{{name}}</strong>,</p>
+      <p>Administrator {{app_name}} telah mendaftarkan akun pengajar resmi untuk Anda. Anda kini dapat mengakses portal instruktur untuk mengunggah bahan ajar, menyusun silabus modul, serta mengevaluasi tugas & studi kasus mahasiswa.</p>
+      
+      <div class="cred-card">
+        <div style="font-weight: bold; color: #0f766e; margin-bottom: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Kredensial Masuk Portal Anda:</div>
+        <div class="cred-row">
+          <span class="cred-label">Username / Email:</span>
+          <span class="cred-val">{{email}}</span>
+        </div>
+        <div class="cred-row" style="border-bottom: none;">
+          <span class="cred-label">Kata Sandi Sementara:</span>
+          <span class="cred-val" style="color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 4px;">{{password}}</span>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="{{login_url}}" class="btn">Masuk ke Portal Pengajar Sekarang &rarr;</a>
+      </div>
+
+      <div style="background: #f8fafc; border-left: 4px solid #0d9488; padding: 12px 16px; border-radius: 4px; font-size: 12px; color: #475569;">
+        <strong>Informasi Keamanan:</strong> Anda dapat mengganti kata sandi sementara ini kapan saja melalui menu <em>Pengaturan Akun</em> setelah berhasil masuk.
+      </div>
+    </div>
+    <div class="footer">
+      <div>Butuh bantuan teknis? Hubungi Administrator di <a href="mailto:{{support_email}}" style="color: #0d9488;">{{support_email}}</a></div>
+      <div style="margin-top: 8px;">&copy; {{year}} {{app_name}}. Seluruh hak cipta dilindungi undang-undang.</div>
+    </div>
+  </div>
+</body>
+</html>
+HTML,
+                'body_text' => "Yth. Bapak/Ibu {{name}},\n\nAkun pengajar Anda di {{app_name}} telah dibuat oleh Administrator.\n\nKredensial Masuk:\nEmail: {{email}}\nPassword: {{password}}\nLink Login: {{login_url}}\n\nAnda dapat mengganti kata sandi kapan saja di menu Pengaturan Akun setelah login.\n\nSalam hangat,\nTim Manajemen {{app_name}}",
+                'placeholders' => ['name', 'email', 'password', 'login_url', 'app_name', 'year', 'support_email'],
+                'is_active' => true,
+            ],
         ];
+
 
         foreach ($templates as $t) {
             EmailTemplate::updateOrCreate(
