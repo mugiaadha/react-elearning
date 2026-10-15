@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Batch;
 use App\Models\Brevet;
 use App\Models\Enrollment;
 use App\Models\Material;
@@ -460,6 +461,34 @@ class TeacherController extends Controller
             'reviewed_at' => now(),
         ]);
 
+        // Sync student's enrollment status based on teacher review
+        if ($submission->user_id) {
+            $enrollment = Enrollment::where('user_id', $submission->user_id)
+                ->where(function ($q) use ($submission) {
+                    $q->where('brevet_id', $submission->brevet_id);
+                    if ($submission->brevet) {
+                        $q->orWhere('brevet_id', $submission->brevet->id)
+                          ->orWhere('brevet_id', $submission->brevet->slug);
+                    }
+                })
+                ->first();
+
+            if ($enrollment) {
+                if ($status === 'APPROVED') {
+                    $enrollment->update([
+                        'status' => 'PASSED',
+                        'passed_at' => now(),
+                        'progress_percentage' => 100,
+                    ]);
+                } elseif (in_array($status, ['REVISION', 'REJECTED'])) {
+                    $enrollment->update([
+                        'status' => 'ACTIVE',
+                        'passed_at' => null,
+                    ]);
+                }
+            }
+        }
+
         $statusLabel = match ($status) {
             'APPROVED' => 'LULUS (Nilai: ' . $score . '/100)',
             'REVISION' => 'PERLU REVISI',
@@ -489,6 +518,27 @@ class TeacherController extends Controller
             'score' => $score,
             'reviewed_at' => now(),
         ]);
+
+        // Sync student's enrollment status to PASSED
+        if ($submission->user_id) {
+            $enrollment = Enrollment::where('user_id', $submission->user_id)
+                ->where(function ($q) use ($submission) {
+                    $q->where('brevet_id', $submission->brevet_id);
+                    if ($submission->brevet) {
+                        $q->orWhere('brevet_id', $submission->brevet->id)
+                          ->orWhere('brevet_id', $submission->brevet->slug);
+                    }
+                })
+                ->first();
+
+            if ($enrollment) {
+                $enrollment->update([
+                    'status' => 'PASSED',
+                    'passed_at' => now(),
+                    'progress_percentage' => 100,
+                ]);
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -522,5 +572,66 @@ class TeacherController extends Controller
                 'pending_submissions' => $submissions,
             ],
         ]);
+    }
+
+    /**
+     * Get batches for a specific brevet
+     */
+    public function batches($brevetId)
+    {
+        $brevet = Brevet::find($brevetId) ?? Brevet::where('slug', $brevetId)->first();
+        if (!$brevet) {
+            return response()->json(['success' => false, 'message' => 'Brevet tidak ditemukan.'], 404);
+        }
+
+        $batches = Batch::where('brevet_id', $brevet->id)
+            ->withCount('enrollments')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $batches,
+        ]);
+    }
+
+    /**
+     * Teacher creates a new cohort batch with immutable curriculum snapshot
+     */
+    public function storeBatch(Request $request, $brevetId)
+    {
+        $brevet = Brevet::find($brevetId) ?? Brevet::where('slug', $brevetId)->first();
+        if (!$brevet) {
+            return response()->json(['success' => false, 'message' => 'Brevet tidak ditemukan.'], 404);
+        }
+
+        $validated = $request->validate([
+            'batch_name' => 'required|string|max:255',
+            'batch_code' => 'nullable|string|max:50',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'status' => 'nullable|in:open,ongoing,finished',
+        ]);
+
+        $batchCode = $validated['batch_code'] ?? ('BAT-' . strtoupper(str_replace('brevet-', '', $brevet->id)) . '-' . (Batch::where('brevet_id', $brevet->id)->count() + 1));
+        if (Batch::where('batch_code', $batchCode)->exists()) {
+            $batchCode .= '-' . rand(10, 99);
+        }
+
+        $batch = Batch::create([
+            'brevet_id' => $brevet->id,
+            'batch_name' => $validated['batch_name'],
+            'batch_code' => $batchCode,
+            'start_date' => $validated['start_date'] ?? now()->startOfMonth(),
+            'end_date' => $validated['end_date'] ?? now()->addMonths(2)->endOfMonth(),
+            'status' => $validated['status'] ?? 'ongoing',
+            'curriculum' => $brevet->curriculum ?: [], // Snapshot current master curriculum
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Angkatan baru '{$batch->batch_name}' berhasil dibuat dengan kurikulum terkunci!",
+            'data' => $batch,
+        ], 201);
     }
 }

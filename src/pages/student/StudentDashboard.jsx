@@ -19,7 +19,8 @@ import {
   Video,
   CheckCircle2,
   RotateCcw,
-  AlertTriangle
+  AlertTriangle,
+  Users
 } from 'lucide-react';
 
 export const StudentDashboard = () => {
@@ -86,7 +87,17 @@ export const StudentDashboard = () => {
       : (activeBrevet.progress_percentage ?? 0)
   );
 
-  const progress = localProg !== null ? Math.max(serverProgress, localProg) : serverProgress;
+  const isStudentGraduated = Boolean(
+    activeBrevet.is_passed ||
+    activeBrevet.status === 'PASSED' ||
+    serverProgress === 100 ||
+    user?.certificates?.some((c) =>
+      c.course_title?.toLowerCase().includes(activeBrevet.title?.toLowerCase())
+    )
+  );
+
+  const rawProgress = localProg !== null ? Math.max(serverProgress, localProg) : serverProgress;
+  const progress = isStudentGraduated ? 100 : rawProgress;
 
   return (
     <div className="space-y-8">
@@ -174,10 +185,26 @@ export const StudentDashboard = () => {
                 <h3 className="font-bold text-slate-900 text-base">
                   Program Brevet Aktif Anda
                 </h3>
-                <p className="text-xs text-slate-500">Angkatan Berjalan 2026</p>
+                <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                  <span className="font-semibold text-nac-primary flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5" />
+                    {activeBrevet.batch?.batch_name || activeBrevet.batch_name || 'Batch 42 - Reguler'}
+                  </span>
+                  <span>•</span>
+                  <span>Angkatan Berjalan 2026</span>
+                </p>
               </div>
             </div>
-            <Badge status="ACTIVE" size="sm" />
+            <div className="flex items-center gap-2">
+              {isStudentGraduated ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  Lulus ({activeBrevet.batch?.batch_name?.split(' - ')[0] || 'Batch Resmi'})
+                </span>
+              ) : (
+                <Badge status="ACTIVE" size="sm" />
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">

@@ -10,10 +10,12 @@ import {
   ChevronUp,
   ChevronDown,
   AlertTriangle,
+  Users,
 } from 'lucide-react';
 
 export const CourseSyllabusSidebar = ({
   curriculum = [],
+  batchName,
   activeModuleIndex,
   setActiveModuleIndex,
   activeLessonId,
@@ -27,7 +29,15 @@ export const CourseSyllabusSidebar = ({
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-        <h3 className="font-bold text-slate-900 text-sm">Silabus & Kunci Bab Belajar</h3>
+        <div>
+          <h3 className="font-bold text-slate-900 text-sm">Silabus & Kunci Bab Belajar</h3>
+          {batchName && (
+            <p className="text-[11px] text-amber-700 font-semibold flex items-center gap-1 mt-0.5">
+              <Users className="w-3 h-3 text-amber-600" />
+              <span>Angkatan: {batchName}</span>
+            </p>
+          )}
+        </div>
         <span className="text-[11px] text-slate-500 font-mono">
           {curriculum.length} Modul
         </span>
@@ -200,6 +210,11 @@ export const CourseSyllabusSidebar = ({
                             <PlayCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           )}
                           <span className="truncate">Bab {cIdx + 1}: {les.title}</span>
+                          {(les.is_update || les.is_optional) && (
+                            <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 text-[9px] font-bold border border-purple-200 shrink-0">
+                              Update Baru
+                            </span>
+                          )}
                         </div>
                         <span className="text-[10px] text-slate-400 shrink-0 font-mono">
                           {!isChapUnlocked ? 'Terkunci' : les.duration}

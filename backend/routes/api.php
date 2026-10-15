@@ -39,9 +39,10 @@ $registerRoutes = function () {
     Route::put('/admin/email-templates/{id}', [EmailVerificationController::class, 'updateTemplate']);
     Route::post('/admin/email-templates/test-send', [EmailVerificationController::class, 'testSend']);
 
-    // 3. Brevet Courses
+    // 3. Brevet Courses & Batches
     Route::get('/brevets', [BrevetController::class, 'index']);
     Route::get('/brevets/{idOrSlug}', [BrevetController::class, 'show']);
+    Route::get('/brevets/{idOrSlug}/batches', [BrevetController::class, 'batches']);
 
     // 4. Certificates & Public Verification
     Route::get('/certificates', [CertificateController::class, 'index']);
@@ -68,6 +69,8 @@ $registerRoutes = function () {
     Route::get('/teacher/students', [TeacherController::class, 'students']);
     Route::get('/teacher/brevets', [TeacherController::class, 'brevets']);
     Route::post('/teacher/brevets', [TeacherController::class, 'storeBrevet']);
+    Route::get('/teacher/brevets/{id}/batches', [TeacherController::class, 'batches']);
+    Route::post('/teacher/brevets/{id}/batches', [TeacherController::class, 'storeBatch']);
     Route::post('/teacher/brevets/{id}/modules', [TeacherController::class, 'storeModule']);
     Route::put('/teacher/brevets/{id}/modules/{moduleId}', [TeacherController::class, 'updateModule']);
     Route::delete('/teacher/brevets/{id}/modules/{moduleId}', [TeacherController::class, 'deleteModule']);

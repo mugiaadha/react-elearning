@@ -49,6 +49,18 @@ class Brevet extends Model
         return $this->hasMany(Enrollment::class, 'brevet_id', 'id');
     }
 
+    public function batches()
+    {
+        return $this->hasMany(Batch::class, 'brevet_id', 'id');
+    }
+
+    public function activeBatch()
+    {
+        return $this->hasOne(Batch::class, 'brevet_id', 'id')
+            ->whereIn('status', ['open', 'ongoing'])
+            ->latest('id');
+    }
+
     public function materials()
     {
         return $this->hasMany(Material::class, 'brevet_id', 'id');

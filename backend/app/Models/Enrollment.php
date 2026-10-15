@@ -9,15 +9,18 @@ class Enrollment extends Model
     protected $fillable = [
         'user_id',
         'brevet_id',
+        'batch_id',
         'invoice_number',
         'amount',
         'payment_method',
         'payment_status',
+        'status',
         'payment_proof_url',
         'payment_notes',
         'progress_percentage',
         'completed_lessons',
         'is_active',
+        'passed_at',
         'registered_date',
     ];
 
@@ -26,6 +29,7 @@ class Enrollment extends Model
         'is_active' => 'boolean',
         'amount' => 'integer',
         'progress_percentage' => 'integer',
+        'passed_at' => 'datetime',
         'registered_date' => 'datetime',
     ];
 
@@ -37,5 +41,10 @@ class Enrollment extends Model
     public function brevet()
     {
         return $this->belongsTo(Brevet::class, 'brevet_id', 'id');
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(Batch::class, 'batch_id', 'id');
     }
 }

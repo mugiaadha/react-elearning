@@ -56,7 +56,7 @@ export const TeacherModuleCard = ({
             title="Tambah Bahan Ajar ke Modul ini"
           >
             <Plus className="w-3.5 h-3.5 text-nac-primary" />
-            + Bahan Ajar
+            Bahan Ajar
           </button>
           <button
             onClick={() => onDeleteModule(mod.id, mod.title)}
@@ -84,7 +84,7 @@ export const TeacherModuleCard = ({
 
           {!mod.lessons || mod.lessons.length === 0 ? (
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-center text-xs text-slate-400">
-              Belum ada bahan ajar. Klik "+ Bahan Ajar" di atas untuk menambahkan link video YouTube atau file Google Drive.
+              Belum ada bahan ajar. Klik "Bahan Ajar" di atas untuk menambahkan link video YouTube atau file Google Drive.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">

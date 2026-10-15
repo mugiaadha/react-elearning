@@ -19,7 +19,8 @@ import {
   CreditCard,
   Layers,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Users
 } from 'lucide-react';
 
 export const MyCoursesPage = () => {
@@ -300,23 +301,24 @@ export const MyCoursesPage = () => {
                     )}
 
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${progress === 100
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${courseItem.is_passed || progress === 100
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : progress > 0
                           ? 'bg-sky-50 text-sky-700 border-sky-200'
                           : 'bg-slate-50 text-slate-600 border-slate-200'
                         }`}
                     >
-                      {progress === 100
-                        ? '100% Lulus'
+                      {courseItem.is_passed || progress === 100
+                        ? `100% Lulus (${courseItem.batch?.batch_name?.split(' - ')[0] || courseItem.batch_name || 'Batch Resmi'})`
                         : progress > 0
                           ? `${progress}% Berjalan`
                           : 'Materi Baru'}
                     </span>
                   </div>
 
-                  <span className="text-xs text-slate-400 font-mono">
-                    {courseItem.invoice_id || 'Batch 2026'}
+                  <span className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                    <Users className="w-3.5 h-3.5 text-nac-primary" />
+                    <span>{courseItem.batch?.batch_name || courseItem.batch_name || 'Batch 42 - Reguler'}</span>
                   </span>
                 </div>
 

@@ -9,6 +9,7 @@ import {
   ExternalLink,
   UploadCloud,
   CheckCircle,
+  Clock,
 } from 'lucide-react';
 
 export const ExamContentView = ({
@@ -17,6 +18,7 @@ export const ExamContentView = ({
   activeModuleExam,
   activeModuleSubmission,
   isApprovedByTeacher,
+  isPendingEvaluation,
   onNextModule,
   onClaimCertificate,
   onSubmitExam,
@@ -342,6 +344,31 @@ export const ExamContentView = ({
             <Award className="w-4 h-4 text-slate-950" />
             <span>Lihat Status Kelulusan & Buka Sertifikat</span>
           </button>
+        </div>
+      ) : (isPendingEvaluation || activeModuleSubmission?.status === 'PENDING') ? (
+        <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-teal-500/10 via-emerald-500/10 to-teal-500/10 p-5 rounded-2xl border-2 border-teal-300 shadow-sm animate-in fade-in">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-teal-600 text-white shadow-sm">
+                Status: Menunggu Penilaian Pengajar
+              </span>
+              <span className="text-xs text-teal-900 font-semibold">
+                • Lembar Jawaban Telah Diterima
+              </span>
+            </div>
+            <h5 className="font-extrabold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+              <Clock className="w-5 h-5 text-teal-600 shrink-0" />
+              Lembar Jawaban Ujian Akhir Sedang Dinilai
+            </h5>
+            <p className="text-xs text-slate-600 leading-relaxed max-w-xl">
+              Lembar jawaban ulangan akhir Anda telah tersimpan di sistem dan saat ini sedang dalam antrean evaluasi oleh Pengajar. Status kelulusan dan sertifikat digital resmi akan otomatis terbuka di sini begitu Pengajar memberikan penilaian lulus (Approved).
+            </p>
+          </div>
+
+          <div className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-xs bg-white text-teal-900 border border-teal-200 shadow-sm shrink-0">
+            <Clock className="w-4 h-4 text-teal-600 animate-spin" style={{ animationDuration: '3s' }} />
+            <span>Menunggu Penilaian Pengajar</span>
+          </div>
         </div>
       ) : null}
     </div>

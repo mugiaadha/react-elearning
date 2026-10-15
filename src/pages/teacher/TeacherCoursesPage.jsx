@@ -16,7 +16,8 @@ import {
   Clock,
   Award,
   ChevronRight,
-  FolderPlus
+  FolderPlus,
+  Users
 } from 'lucide-react';
 import apiClient from '../../services/api/apiClient';
 import ENDPOINTS from '../../services/api/endpoints';
@@ -401,9 +402,13 @@ export const TeacherCoursesPage = () => {
       {currentBrevet && (
         <div className="bg-gradient-to-r from-slate-900 to-nac-navy text-white rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1 max-w-2xl">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
                 {currentBrevet.badge || 'Program Aktif'}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold flex items-center gap-1">
+                <Users className="w-3 h-3 text-emerald-300" />
+                {currentBrevet.active_batch?.batch_name || 'Batch 42 - Reguler'} (Terkunci Per-Angkatan)
               </span>
               <span className="text-xs text-slate-300 font-mono">
                 {currentBrevet.level || 'Tingkat Menengah'} • {currentBrevet.duration || '12 Minggu'}

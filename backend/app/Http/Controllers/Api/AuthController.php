@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Batch;
 use App\Models\Brevet;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -131,10 +132,12 @@ class AuthController extends Controller
             $amount = $brevet->price;
         }
 
-        // Create or update enrollment record
+        // Create or update enrollment record with active cohort batch
+        $activeBatchId = $brevet?->activeBatch?->id ?? Batch::where('brevet_id', $brevetId)->latest('id')->value('id');
         Enrollment::updateOrCreate(
             ['user_id' => $user->id, 'brevet_id' => $brevetId],
             [
+                'batch_id' => $activeBatchId,
                 'invoice_number' => $invoiceId,
                 'amount' => $amount,
                 'payment_method' => 'QRIS Dinamis',
@@ -310,15 +313,23 @@ class AuthController extends Controller
             ->first();
 
         if (!$enrollment) {
+            $activeBatchId = $brevet->activeBatch?->id ?? Batch::where('brevet_id', $brevet->id)->latest('id')->value('id');
             $enrollment = Enrollment::create([
                 'user_id' => $user->id,
                 'brevet_id' => $brevet->id,
+                'batch_id' => $activeBatchId,
                 'amount' => $brevet->price,
                 'payment_status' => $user->payment_status,
                 'is_active' => $user->payment_status === 'APPROVED',
                 'progress_percentage' => 0,
                 'completed_lessons' => [],
             ]);
+        } elseif (!$enrollment->batch_id) {
+            $activeBatchId = $brevet->activeBatch?->id ?? Batch::where('brevet_id', $brevet->id)->latest('id')->value('id');
+            if ($activeBatchId) {
+                $enrollment->batch_id = $activeBatchId;
+                $enrollment->save();
+            }
         }
 
         $currentCompleted = $enrollment->completed_lessons ?: [];
@@ -330,22 +341,67 @@ class AuthController extends Controller
             }
         }
 
-        // Count total items (lessons + 1 final exam per module) in brevet curriculum
+        // Check if student has already permanently passed this cohort
+        $hasCertificate = $user->certificates()
+            ->where(function ($q) use ($brevet) {
+                $q->where('course_title', 'like', '%' . $brevet->title . '%');
+            })->exists();
+
+        $hasApprovedExam = Submission::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere('student_email', $user->email);
+            })
+            ->where(function ($q) use ($enrollment, $brevet) {
+                $q->where('brevet_id', $enrollment->brevet_id)
+                  ->orWhere('brevet_id', $brevet->id)
+                  ->orWhere('brevet_id', $brevet->slug)
+                  ->orWhere('course', 'like', '%' . $brevet->title . '%');
+            })
+            ->where('status', 'APPROVED')
+            ->exists();
+
+        // Student is officially passed ONLY if they have an approved exam or a valid certificate
+        $isAlreadyPassed = ($enrollment->status === 'PASSED' && ($hasApprovedExam || $hasCertificate)) || ($hasApprovedExam && $hasCertificate);
+
+        // Use student's cohort batch curriculum (immutable snapshot) rather than shifting global curriculum
+        $cohortCurriculum = $enrollment->batch?->curriculum ?: ($brevet->curriculum ?: []);
         $totalItems = 0;
-        if (!empty($brevet->curriculum) && is_array($brevet->curriculum)) {
-            foreach ($brevet->curriculum as $mod) {
-                $totalItems += count($mod['lessons'] ?? []) + 1;
+        if (!empty($cohortCurriculum) && is_array($cohortCurriculum)) {
+            foreach ($cohortCurriculum as $mod) {
+                $lessons = $mod['lessons'] ?? [];
+                // Exclude optional/update-only lessons from mandatory progress count
+                $mandatoryLessons = array_filter($lessons, function ($l) {
+                    return empty($l['is_optional']) && empty($l['is_update']);
+                });
+                $totalItems += count($mandatoryLessons) + 1; // lessons + 1 module exam
             }
         }
         if ($totalItems <= 0) $totalItems = 6;
 
-        $computedPercentage = min(100, (int) round((count($currentCompleted) / $totalItems) * 100));
-        $progressPercentage = is_numeric($clientPercentage) ? min(100, max(0, (int)$clientPercentage)) : $computedPercentage;
+        if ($isAlreadyPassed) {
+            // Immutable graduation status: progress never drops below 100%
+            $progressPercentage = 100;
+        } else {
+            $computedPercentage = min(100, (int) round((count($currentCompleted) / $totalItems) * 100));
+            $progressPercentage = is_numeric($clientPercentage) ? min(100, max(0, (int)$clientPercentage)) : $computedPercentage;
+        }
 
-        $enrollment->update([
+        $enrollmentUpdateData = [
             'completed_lessons' => $currentCompleted,
             'progress_percentage' => $progressPercentage,
-        ]);
+        ];
+
+        // Only mark status as PASSED if teacher has officially approved the exam submission
+        if ($hasApprovedExam && $enrollment->status !== 'PASSED') {
+            $enrollmentUpdateData['status'] = 'PASSED';
+            $enrollmentUpdateData['passed_at'] = $enrollment->passed_at ?: now();
+        } elseif (!$hasApprovedExam && !$hasCertificate && $enrollment->status === 'PASSED') {
+            // Revert accidental/premature PASSED status back to ACTIVE if teacher has not approved yet
+            $enrollmentUpdateData['status'] = 'ACTIVE';
+            $enrollmentUpdateData['passed_at'] = null;
+        }
+
+        $enrollment->update($enrollmentUpdateData);
 
         return response()->json([
             'success' => true,
@@ -606,10 +662,47 @@ class AuthController extends Controller
             Enrollment::where('user_id', $user->id)->where('id', '!=', $first->id)->update(['is_active' => false]);
         }
 
-        $enrollments = $user->enrollments()->with('brevet')->get()->map(function ($e) {
+        $enrollments = $user->enrollments()->with(['brevet', 'batch'])->get()->map(function ($e) use ($user) {
+            $hasApprovedExam = Submission::where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id)
+                      ->orWhere('student_email', $user->email);
+                })
+                ->where(function ($q) use ($e) {
+                    $q->where('brevet_id', $e->brevet_id);
+                    if ($e->brevet) {
+                        $q->orWhere('brevet_id', $e->brevet->id)
+                          ->orWhere('brevet_id', $e->brevet->slug)
+                          ->orWhere('course', 'like', '%' . $e->brevet->title . '%');
+                    }
+                })
+                ->where('status', 'APPROVED')
+                ->exists();
+
+            $hasCertificate = $e->brevet ? $user->certificates()
+                ->where(function ($q) use ($e) {
+                    $q->where('course_title', 'like', '%' . $e->brevet->title . '%');
+                })->exists() : false;
+
+            $isPassed = ($e->status === 'PASSED' && ($hasApprovedExam || $hasCertificate)) || ($hasApprovedExam && $hasCertificate);
+            $realStatus = $isPassed ? 'PASSED' : 'ACTIVE';
+
             return [
                 'id' => $e->id,
                 'brevet_id' => $e->brevet_id,
+                'batch_id' => $e->batch_id,
+                'batch_name' => $e->batch?->batch_name ?? 'Batch 42 - Reguler',
+                'batch_code' => $e->batch?->batch_code ?? 'BAT-AB-42',
+                'batch' => $e->batch ? [
+                    'id' => $e->batch->id,
+                    'batch_name' => $e->batch->batch_name,
+                    'batch_code' => $e->batch->batch_code,
+                    'status' => $e->batch->status,
+                    'start_date' => $e->batch->start_date?->format('d M Y'),
+                    'end_date' => $e->batch->end_date?->format('d M Y'),
+                ] : null,
+                'status' => $realStatus,
+                'is_passed' => $isPassed,
+                'passed_at' => $isPassed ? $e->passed_at?->toISOString() : null,
                 'title' => $e->brevet?->title ?? 'Brevet Pelatihan',
                 'description' => $e->brevet?->description ?? $e->brevet?->tagline ?? 'Program pelatihan Brevet Pajak terapan unggulan NAC Tax Center.',
                 'tagline' => $e->brevet?->tagline,
@@ -748,9 +841,11 @@ class AuthController extends Controller
         $amount = $brevet->price ?: 2750000;
 
         // Create new enrollment with PENDING_APPROVAL and is_active: false
+        $activeBatchId = $brevet->activeBatch?->id ?? Batch::where('brevet_id', $brevet->id)->latest('id')->value('id');
         $enrollment = Enrollment::create([
             'user_id' => $user->id,
             'brevet_id' => $brevet->id,
+            'batch_id' => $activeBatchId,
             'invoice_number' => $invoiceId,
             'amount' => $amount,
             'payment_method' => 'QRIS Dinamis',
@@ -818,16 +913,42 @@ class AuthController extends Controller
     private function formatUserProfile(User $user)
     {
         // Ensure only one enrollment is active (self-healing)
-        $activeEnrollments = $user->enrollments()->where('is_active', true)->get();
+        $activeEnrollments = $user->enrollments()->with(['brevet', 'batch'])->where('is_active', true)->get();
         if ($activeEnrollments->count() > 1) {
             $enrollment = $activeEnrollments->first();
             Enrollment::where('user_id', $user->id)->where('id', '!=', $enrollment->id)->update(['is_active' => false]);
         } else {
             $enrollment = $activeEnrollments->first()
-                ?? $user->enrollments()->where('payment_status', 'APPROVED')->first()
-                ?? $user->enrollments()->latest()->first();
+                ?? $user->enrollments()->with(['brevet', 'batch'])->where('payment_status', 'APPROVED')->first()
+                ?? $user->enrollments()->with(['brevet', 'batch'])->latest()->first();
         }
         $brevet = $enrollment?->brevet;
+        $batch = $enrollment?->batch;
+
+        $hasApprovedExam = false;
+        $hasCertificate = false;
+        if ($user->role === 'student' && $enrollment && $brevet) {
+            $hasApprovedExam = Submission::where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id)
+                      ->orWhere('student_email', $user->email);
+                })
+                ->where(function ($q) use ($enrollment, $brevet) {
+                    $q->where('brevet_id', $enrollment->brevet_id)
+                      ->orWhere('brevet_id', $brevet->id)
+                      ->orWhere('brevet_id', $brevet->slug)
+                      ->orWhere('course', 'like', '%' . $brevet->title . '%');
+                })
+                ->where('status', 'APPROVED')
+                ->exists();
+
+            $hasCertificate = $user->certificates()
+                ->where(function ($q) use ($brevet) {
+                    $q->where('course_title', 'like', '%' . $brevet->title . '%');
+                })->exists();
+        }
+
+        $isPassed = ($enrollment?->status === 'PASSED' && ($hasApprovedExam || $hasCertificate)) || ($hasApprovedExam && $hasCertificate);
+        $realStatus = $isPassed ? 'PASSED' : 'ACTIVE';
 
         $activeBrevet = null;
         if ($user->role === 'student') {
@@ -852,6 +973,20 @@ class AuthController extends Controller
                 'is_active' => (bool)($enrollment?->is_active ?? false),
                 'progress_percentage' => $enrollment?->progress_percentage ?? 0,
                 'completed_lessons' => $enrollment?->completed_lessons ?: [],
+                'batch_id' => $enrollment?->batch_id,
+                'batch_name' => $batch?->batch_name ?? 'Batch 42 - Reguler',
+                'batch_code' => $batch?->batch_code ?? 'BAT-AB-42',
+                'batch' => $batch ? [
+                    'id' => $batch->id,
+                    'batch_name' => $batch->batch_name,
+                    'batch_code' => $batch->batch_code,
+                    'status' => $batch->status,
+                    'start_date' => $batch->start_date?->format('d M Y'),
+                    'end_date' => $batch->end_date?->format('d M Y'),
+                ] : null,
+                'status' => $realStatus,
+                'is_passed' => $isPassed,
+                'passed_at' => $isPassed ? $enrollment?->passed_at?->toISOString() : null,
             ];
         } elseif ($user->role === 'teacher') {
             $activeBrevet = [
@@ -1136,9 +1271,11 @@ class AuthController extends Controller
 
                     if (!$existingEnrollment) {
                         $invoiceId = 'INV-NAC-' . date('Y') . '-' . rand(1000, 9999);
+                        $activeBatchId = $targetBrevet->activeBatch?->id ?? Batch::where('brevet_id', $targetBrevet->id)->latest('id')->value('id');
                         Enrollment::create([
                             'user_id' => $user->id,
                             'brevet_id' => $targetBrevet->id,
+                            'batch_id' => $activeBatchId,
                             'invoice_number' => $invoiceId,
                             'amount' => $targetBrevet->price,
                             'payment_method' => 'QRIS Dinamis',
@@ -1191,10 +1328,12 @@ class AuthController extends Controller
             $amount = $brevet ? $brevet->price : 2750000;
             $title = $brevet ? $brevet->title : 'Brevet Pajak A & B Terpadu';
             $invoiceId = 'INV-NAC-' . date('Y') . '-' . rand(1000, 9999);
+            $activeBatchId = $brevet ? ($brevet->activeBatch?->id ?? Batch::where('brevet_id', $brevet->id)->latest('id')->value('id')) : null;
 
             Enrollment::create([
                 'user_id' => $user->id,
                 'brevet_id' => $targetBrevetId,
+                'batch_id' => $activeBatchId,
                 'invoice_number' => $invoiceId,
                 'amount' => $amount,
                 'payment_method' => 'QRIS Dinamis',

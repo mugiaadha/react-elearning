@@ -97,10 +97,11 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 | Tabel / Entity | Deskripsi & Field Utama | Relasi |
 | :--- | :--- | :--- |
 | **`users`** | Akun pengguna (`id`, `string_id`, `name`, `email`, `role`, `avatar`, `payment_status`, `google_id`, `email_verified_at`). Role: `student`, `teacher`, `admin`. | `hasMany(Enrollment)`, `hasMany(Payment)`, `hasMany(Certificate)` |
-| **`brevets`** | Program pelatihan (`id`: `brevet-ab`, `brevet-c`, `coretax-mastery`, `slug`, `title`, `price`, `instructor`, `curriculum` [JSON]). | `hasMany(Enrollment)`, `hasMany(Payment)` |
-| **`enrollments`** | Kursus yang diambil siswa (`user_id`, `brevet_id`, `invoice_number`, `is_active`, `payment_status`, `progress_percentage`, `completed_lessons` [JSON]). | `belongsTo(User)`, `belongsTo(Brevet)` |
+| **`brevets`** | Program pelatihan (`id`: `brevet-ab`, `brevet-c`, `coretax-mastery`, `slug`, `title`, `price`, `instructor`, `curriculum` [JSON]). | `hasMany(Batch)`, `hasMany(Enrollment)`, `hasMany(Payment)` |
+| **`batches`** | Angkatan kelas / Cohort (`id`, `brevet_id`, `batch_name`, `batch_code`, `start_date`, `end_date`, `status`: `open`/`ongoing`/`finished`, `curriculum` [JSON snapshot terkunci]). | `belongsTo(Brevet)`, `hasMany(Enrollment)`, `hasMany(Submission)` |
+| **`enrollments`** | Kursus yang diambil siswa (`user_id`, `brevet_id`, `batch_id`, `status`: `ACTIVE`/`PASSED`, `passed_at`, `invoice_number`, `is_active`, `payment_status`, `progress_percentage`, `completed_lessons` [JSON]). | `belongsTo(User)`, `belongsTo(Brevet)`, `belongsTo(Batch)` |
 | **`payments`** | Riwayat transaksi tagihan (`id`: `PAY-XXXX`, `invoice_number`, `user_id`, `brevet_id`, `amount`, `status`: `PENDING_APPROVAL` / `APPROVED` / `REJECTED`, `proof_image_url`). | `belongsTo(User)`, `belongsTo(Brevet)` |
-| **`submissions`** | Tugas / ulangan modul siswa (`id`: `sub-XXXX`, `user_id`, `module_id`, `task`, `submission_url`, `status`: `PENDING` / `APPROVED` / `REVISION`, `score`, `teacher_feedback`). | `belongsTo(User)`, `belongsTo(Brevet)` |
+| **`submissions`** | Tugas / ulangan modul siswa (`id`: `sub-XXXX`, `user_id`, `brevet_id`, `batch_id`, `module_id`, `task`, `submission_url`, `status`: `PENDING` / `APPROVED` / `REVISION`, `score`, `teacher_feedback`). | `belongsTo(User)`, `belongsTo(Brevet)`, `belongsTo(Batch)` |
 | **`certificates`**| Sertifikat digital resmi kelulusan (`certificate_id`, `user_id`, `recipient_name`, `course_title`, `grade`, `score`, `verification_url`). | `belongsTo(User)` |
 | **`email_templates`** | Template email dinamis SMTP (`template_key`, `subject`, `body_html`, `variables_json`). | Standalone CMS |
 | **`materials`** | Modul materi tambahan unggahan pengajar (`brevet_id`, `title`, `target_module`, `file_type`, `file_url`). | `belongsTo(Brevet)` |
@@ -134,9 +135,10 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 - `POST /auth/verify-email` : Verifikasi 6-digit kode OTP email siswa.
 - `GET/PUT /admin/email-templates/{id}` : Manajemen template HTML email sistem.
 
-### C. Public Brevets & Certificates
-- `GET  /brevets` : Katalog seluruh program brevet berserta harga & silabus.
-- `GET  /brevets/{idOrSlug}` : Detail spesifik program brevet berdasarkan ID / Slug.
+### C. Public Brevets, Batches & Certificates
+- `GET  /brevets` : Katalog seluruh program brevet berserta harga, batch aktif, & silabus.
+- `GET  /brevets/{idOrSlug}` : Detail spesifik program brevet (scoping kurikulum otomatis per batch siswa yang login).
+- `GET  /brevets/{idOrSlug}/batches` : Daftar angkatan/cohort yang tersedia untuk program brevet.
 - `GET  /certificates` : Daftar sertifikat (otomatis ter-filter per user jika siswa yang login).
 - `POST /certificates` : Terbitkan sertifikat kelulusan (nilai & yudisium dihitung dinamis dari submission).
 - `GET  /certificates/{certId}/verify` : Verifikasi keabsahan sertifikat publik via QR Code.
@@ -151,6 +153,8 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 - `GET  /admin/stats` : Ringkasan statistik siswa aktif, revenue, dan guru.
 - `GET/POST /admin/teachers` : Manajemen & undangan akun instruktur/guru.
 - `GET  /teacher/dashboard` : Ringkasan metrik kelas binaan guru.
+- `GET  /teacher/brevets/{id}/batches` : Daftar batch & jumlah siswa terdaftar per program.
+- `POST /teacher/brevets/{id}/batches` : Buka angkatan baru dengan snapshot kurikulum terkunci.
 - `GET  /teacher/submissions` : Daftar ujian modul siswa yang perlu dinilai/revisi.
 - `POST /teacher/submissions/{id}/review` : Berikan revisi (`status: REVISION`) atau lulus (`status: APPROVED`) beserta nilai.
 - `GET/POST /teacher/materials` : Unggah materi ajar tambahan untuk modul.
@@ -188,8 +192,8 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Aturan Approval Brevet Tambahan**: Ketika pendaftaran brevet tambahan disetujui (admin approve / simulasi), program baru tersebut **TIDAK** membajak ruang kelas aktif yang sedang berjalan (`is_active` tetap `false`). Kursus baru tersebut berstatus `APPROVED` dan berlabel "Terdaftar Resmi", sehingga mahasiswa bebas menentukan kapan ingin beralih ruang kelas via tombol *"Pilih & Aktifkan Kelas Ini"*. Tepat 1 program brevet yang boleh berstatus `is_active: true` pada satu waktu.
 
 6. **Penerbitan & Verifikasi Sertifikat Kelulusan**:
-   - **Gating Status Kelulusan & Sertifikat di Bab Akhir**: Tombol dan kartu status kelulusan serta sertifikat digital di Bab Akhir **HANYA muncul jika status siswa telah resmi dinyatakan LULUS oleh pengajar** (`isApprovedByTeacher`: seluruh modul selesai, ujian akhir terkumpul dan dinilai `APPROVED` oleh pengajar). Jika belum mengumpulkan, sedang dinilai (pending), atau revisi, UI sertifikat tidak ditampilkan sama sekali.
-   - **Auto-Issuance saat Akses Halaman Sertifikat**: Saat siswa mengakses `GET /api/certificates`, backend secara otomatis melakukan sinkronisasi auto-issuance (`autoIssueCertificatesForPassedBrevets`) untuk setiap pendaftaran brevet siswa yang sudah berstatus lulus (progress 100% atau submission approved). Jika record sertifikat belum ada di tabel `certificates`, backend langsung menerbitkannya secara otomatis sehingga siswa tetap mendapatkan sertifikat meskipun belum sempat menekan tombol klaim manual di ruang kelas.
+   - **Gating Status Kelulusan & Sertifikat di Bab Akhir**: Tombol dan kartu status kelulusan serta sertifikat digital di Bab Akhir **HANYA muncul jika status siswa telah resmi dinyatakan LULUS oleh pengajar** (`isApprovedByTeacher`: seluruh modul selesai, ujian akhir terkumpul dan dinilai `status: 'APPROVED'` oleh pengajar). Jika baru mengumpulkan ujian (`status: 'PENDING'`), antarmuka menampilkan status informatif *"Menunggu Penilaian Pengajar / Lembar Jawaban Telah Diterima"* dan sertifikat terkunci rapat sampai evaluasi selesai disetujui instruktur.
+   - **Auto-Issuance saat Akses Halaman Sertifikat**: Saat siswa mengakses `GET /api/certificates`, backend secara otomatis melakukan sinkronisasi auto-issuance (`autoIssueCertificatesForPassedBrevets`) yang **secara ketat mewajibkan lembar ujian akhir telah berstatus disetujui instruktur (`$hasApprovedExam === true`)**. Progres 100% materi tanpa persetujuan ujian pengajar tidak akan pernah menerbitkan sertifikat premature. Jika pengajar sudah approve via portal guru, barulah sertifikat terbit otomatis beserta sinkronisasi status pendaftaran ke `PASSED`.
    - **Konsistensi ID Pengguna (Frontend & Backend)**: Profil pengguna pada backend (`AuthController::formatUserProfile`) menyediakan `numeric_id` (integer) bersamaan dengan `id` berformat string (`usr-{id}`). Filter frontend pada `CertificatesPage.jsx` memvalidasi relasi sertifikat menggunakan numeric match (`c.user_id == user.numeric_id` atau parsing digit dari `user.id`) serta fallback ke nama siswa untuk memastikan sertifikat tidak tereliminasi akibat ketidaksamaan tipe data string vs integer.
    - **Perhitungan Nilai Akhir Dinamis**: Nilai akhir dihitung secara riil dari rata-rata nilai ujian modul yang dinilai instruktur (`submissions.score`).
    - **Predikat Yudisium Otomatis**: Tier yudisium dipetakan dinamis dari perolehan nilai (A Magna Cumlaude, A Sangat Memuaskan, B+, B, C).
@@ -205,3 +209,11 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
      * **Folder `pages/`**: Sub-pages / halaman turunan bertingkat jika ada (misal `pages/MyCoursesPage.jsx`, `pages/CertificatesPage.jsx`, atau bertingkat seperti `pages/course/CourseLearningPage.jsx`).
    - Setiap implementasi modul/role berikutnya (`teacher`, `admin`) wajib konsisten mengikuti hierarki 3-lapis ini.
    - Hindari file monolitik (>800 baris) dengan memecah UI ke komponen privat di folder `components/` lokal.
+
+8. **Sistem Pembelajaran Berbasis Batch / Angkatan (Cohort-based Learning & Immutable Progress)**:
+   - **Snapshot Kurikulum Per-Batch (`batches.curriculum`)**: Modul kurikulum siswa tidak lagi terikat ke master kursus global yang mudah bergeser, melainkan terikat ke snapshot kurikulum angkatan (`batch_id`) saat batch tersebut dibuka.
+   - **Immutabilitas Kelulusan (Permanent 100% Status)**: Jika siswa sudah dinyatakan lulus (`enrollment.status === 'PASSED'` / progress 100% / sertifikat terbit), status kelulusan bersifat permanen. Penambahan modul baru di master brevet atau batch lain tidak akan pernah menurunkan progres siswa yang sudah lulus.
+   - **Materi Susulan / Update Opsional**: Jika ada materi baru yang ditambahkan pengajar ke master kurikulum setelah siswa lulus/berjalan, sistem menandai materi tersebut sebagai `is_update: true` / `is_optional: true` (`badge: 'Update Baru (Opsional)'`) sehingga siswa tetap dapat memperluas wawasan tanpa mewajibkan ujian ulang atau menurunkan persentase kelulusan.
+   - **Pemberian Batch Otomatis**: Setiap pendaftaran baru (onboarding, Google OAuth, maupun brevet tambahan) otomatis diikatkan ke batch aktif (`status: 'open'` / `'ongoing'`) dari program brevet terkait.
+   - **Tampilan UI Konsisten**: Nama angkatan (contoh: "Batch 42 - Reguler", "Batch 1 - Akselerasi Coretax DJP") ditampilkan jelas pada Dashboard Siswa, Kursus Saya, Silabus Sidebar, dan Portal Pengajar.
+

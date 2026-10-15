@@ -34,7 +34,10 @@ class CertificateController extends Controller
             $brevet = $enrollment->brevet;
             if (!$brevet) continue;
 
-            $hasApprovedExam = \App\Models\Submission::where('user_id', $user->id)
+            $hasApprovedExam = \App\Models\Submission::where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id)
+                      ->orWhere('student_email', $user->email);
+                })
                 ->where(function ($q) use ($enrollment, $brevet) {
                     $q->where('brevet_id', $enrollment->brevet_id)
                       ->orWhere('brevet_id', $brevet->id)
@@ -44,7 +47,8 @@ class CertificateController extends Controller
                 ->where('status', 'APPROVED')
                 ->exists();
 
-            $isCompleted = ($enrollment->progress_percentage >= 100) || $hasApprovedExam;
+            // Strictly require teacher's approved exam before issuing certificate
+            $isCompleted = $hasApprovedExam;
 
             if ($isCompleted) {
                 $certExists = Certificate::where('user_id', $user->id)
@@ -182,16 +186,23 @@ class CertificateController extends Controller
                 ], 200);
             }
 
-            // Gating: Student must have at least one approved submission from teacher
+            // Gating: Student must have an approved submission for this specific brevet from teacher
             if ($user->role === 'student') {
-                $hasApprovedExam = \App\Models\Submission::where('user_id', $user->id)
+                $hasApprovedExam = \App\Models\Submission::where(function ($q) use ($user) {
+                        $q->where('user_id', $user->id)
+                          ->orWhere('student_email', $user->email);
+                    })
+                    ->where(function ($q) use ($validated) {
+                        $q->where('course', 'like', '%' . $validated['courseTitle'] . '%')
+                          ->orWhere('brevet_id', 'like', '%' . strtolower(str_replace(' ', '-', $validated['courseTitle'])) . '%');
+                    })
                     ->where('status', 'APPROVED')
                     ->exists();
 
                 if (!$hasApprovedExam) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Sertifikat belum dapat diterbitkan karena ulangan akhir belum dinyatakan lulus oleh pengajar.',
+                        'message' => 'Sertifikat belum dapat diterbitkan karena ujian akhir Anda masih menunggu evaluasi dan penilaian dari pengajar.',
                     ], 403);
                 }
             }

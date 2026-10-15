@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Sparkles,
   BookOpen,
+  Users,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { LearningHeaderBanners } from '../../components/LearningHeaderBanners';
@@ -254,9 +255,14 @@ export const CourseLearningPage = () => {
     return lessons.length > 0 && lessons.every((l) => completedLessonIds.includes(l.id));
   };
 
-  // Calculate overall course progress percentage (accurately scoped to THIS course)
+  // Resolve cohort batch name
+  const batchName = course?.batch?.batch_name || course?.batch_name || user?.active_brevet?.batch_name || 'Batch 42 - Reguler';
+
+  // Calculate overall course progress percentage (accurately scoped to THIS cohort)
   const allCourseLessons = course?.curriculum?.flatMap((m) => m.lessons || []) || [];
-  const completedCourseLessons = allCourseLessons.filter((l) => completedLessonIds.includes(l.id));
+  // Exclude optional update lessons from mandatory progress calculation
+  const mandatoryCourseLessons = allCourseLessons.filter((l) => !l.is_optional && !l.is_update);
+  const completedCourseLessons = mandatoryCourseLessons.filter((l) => completedLessonIds.includes(l.id));
 
   const totalModules = course?.curriculum?.length || 1;
   const completedModulesList = course?.curriculum?.filter((m) => {
@@ -269,17 +275,14 @@ export const CourseLearningPage = () => {
   }) || [];
 
   const completedExamsCount = completedModulesList.length;
-  const totalCourseItems = allCourseLessons.length + totalModules;
+  const totalCourseItems = mandatoryCourseLessons.length + totalModules;
   const completedCourseItems = completedCourseLessons.length + completedExamsCount;
-  const progressPercent = totalCourseItems > 0
-    ? Math.min(100, Math.round((completedCourseItems / totalCourseItems) * 100))
-    : 0;
 
   // Completion & Teacher Review Graduation States:
   const allModulesFinished =
     totalModules > 0 &&
     completedExamsCount === totalModules &&
-    completedCourseLessons.length === allCourseLessons.length;
+    completedCourseLessons.length === mandatoryCourseLessons.length;
 
   // Has teacher requested revision on any submitted assignment?
   const revisionSubmission = userSubmissions.find((s) => s.status === 'REVISION');
@@ -299,20 +302,39 @@ export const CourseLearningPage = () => {
     finalExamSubmission && finalExamSubmission.status === 'APPROVED'
   );
 
-  // Strictly approved by teacher:
-  // Must have existing certificate, OR all lessons & exams submitted and final exam approved by teacher
-  const isApprovedByTeacher = Boolean(
-    certificateData ||
-    (allModulesFinished && !revisionSubmission && hasFinalExamApproved)
-  );
-
   // Waiting for evaluation?
-  // Only when student has finished modules & submitted final exam, but teacher hasn't evaluated yet
+  // Only when student has finished modules & submitted final exam, but teacher hasn't evaluated yet (PENDING)
   const isPendingEvaluation = Boolean(
-    !isApprovedByTeacher &&
+    !hasFinalExamApproved &&
     !revisionSubmission &&
     finalExamSubmission &&
     finalExamSubmission.status === 'PENDING'
+  );
+
+  // Cohort graduation state: if teacher has officially approved and certificate exists or enrollment passed
+  const isStudentGraduated = Boolean(
+    !isPendingEvaluation &&
+    !revisionSubmission &&
+    (
+      (hasFinalExamApproved && certificateData) ||
+      (course?.enrollment?.status === 'PASSED' && hasFinalExamApproved) ||
+      (user?.active_brevet && user.active_brevet.is_passed && hasFinalExamApproved)
+    )
+  );
+
+  const calculatedPercent = totalCourseItems > 0
+    ? Math.min(100, Math.round((completedCourseItems / totalCourseItems) * 100))
+    : 0;
+
+  const progressPercent = isStudentGraduated ? 100 : calculatedPercent;
+
+  // Strictly approved by teacher:
+  // Must have final exam approved by teacher with status APPROVED
+  const isApprovedByTeacher = Boolean(
+    !isPendingEvaluation &&
+    !revisionSubmission &&
+    hasFinalExamApproved &&
+    (allModulesFinished || isStudentGraduated || certificateData)
   );
 
   // Selected Chapter Lock Status:
@@ -605,9 +627,13 @@ export const CourseLearningPage = () => {
       {/* Course Header Banner */}
       <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30">
               Kelas Aktif
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/30 flex items-center gap-1">
+              <Users className="w-3 h-3 text-amber-300" />
+              <span>{batchName}</span>
             </span>
             <span className="text-xs text-slate-400 font-mono">
               Kurikulum Standar UU HPP & Coretax 2026
@@ -694,6 +720,7 @@ export const CourseLearningPage = () => {
               activeModuleExam={activeModuleExam}
               activeModuleSubmission={activeModuleSubmission}
               isApprovedByTeacher={isApprovedByTeacher}
+              isPendingEvaluation={isPendingEvaluation}
               onNextModule={handleNextModule}
               onClaimCertificate={handleClaimCertificate}
               onSubmitExam={handleSubmitExam}
@@ -713,6 +740,7 @@ export const CourseLearningPage = () => {
         <div className="lg:col-span-4 space-y-4">
           <CourseSyllabusSidebar
             curriculum={course.curriculum}
+            batchName={batchName}
             activeModuleIndex={activeModuleIndex}
             setActiveModuleIndex={setActiveModuleIndex}
             activeLessonId={activeLessonId}

@@ -122,12 +122,50 @@ class DatabaseSeeder extends Seeder
             }
         }
 
+        // 2.5 Seed Cohort Batches
+        $batchAB = \App\Models\Batch::updateOrCreate(
+            ['batch_code' => 'BAT-AB-42'],
+            [
+                'brevet_id' => 'brevet-ab',
+                'batch_name' => 'Batch 42 - Reguler',
+                'status' => 'ongoing',
+                'start_date' => now()->startOfMonth(),
+                'end_date' => now()->addMonths(2)->endOfMonth(),
+                'curriculum' => Brevet::find('brevet-ab')?->curriculum ?? [],
+            ]
+        );
+
+        $batchC = \App\Models\Batch::updateOrCreate(
+            ['batch_code' => 'BAT-C-18'],
+            [
+                'brevet_id' => 'brevet-c',
+                'batch_name' => 'Batch 18 - Eksekutif',
+                'status' => 'ongoing',
+                'start_date' => now()->startOfMonth(),
+                'end_date' => now()->addMonths(2)->endOfMonth(),
+                'curriculum' => Brevet::find('brevet-c')?->curriculum ?? [],
+            ]
+        );
+
+        $batchCore = \App\Models\Batch::updateOrCreate(
+            ['batch_code' => 'BAT-CORE-01'],
+            [
+                'brevet_id' => 'coretax-mastery',
+                'batch_name' => 'Batch 1 - Akselerasi Coretax DJP',
+                'status' => 'ongoing',
+                'start_date' => now()->startOfMonth(),
+                'end_date' => now()->addMonths(1)->endOfMonth(),
+                'curriculum' => Brevet::find('coretax-mastery')?->curriculum ?? [],
+            ]
+        );
+
         // 3. Seed Enrollments
         Enrollment::updateOrCreate(
             ['invoice_number' => 'INV-NAC-2026-0892'],
             [
                 'user_id' => $student1->id,
                 'brevet_id' => 'brevet-ab',
+                'batch_id' => $batchAB->id,
                 'amount' => 2750000,
                 'payment_method' => 'QRIS Dinamis',
                 'payment_status' => 'APPROVED',
@@ -145,6 +183,7 @@ class DatabaseSeeder extends Seeder
             [
                 'user_id' => $student2->id,
                 'brevet_id' => 'brevet-c',
+                'batch_id' => $batchC->id,
                 'amount' => 3850000,
                 'payment_method' => 'Transfer Bank Mandiri VA',
                 'payment_status' => 'APPROVED',
@@ -162,6 +201,7 @@ class DatabaseSeeder extends Seeder
             [
                 'user_id' => $student3->id,
                 'brevet_id' => 'coretax-mastery',
+                'batch_id' => $batchCore->id,
                 'amount' => 1250000,
                 'payment_method' => 'BCA Virtual Account',
                 'payment_status' => 'APPROVED',
