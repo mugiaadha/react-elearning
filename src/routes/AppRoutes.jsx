@@ -30,12 +30,12 @@ import CertificateVerifyPage from '../pages/public/CertificateVerifyPage';
 // Onboarding Pre-Approval Page
 import PaymentPendingPage from '../pages/onboarding/PaymentPendingPage';
 
-// Student Pages
-import StudentDashboardPage from '../pages/student/StudentDashboardPage';
-import MyCoursesPage from '../pages/student/MyCoursesPage';
-import CourseLearningPage from '../pages/student/CourseLearningPage';
-import CertificatesPage from '../pages/student/CertificatesPage';
-import TransactionsPage from '../pages/student/TransactionsPage';
+// Student Pages (Modular Architecture)
+import StudentDashboard from '../pages/student/StudentDashboard';
+import MyCoursesPage from '../pages/student/pages/MyCoursesPage';
+import CourseLearningPage from '../pages/student/pages/course/CourseLearningPage';
+import CertificatesPage from '../pages/student/pages/CertificatesPage';
+import TransactionsPage from '../pages/student/pages/TransactionsPage';
 
 // Teacher Pages
 import TeacherDashboardPage from '../pages/teacher/TeacherDashboardPage';
@@ -102,7 +102,7 @@ export const AppRoutes = () => {
           element={
             <RequireRole allowedRoles={['student']}>
               <PaymentApprovalGuard>
-                <StudentDashboardPage />
+                <StudentDashboard />
               </PaymentApprovalGuard>
             </RequireRole>
           }

@@ -14,9 +14,9 @@ import {
 export const CertificateVerifyPage = () => {
   const { certId } = useParams();
   const { showToast } = useToast();
-  const [queryId, setQueryId] = useState(certId || 'NAC-CERT-2026-AB-88219');
+  const [queryId, setQueryId] = useState(certId || '');
   const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(certId));
 
   const checkCertificate = async (idToCheck, isManual = false) => {
     if (!idToCheck?.trim()) {
@@ -51,7 +51,8 @@ export const CertificateVerifyPage = () => {
     if (certId) {
       checkCertificate(certId, false);
     } else {
-      checkCertificate('NAC-CERT-2026-AB-88219', false);
+      setLoading(false);
+      setResult(null);
     }
   }, [certId]);
 
@@ -177,6 +178,14 @@ export const CertificateVerifyPage = () => {
           <div className="pt-2 text-center text-xs text-slate-500 border-t border-slate-100">
             Diterbitkan oleh NAC Tax Center Indonesia • BKP Reg: SI-8821/BKP-C/2021
           </div>
+        </div>
+      ) : !result ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-3">
+          <Search className="w-10 h-10 text-slate-300 mx-auto" />
+          <h3 className="font-bold text-slate-800 text-sm">Pencarian Nomor Seri Sertifikat</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            Ketik nomor registrasi sertifikat digital (contoh: NAC-CERT-2026-CORE-12345) pada kolom di atas lalu klik "Verifikasi Sekarang".
+          </p>
         </div>
       ) : (
         <div className="bg-rose-50 rounded-2xl border border-rose-200 p-8 text-center space-y-3">

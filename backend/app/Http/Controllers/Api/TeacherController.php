@@ -21,7 +21,7 @@ class TeacherController extends Controller
         $students = User::where('role', 'student')->with('activeEnrollment.brevet')->get()->map(function ($u) {
             $enrollment = $u->activeEnrollment;
             $brevetTitle = $enrollment?->brevet?->title ?? 'Brevet AB Terpadu';
-            $progress = ($enrollment?->progress_percentage ?? 20) . '%';
+            $progress = ($enrollment?->progress_percentage ?? 0) . '%';
 
             $status = 'Aktif Belajar';
             if (($enrollment?->progress_percentage ?? 0) >= 100) {
@@ -30,13 +30,20 @@ class TeacherController extends Controller
                 $status = 'Menjelang Ujian Akhir';
             }
 
+            $lastActiveDate = $enrollment?->updated_at ?? $u->updated_at ?? now();
+            $lastActiveStr = $lastActiveDate->isToday()
+                ? 'Hari ini, ' . $lastActiveDate->format('H:i') . ' WIB'
+                : ($lastActiveDate->isYesterday()
+                    ? 'Kemarin, ' . $lastActiveDate->format('H:i') . ' WIB'
+                    : $lastActiveDate->format('d M Y, H:i') . ' WIB');
+
             return [
                 'id' => $u->string_id ?? 'usr-' . $u->id,
                 'name' => $u->name,
                 'email' => $u->email,
                 'enrolled' => $brevetTitle,
                 'progress' => $progress,
-                'lastActive' => 'Hari ini, ' . date('H:i') . ' WIB',
+                'lastActive' => $lastActiveStr,
                 'status' => $status,
             ];
         });
@@ -154,8 +161,8 @@ class TeacherController extends Controller
                 'title' => 'Video Kuliah & Pemaparan Silabus ' . $validated['title'],
                 'duration' => '45 Menit',
                 'type' => 'video',
-                'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-                'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                'url' => 'https://www.youtube.com/watch?v=V74l_zS1x8E',
+                'video_url' => 'https://www.youtube.com/watch?v=V74l_zS1x8E',
             ];
         }
 

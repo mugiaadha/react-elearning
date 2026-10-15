@@ -59,6 +59,24 @@ export const userService = {
   },
 
   /**
+   * Set student's active classroom brevet
+   * @param {string} brevetId
+   */
+  async setActiveBrevet(brevetId) {
+    const response = await apiClient.post(ENDPOINTS.USER_SET_ACTIVE_BREVET, { brevet_id: brevetId });
+    return response;
+  },
+
+  /**
+   * Enroll in an additional brevet program
+   * @param {string} brevetId
+   */
+  async enrollBrevet(brevetId) {
+    const response = await apiClient.post(ENDPOINTS.USER_ENROLL_BREVET, { brevet_id: brevetId });
+    return response;
+  },
+
+  /**
    * Request / resend 6-digit OTP verification email via backend SMTP
    * @param {string} email
    */

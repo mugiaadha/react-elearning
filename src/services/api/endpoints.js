@@ -22,6 +22,8 @@ export const ENDPOINTS = {
   AUTH_VERIFY_EMAIL: '/auth/verify-email',
   USER_PROFILE: IS_MOCK_MODE ? '/api/user/profile.json' : '/user/profile',
   USER_ENROLLMENTS: IS_MOCK_MODE ? '/api/user/enrollments.json' : '/user/enrollments',
+  USER_SET_ACTIVE_BREVET: '/user/set-active-brevet',
+  USER_ENROLL_BREVET: '/user/enroll-brevet',
   USER_COURSE_PROGRESS: '/user/course-progress',
   USER_COURSE_PROGRESS_RESET: '/user/course-progress/reset',
 

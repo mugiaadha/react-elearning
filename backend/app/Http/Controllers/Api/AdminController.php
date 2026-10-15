@@ -18,10 +18,41 @@ class AdminController extends Controller
         $totalStudents = User::where('role', 'student')->count();
         $activeStudents = User::where('role', 'student')->where('payment_status', 'APPROVED')->count();
         $pendingApprovals = Payment::where('status', 'PENDING_APPROVAL')->count();
-        $totalRevenue = Payment::where('status', 'APPROVED')->sum('amount');
+        $totalRevenue = Payment::where('status', 'APPROVED')->sum('amount') ?: 0;
 
-        if ($totalRevenue == 0) {
-            $totalRevenue = 485250000;
+        // Dynamic completion rate
+        $avgProgress = \App\Models\Enrollment::where('payment_status', 'APPROVED')->avg('progress_percentage');
+        $completionRate = $avgProgress !== null ? round($avgProgress, 1) : 0;
+
+        // Dynamic course popularity based on real enrollments
+        $brevets = Brevet::all();
+        $coursePopularity = $brevets->map(function ($b) {
+            return [
+                'id' => $b->id,
+                'title' => $b->title,
+                'enrolled' => \App\Models\Enrollment::where('brevet_id', $b->id)->count(),
+                'active' => \App\Models\Enrollment::where('brevet_id', $b->id)->where('is_active', true)->count(),
+            ];
+        });
+
+        // Dynamic monthly revenue from approved payments
+        $monthlyRevenue = Payment::where('status', 'APPROVED')
+            ->selectRaw("strftime('%Y-%m', transaction_time) as month_key, sum(amount) as revenue")
+            ->groupBy('month_key')
+            ->orderBy('month_key', 'asc')
+            ->get()
+            ->map(function ($row) {
+                $time = strtotime($row->month_key . '-01');
+                return [
+                    'month' => date('M Y', $time),
+                    'revenue' => (float)$row->revenue,
+                ];
+            });
+
+        if ($monthlyRevenue->isEmpty()) {
+            $monthlyRevenue = collect([
+                ['month' => date('M Y'), 'revenue' => (float)$totalRevenue],
+            ]);
         }
 
         return response()->json([
@@ -29,25 +60,14 @@ class AdminController extends Controller
             'message' => 'Statistik backoffice berhasil diambil.',
             'data' => [
                 'summary' => [
-                    'total_students' => max($totalStudents, 5420),
-                    'active_students' => max($activeStudents, 1280),
+                    'total_students' => $totalStudents,
+                    'active_students' => $activeStudents,
                     'pending_approvals' => $pendingApprovals,
-                    'total_revenue_idr' => $totalRevenue,
-                    'completion_rate_percentage' => 94.2,
+                    'total_revenue_idr' => (float)$totalRevenue,
+                    'completion_rate_percentage' => $completionRate,
                 ],
-                'course_popularity' => [
-                    ['id' => 'brevet-ab', 'title' => 'Brevet AB Terpadu', 'enrolled' => 3840, 'active' => 890],
-                    ['id' => 'brevet-c', 'title' => 'Brevet C Eksekutif', 'enrolled' => 1450, 'active' => 270],
-                    ['id' => 'coretax-mastery', 'title' => 'Simulasi Coretax DJP', 'enrolled' => 2100, 'active' => 620],
-                ],
-                'monthly_revenue' => [
-                    ['month' => 'May 2026', 'revenue' => 62500000],
-                    ['month' => 'Jun 2026', 'revenue' => 74000000],
-                    ['month' => 'Jul 2026', 'revenue' => 81500000],
-                    ['month' => 'Aug 2026', 'revenue' => 95000000],
-                    ['month' => 'Sep 2026', 'revenue' => 105250000],
-                    ['month' => 'Oct 2026', 'revenue' => 67000000],
-                ],
+                'course_popularity' => $coursePopularity,
+                'monthly_revenue' => $monthlyRevenue,
             ],
         ]);
     }

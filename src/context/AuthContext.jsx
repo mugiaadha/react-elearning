@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(() => !!localStorage.getItem('nac_auth_token'));
 
   // Initialize user profile from backend API if token exists
-  const loadUser = useCallback(async () => {
+  const loadUser = useCallback(async (isInitial = false) => {
     const token = localStorage.getItem('nac_auth_token');
     if (!token) {
       setUser(null);
@@ -20,22 +20,24 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
       const profile = await userService.getProfile();
       setUser(profile);
       return profile;
     } catch (err) {
       console.warn('Failed to load user profile or token expired', err);
-      localStorage.removeItem('nac_auth_token');
-      setUser(null);
+      if (err.response?.status === 401 || err.status === 401) {
+        localStorage.removeItem('nac_auth_token');
+        setUser(null);
+      }
       return null;
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadUser();
+    loadUser(true);
   }, [loadUser]);
 
   // Purge any stale localStorage lesson progress caches across users
@@ -190,9 +192,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const refreshProfile = () => {
-    return loadUser();
-  };
+  const refreshProfile = useCallback(() => {
+    return loadUser(false);
+  }, [loadUser]);
 
   return (
     <AuthContext.Provider

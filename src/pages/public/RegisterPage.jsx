@@ -29,7 +29,7 @@ export const RegisterPage = () => {
   const { registerStudent, refreshProfile } = useAuth();
   const { showToast } = useToast();
 
-  const brevetParamId = searchParams.get('brevet_id') || 'brevet-ab';
+  const brevetParamId = searchParams.get('brevet_id') || searchParams.get('brevet') || searchParams.get('slug') || 'brevet-ab';
 
   const [brevets, setBrevets] = useState([]);
   const [selectedBrevetId, setSelectedBrevetId] = useState(brevetParamId);
@@ -60,10 +60,30 @@ export const RegisterPage = () => {
   }, [resendCooldown]);
 
   useEffect(() => {
-    brevetService.getAllBrevets().then(setBrevets).catch(() => {});
-  }, []);
+    brevetService
+      .getAllBrevets()
+      .then((data) => {
+        setBrevets(data || []);
+        const param = searchParams.get('brevet_id') || searchParams.get('brevet') || searchParams.get('slug');
+        if (param && Array.isArray(data)) {
+          const found = data.find((b) => b.id === param || b.slug === param);
+          if (found) {
+            setSelectedBrevetId(found.id);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [searchParams]);
 
-  const selectedBrevet = brevets.find((b) => b.id === selectedBrevetId) || brevets[0];
+  const selectedBrevet =
+    brevets.find((b) => b.id === selectedBrevetId || b.slug === selectedBrevetId) ||
+    brevets.find((b) => b.id === brevetParamId || b.slug === brevetParamId) ||
+    brevets[0] ||
+    null;
+
+  const targetBrevetId = selectedBrevet?.id || selectedBrevetId || 'coretax-mastery';
+  const targetBrevetTitle = selectedBrevet?.title || 'Program Brevet Pajak';
+  const targetBrevetPrice = selectedBrevet?.price || 1250000;
 
   const handleStartRegistration = async (e) => {
     e.preventDefault();
@@ -97,14 +117,19 @@ export const RegisterPage = () => {
       setRegError('');
       showToast('Mendaftarkan akun & mengirim email verifikasi via SMTP...', 'loading', 3000);
 
+      try {
+        localStorage.setItem('nac_pending_brevet_id', targetBrevetId);
+      } catch (e) {}
+
       const response = await registerStudent({
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim(),
         password,
-        brevetId: selectedBrevet?.id || 'brevet-ab',
-        brevetTitle: selectedBrevet?.title || 'Brevet Pajak A & B Terpadu',
-        amount: selectedBrevet?.price || 2750000,
+        brevetId: targetBrevetId,
+        brevet_id: targetBrevetId,
+        brevetTitle: targetBrevetTitle,
+        amount: targetBrevetPrice,
       });
 
       showToast(`Pendaftaran berhasil! Mengarahkan ke halaman verifikasi email...`, 'success', 3500);
@@ -153,6 +178,13 @@ export const RegisterPage = () => {
     try {
       showToast('Memverifikasi kode dengan database...', 'loading', 1500);
       const verifyRes = await userService.verifyEmail(email.trim(), inputOtp.trim());
+      try {
+        Object.keys(localStorage).forEach((k) => {
+          if (k.startsWith('nac_completed_lessons_')) {
+            localStorage.removeItem(k);
+          }
+        });
+      } catch (e) {}
       if (verifyRes?.token) {
         localStorage.setItem('nac_auth_token', verifyRes.token);
       }
@@ -414,7 +446,7 @@ export const RegisterPage = () => {
             <GoogleAuthButton
               text="Daftar Cepat dengan Akun Google"
               mode="register"
-              brevetId={selectedBrevetId}
+              brevetId={targetBrevetId}
             />
 
             <p className="text-center text-[11px] text-slate-500 pt-1">

@@ -24,6 +24,8 @@ $registerRoutes = function () {
     Route::get('/user/profile', [AuthController::class, 'profile']);
     Route::match(['put', 'post'], '/user/profile', [AuthController::class, 'updateProfile']);
     Route::get('/user/enrollments', [AuthController::class, 'enrollments']);
+    Route::post('/user/set-active-brevet', [AuthController::class, 'setActiveBrevet']);
+    Route::post('/user/enroll-brevet', [AuthController::class, 'enrollBrevet']);
     Route::post('/user/course-progress', [AuthController::class, 'updateProgress']);
     Route::post('/user/course-progress/reset', [AuthController::class, 'resetCourseProgress']);
     Route::get('/user/submissions', [AuthController::class, 'userSubmissions']);

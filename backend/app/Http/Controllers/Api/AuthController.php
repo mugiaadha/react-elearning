@@ -67,6 +67,8 @@ class AuthController extends Controller
                 'password' => 'required|string|min:6',
                 'phone' => 'nullable|string|min:8|max:20',
                 'brevetId' => 'nullable|string',
+                'brevet_id' => 'nullable|string',
+                'slug' => 'nullable|string',
                 'brevetTitle' => 'nullable|string',
                 'amount' => 'nullable|numeric',
             ], [
@@ -118,11 +120,11 @@ class AuthController extends Controller
         }
 
         $invoiceId = 'INV-NAC-' . date('Y') . '-' . rand(1000, 9999);
-        $brevetId = $validated['brevetId'] ?? 'brevet-ab';
+        $brevetId = $validated['brevetId'] ?? $request->input('brevet_id') ?? $request->input('slug') ?? 'brevet-ab';
         $amount = $validated['amount'] ?? 2750000;
         $title = $validated['brevetTitle'] ?? 'Brevet Pajak A & B Terpadu';
 
-        $brevet = Brevet::find($brevetId) ?? Brevet::first();
+        $brevet = Brevet::where('id', $brevetId)->orWhere('slug', $brevetId)->first() ?? Brevet::first();
         if ($brevet) {
             $brevetId = $brevet->id;
             $title = $brevet->title;
@@ -228,12 +230,31 @@ class AuthController extends Controller
             'phone' => 'sometimes|nullable|string|max:20',
             'avatar' => 'sometimes|nullable|string',
             'password' => 'sometimes|nullable|string|min:6',
+            'payment_status' => 'sometimes|nullable|string',
         ]);
 
         if (!empty($validated['name'])) $user->name = $validated['name'];
         if (array_key_exists('phone', $validated)) $user->phone = $validated['phone'];
         if (array_key_exists('avatar', $validated)) $user->avatar = $validated['avatar'];
         if (!empty($validated['password'])) $user->password = Hash::make($validated['password']);
+        if (!empty($validated['payment_status'])) {
+            $user->payment_status = $validated['payment_status'];
+            $activeEnrollment = $user->enrollments()->where('is_active', true)->first();
+            if ($activeEnrollment) {
+                $activeEnrollment->payment_status = $validated['payment_status'];
+                $activeEnrollment->save();
+            } else {
+                $fallbackEnrollment = $user->enrollments()->latest()->first();
+                if ($fallbackEnrollment) {
+                    $fallbackEnrollment->payment_status = $validated['payment_status'];
+                    if ($validated['payment_status'] === 'APPROVED') {
+                        Enrollment::where('user_id', $user->id)->where('id', '!=', $fallbackEnrollment->id)->update(['is_active' => false]);
+                        $fallbackEnrollment->is_active = true;
+                    }
+                    $fallbackEnrollment->save();
+                }
+            }
+        }
 
         $user->save();
 
@@ -273,6 +294,7 @@ class AuthController extends Controller
         $slug = $request->input('slug', 'brevet-ab-terpadu');
         $lessonId = $request->input('lessonId');
         $completed = $request->input('completed', true);
+        $clientPercentage = $request->input('progress_percentage');
 
         $brevet = Brevet::where('slug', $slug)->orWhere('id', $slug)->first();
         if (!$brevet) {
@@ -280,7 +302,11 @@ class AuthController extends Controller
         }
 
         $enrollment = Enrollment::where('user_id', $user->id)
-            ->where('brevet_id', $brevet->id)
+            ->where(function ($q) use ($brevet, $slug) {
+                $q->where('brevet_id', $brevet->id)
+                  ->orWhere('brevet_id', $brevet->slug)
+                  ->orWhere('brevet_id', $slug);
+            })
             ->first();
 
         if (!$enrollment) {
@@ -296,10 +322,12 @@ class AuthController extends Controller
         }
 
         $currentCompleted = $enrollment->completed_lessons ?: [];
-        if ($completed && !in_array($lessonId, $currentCompleted)) {
-            $currentCompleted[] = $lessonId;
-        } elseif (!$completed && in_array($lessonId, $currentCompleted)) {
-            $currentCompleted = array_values(array_diff($currentCompleted, [$lessonId]));
+        if ($lessonId) {
+            if ($completed && !in_array($lessonId, $currentCompleted)) {
+                $currentCompleted[] = $lessonId;
+            } elseif (!$completed && in_array($lessonId, $currentCompleted)) {
+                $currentCompleted = array_values(array_diff($currentCompleted, [$lessonId]));
+            }
         }
 
         // Count total items (lessons + 1 final exam per module) in brevet curriculum
@@ -311,7 +339,8 @@ class AuthController extends Controller
         }
         if ($totalItems <= 0) $totalItems = 6;
 
-        $progressPercentage = min(100, (int) round((count($currentCompleted) / $totalItems) * 100));
+        $computedPercentage = min(100, (int) round((count($currentCompleted) / $totalItems) * 100));
+        $progressPercentage = is_numeric($clientPercentage) ? min(100, max(0, (int)$clientPercentage)) : $computedPercentage;
 
         $enrollment->update([
             'completed_lessons' => $currentCompleted,
@@ -324,6 +353,7 @@ class AuthController extends Controller
             'data' => [
                 'completed_lessons' => $currentCompleted,
                 'progress_percentage' => $progressPercentage,
+                'user' => $this->formatUserProfile($user->fresh()),
             ],
         ]);
     }
@@ -519,6 +549,7 @@ class AuthController extends Controller
             'data' => [
                 'completed_lessons' => [],
                 'progress_percentage' => 0,
+                'user' => $this->formatUserProfile($user->fresh()),
             ],
         ]);
     }
@@ -569,17 +600,25 @@ class AuthController extends Controller
             return response()->json(['success' => true, 'data' => []]);
         }
 
+        $activeEnrollments = $user->enrollments()->where('is_active', true)->get();
+        if ($activeEnrollments->count() > 1) {
+            $first = $activeEnrollments->first();
+            Enrollment::where('user_id', $user->id)->where('id', '!=', $first->id)->update(['is_active' => false]);
+        }
+
         $enrollments = $user->enrollments()->with('brevet')->get()->map(function ($e) {
             return [
                 'id' => $e->id,
                 'brevet_id' => $e->brevet_id,
                 'title' => $e->brevet?->title ?? 'Brevet Pelatihan',
+                'description' => $e->brevet?->description ?? $e->brevet?->tagline ?? 'Program pelatihan Brevet Pajak terapan unggulan NAC Tax Center.',
+                'tagline' => $e->brevet?->tagline,
                 'slug' => $e->brevet?->slug ?? 'brevet-ab-terpadu',
                 'invoice_id' => $e->invoice_number,
                 'amount' => $e->amount,
                 'payment_method' => $e->payment_method,
                 'payment_status' => $e->payment_status,
-                'is_active' => $e->is_active,
+                'is_active' => (bool)$e->is_active,
                 'progress_percentage' => $e->progress_percentage,
                 'completed_lessons' => $e->completed_lessons ?: [],
                 'registered_date' => $e->registered_date?->toISOString(),
@@ -590,6 +629,168 @@ class AuthController extends Controller
             'success' => true,
             'data' => $enrollments,
         ]);
+    }
+
+    /**
+     * Set active classroom brevet for student
+     */
+    public function setActiveBrevet(Request $request)
+    {
+        $user = $this->resolveAuthUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $brevetId = $request->input('brevet_id') ?? $request->input('slug');
+        if (!$brevetId) {
+            return response()->json(['success' => false, 'message' => 'Parameter brevet_id wajib diisi.'], 422);
+        }
+
+        $brevet = Brevet::where('id', $brevetId)->orWhere('slug', $brevetId)->first();
+        if (!$brevet) {
+            return response()->json(['success' => false, 'message' => 'Program brevet tidak ditemukan.'], 404);
+        }
+
+        $targetEnrollment = Enrollment::where('user_id', $user->id)
+            ->where(function ($q) use ($brevet) {
+                $q->where('brevet_id', $brevet->id)
+                  ->orWhere('brevet_id', $brevet->slug);
+            })
+            ->first();
+
+        if (!$targetEnrollment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda belum terdaftar pada program brevet ini.',
+            ], 400);
+        }
+
+        if ($targetEnrollment->payment_status !== 'APPROVED') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pembayaran untuk program ini belum disetujui oleh admin.',
+            ], 400);
+        }
+
+        // Set all other enrollments of this student to inactive
+        Enrollment::where('user_id', $user->id)->update(['is_active' => false]);
+
+        // Set selected enrollment to active
+        $targetEnrollment->is_active = true;
+        $targetEnrollment->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ruang kelas aktif berhasil dialihkan ke ' . $brevet->title . '.',
+            'data' => $this->formatUserProfile($user->fresh()),
+        ]);
+    }
+
+    /**
+     * Existing authenticated student enrolls in an additional brevet program
+     */
+    public function enrollBrevet(Request $request)
+    {
+        $user = $this->resolveAuthUser($request);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+        }
+
+        $brevetId = $request->input('brevet_id') ?? $request->input('slug');
+        if (!$brevetId) {
+            return response()->json(['success' => false, 'message' => 'Pilihan program brevet wajib disertakan.'], 422);
+        }
+
+        $brevet = Brevet::where('id', $brevetId)->orWhere('slug', $brevetId)->first();
+        if (!$brevet) {
+            return response()->json(['success' => false, 'message' => 'Program brevet yang dipilih tidak ditemukan.'], 404);
+        }
+
+        // Check if student is already enrolled in this brevet
+        $existingEnrollment = Enrollment::where('user_id', $user->id)
+            ->where(function ($q) use ($brevet) {
+                $q->where('brevet_id', $brevet->id)
+                  ->orWhere('brevet_id', $brevet->slug);
+            })
+            ->first();
+
+        if ($existingEnrollment) {
+            if ($existingEnrollment->payment_status === 'APPROVED') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda sudah terdaftar dan aktif pada program ' . $brevet->title . '.',
+                    'data' => [
+                        'already_active' => true,
+                        'brevet_id' => $brevet->id,
+                        'slug' => $brevet->slug,
+                    ],
+                ], 400);
+            }
+
+            // If already registered but pending approval, return existing invoice
+            $existingPayment = Payment::where('invoice_number', $existingEnrollment->invoice_number)->first();
+            return response()->json([
+                'success' => true,
+                'message' => 'Tagihan pendaftaran program ' . $brevet->title . ' sudah tersedia. Silakan selesaikan pembayaran.',
+                'data' => [
+                    'invoice_id' => $existingEnrollment->invoice_number,
+                    'amount' => $existingEnrollment->amount,
+                    'brevet_title' => $brevet->title,
+                    'brevet_id' => $brevet->id,
+                    'slug' => $brevet->slug,
+                    'payment' => $existingPayment,
+                ],
+            ]);
+        }
+
+        // Generate new unique invoice ID
+        $invoiceId = 'INV-NAC-' . date('Y') . '-' . rand(1000, 9999);
+        $amount = $brevet->price ?: 2750000;
+
+        // Create new enrollment with PENDING_APPROVAL and is_active: false
+        $enrollment = Enrollment::create([
+            'user_id' => $user->id,
+            'brevet_id' => $brevet->id,
+            'invoice_number' => $invoiceId,
+            'amount' => $amount,
+            'payment_method' => 'QRIS Dinamis',
+            'payment_status' => 'PENDING_APPROVAL',
+            'progress_percentage' => 0,
+            'completed_lessons' => [],
+            'is_active' => false,
+            'registered_date' => now(),
+        ]);
+
+        // Create new Payment invoice record
+        $payment = Payment::create([
+            'id' => 'PAY-' . date('Y') . '-' . rand(1000, 9999),
+            'invoice_number' => $invoiceId,
+            'user_id' => $user->id,
+            'brevet_id' => $brevet->id,
+            'student_name' => $user->name,
+            'student_email' => $user->email,
+            'student_phone' => $user->phone,
+            'brevet_title' => $brevet->title,
+            'amount' => $amount,
+            'payment_method' => 'QRIS Dinamis',
+            'status' => 'PENDING_APPROVAL',
+            'transaction_time' => now(),
+            'sender_account_name' => $user->name,
+            'notes' => 'Pendaftaran program brevet tambahan oleh mahasiswa',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pendaftaran ' . $brevet->title . ' berhasil dicatat! Silakan lakukan pembayaran tagihan.',
+            'data' => [
+                'invoice_id' => $invoiceId,
+                'amount' => $amount,
+                'brevet_title' => $brevet->title,
+                'brevet_id' => $brevet->id,
+                'slug' => $brevet->slug,
+                'payment' => $payment,
+            ],
+        ], 201);
     }
 
     /**
@@ -616,15 +817,31 @@ class AuthController extends Controller
      */
     private function formatUserProfile(User $user)
     {
-        $enrollment = $user->activeEnrollment;
+        // Ensure only one enrollment is active (self-healing)
+        $activeEnrollments = $user->enrollments()->where('is_active', true)->get();
+        if ($activeEnrollments->count() > 1) {
+            $enrollment = $activeEnrollments->first();
+            Enrollment::where('user_id', $user->id)->where('id', '!=', $enrollment->id)->update(['is_active' => false]);
+        } else {
+            $enrollment = $activeEnrollments->first()
+                ?? $user->enrollments()->where('payment_status', 'APPROVED')->first()
+                ?? $user->enrollments()->latest()->first();
+        }
         $brevet = $enrollment?->brevet;
 
         $activeBrevet = null;
         if ($user->role === 'student') {
+            $instructorName = $brevet?->instructor['name'] ?? ($brevet?->id === 'coretax-mastery' ? 'Ratna Paramitha, S.E., M.Si., BKP' : 'Bambang Sudarmono, S.E., Ak., M.Ak., BKP');
+            $modulesCount = is_array($brevet?->curriculum) ? count($brevet->curriculum) : 5;
+
             $activeBrevet = [
-                'id' => $enrollment?->brevet_id ?? 'brevet-ab',
+                'id' => $enrollment?->brevet_id ?? ($brevet?->id ?? 'brevet-ab'),
                 'slug' => $brevet?->slug ?? 'brevet-ab-terpadu',
                 'title' => $brevet?->title ?? 'Brevet Pajak A & B Terpadu',
+                'description' => $brevet?->description ?? $brevet?->tagline ?? 'Kurikulum terpadu KUP, PPh, PPN, dan Simulasi Coretax DJP.',
+                'tagline' => $brevet?->tagline,
+                'instructor_name' => $instructorName,
+                'modules_count' => $modulesCount,
                 'invoice_id' => $enrollment?->invoice_number ?? 'INV-NAC-2026-0892',
                 'amount' => $enrollment?->amount ?? 2750000,
                 'registered_date' => $enrollment?->registered_date?->toISOString() ?? now()->toISOString(),
@@ -632,7 +849,7 @@ class AuthController extends Controller
                 'payment_proof_url' => $enrollment?->payment_proof_url,
                 'proof_uploaded' => !empty($enrollment?->payment_proof_url),
                 'payment_status' => $enrollment?->payment_status ?? $user->payment_status,
-                'is_active' => $enrollment?->is_active ?? ($user->payment_status === 'APPROVED'),
+                'is_active' => (bool)($enrollment?->is_active ?? false),
                 'progress_percentage' => $enrollment?->progress_percentage ?? 0,
                 'completed_lessons' => $enrollment?->completed_lessons ?: [],
             ];
@@ -659,6 +876,8 @@ class AuthController extends Controller
 
         return [
             'id' => $user->string_id ?? 'usr-' . $user->id,
+            'numeric_id' => $user->id,
+            'database_id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'phone' => $user->phone,
@@ -681,18 +900,22 @@ class AuthController extends Controller
     {
         $clientId = env('GOOGLE_CLIENT_ID');
         $redirectUri = env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://127.0.0.1:8000') . '/auth/google/callback');
+        $brevetId = $request->query('brevet_id') ?: $request->query('brevetId') ?: $request->query('slug') ?: 'brevet-ab';
 
         $url = null;
         if (!empty($clientId)) {
-            $params = http_build_query([
+            $params = [
                 'client_id' => $clientId,
                 'redirect_uri' => $redirectUri,
                 'response_type' => 'code',
                 'scope' => 'openid profile email',
                 'access_type' => 'offline',
                 'prompt' => 'select_account',
-            ]);
-            $url = 'https://accounts.google.com/o/oauth2/v2/auth?' . $params;
+            ];
+            if (!empty($brevetId)) {
+                $params['state'] = json_encode(['brevet_id' => $brevetId]);
+            }
+            $url = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params);
         }
 
         return response()->json([
@@ -711,22 +934,26 @@ class AuthController extends Controller
     {
         $clientId = env('GOOGLE_CLIENT_ID');
         $redirectUri = env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://127.0.0.1:8000') . '/auth/google/callback');
+        $brevetId = $request->query('brevet_id') ?: $request->query('brevetId') ?: $request->query('slug');
 
         if (empty($clientId)) {
             $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
             return redirect($frontendUrl . '/login?error=' . urlencode('Google Client ID belum dikonfigurasi di file .env backend.'));
         }
 
-        $params = http_build_query([
+        $params = [
             'client_id' => $clientId,
             'redirect_uri' => $redirectUri,
             'response_type' => 'code',
             'scope' => 'openid profile email',
             'access_type' => 'offline',
             'prompt' => 'select_account',
-        ]);
+        ];
+        if (!empty($brevetId)) {
+            $params['state'] = json_encode(['brevet_id' => $brevetId]);
+        }
 
-        return redirect()->away('https://accounts.google.com/o/oauth2/v2/auth?' . $params);
+        return redirect()->away('https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params));
     }
 
     /**
@@ -896,6 +1123,51 @@ class AuthController extends Controller
                 $user->email_verified_at = now();
             }
             $user->save();
+
+            // If user explicitly registered or logged in for a specific brevet (e.g., coretax-mastery)
+            $requestedBrevetId = $request->input('brevetId') ?: $request->input('brevet_id') ?: $request->input('slug');
+            if ($requestedBrevetId) {
+                $targetBrevet = Brevet::where('id', $requestedBrevetId)->orWhere('slug', $requestedBrevetId)->first();
+                if ($targetBrevet) {
+                    $existingEnrollment = Enrollment::where('user_id', $user->id)
+                        ->where(function ($q) use ($targetBrevet) {
+                            $q->where('brevet_id', $targetBrevet->id)->orWhere('brevet_id', $targetBrevet->slug);
+                        })->first();
+
+                    if (!$existingEnrollment) {
+                        $invoiceId = 'INV-NAC-' . date('Y') . '-' . rand(1000, 9999);
+                        Enrollment::create([
+                            'user_id' => $user->id,
+                            'brevet_id' => $targetBrevet->id,
+                            'invoice_number' => $invoiceId,
+                            'amount' => $targetBrevet->price,
+                            'payment_method' => 'QRIS Dinamis',
+                            'payment_status' => 'PENDING_APPROVAL',
+                            'progress_percentage' => 0,
+                            'completed_lessons' => [],
+                            'is_active' => false,
+                            'registered_date' => now(),
+                        ]);
+
+                        Payment::create([
+                            'id' => 'PAY-' . date('Y') . '-' . rand(1000, 9999),
+                            'invoice_number' => $invoiceId,
+                            'user_id' => $user->id,
+                            'student_name' => $user->name,
+                            'student_email' => $user->email,
+                            'student_phone' => $user->phone ?? '-',
+                            'brevet_id' => $targetBrevet->id,
+                            'brevet_title' => $targetBrevet->title,
+                            'amount' => $targetBrevet->price,
+                            'payment_method' => 'QRIS Dinamis',
+                            'transaction_time' => now(),
+                            'status' => 'PENDING_APPROVAL',
+                            'sender_account_name' => $user->name,
+                            'notes' => 'Pendaftaran program via Akun Google',
+                        ]);
+                    }
+                }
+            }
         } else {
             // Register new user via Google
             $isNewUser = true;
@@ -912,16 +1184,17 @@ class AuthController extends Controller
                 'string_id' => 'usr-student-' . Str::random(4),
             ]);
 
-            // Create initial enrollment for course
-            $brevetId = $request->input('brevetId', 'brevet-ab');
-            $brevet = Brevet::find($brevetId) ?? Brevet::first();
+            // Create initial enrollment for course based on selected brevet
+            $brevetId = $request->input('brevetId') ?: $request->input('brevet_id') ?: $request->input('slug') ?: 'brevet-ab';
+            $brevet = Brevet::where('id', $brevetId)->orWhere('slug', $brevetId)->first() ?? Brevet::first();
+            $targetBrevetId = $brevet ? $brevet->id : 'brevet-ab';
             $amount = $brevet ? $brevet->price : 2750000;
             $title = $brevet ? $brevet->title : 'Brevet Pajak A & B Terpadu';
             $invoiceId = 'INV-NAC-' . date('Y') . '-' . rand(1000, 9999);
 
             Enrollment::create([
                 'user_id' => $user->id,
-                'brevet_id' => $brevet ? $brevet->id : 'brevet-ab',
+                'brevet_id' => $targetBrevetId,
                 'invoice_number' => $invoiceId,
                 'amount' => $amount,
                 'payment_method' => 'QRIS Dinamis',
@@ -939,7 +1212,7 @@ class AuthController extends Controller
                 'student_name' => $user->name,
                 'student_email' => $user->email,
                 'student_phone' => $user->phone ?? '-',
-                'brevet_id' => $brevet ? $brevet->id : 'brevet-ab',
+                'brevet_id' => $targetBrevetId,
                 'brevet_title' => $title,
                 'amount' => $amount,
                 'payment_method' => 'QRIS Dinamis',
@@ -979,19 +1252,38 @@ class AuthController extends Controller
     public function googleCallback(Request $request)
     {
         $code = $request->query('code');
+        $state = $request->query('state');
         $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
 
         if (!$code) {
             return redirect($frontendUrl . '/login?error=' . urlencode('Otorisasi Google dibatalkan.'));
         }
 
-        // Delegate code exchange to googleLogin logic
-        $fakeRequest = new Request(['code' => $code]);
+        $brevetId = null;
+        if (!empty($state)) {
+            $decoded = json_decode($state, true);
+            if (is_array($decoded) && !empty($decoded['brevet_id'])) {
+                $brevetId = $decoded['brevet_id'];
+            } elseif (is_string($state) && !empty($state)) {
+                $brevetId = $state;
+            }
+        }
+
+        // Delegate code exchange to googleLogin logic with brevetId preserved
+        $fakeRequest = new Request([
+            'code' => $code,
+            'brevetId' => $brevetId,
+            'brevet_id' => $brevetId,
+        ]);
         $response = $this->googleLogin($fakeRequest);
         $data = json_decode($response->getContent(), true);
 
         if (!empty($data['success']) && !empty($data['token'])) {
-            return redirect($frontendUrl . '/login?google_token=' . urlencode($data['token']));
+            $redirectQuery = ['google_token' => $data['token']];
+            if ($brevetId) {
+                $redirectQuery['brevet_id'] = $brevetId;
+            }
+            return redirect($frontendUrl . '/login?' . http_build_query($redirectQuery));
         }
 
         return redirect($frontendUrl . '/login?error=' . urlencode($data['message'] ?? 'Gagal masuk dengan Google.'));

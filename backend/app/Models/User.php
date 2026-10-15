@@ -50,7 +50,7 @@ class User extends Authenticatable
 
     public function activeEnrollment()
     {
-        return $this->hasOne(Enrollment::class)->latestOfMany();
+        return $this->hasOne(Enrollment::class)->where('is_active', true);
     }
 
     public function payments()

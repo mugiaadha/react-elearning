@@ -124,12 +124,19 @@ class PaymentController extends Controller
             $user = User::find($payment->user_id);
             if ($user) {
                 $user->update(['payment_status' => 'APPROVED']);
-                $enrollment = $user->activeEnrollment;
+                $enrollment = Enrollment::where('invoice_number', $payment->invoice_number)->first()
+                    ?? Enrollment::where('user_id', $user->id)->where('brevet_id', $payment->brevet_id)->first()
+                    ?? $user->activeEnrollment;
                 if ($enrollment) {
+                    $hasActive = $user->enrollments()->where('is_active', true)->where('id', '!=', $enrollment->id)->exists();
+                    $shouldActivate = !$hasActive;
+                    if ($shouldActivate) {
+                        Enrollment::where('user_id', $user->id)->where('id', '!=', $enrollment->id)->update(['is_active' => false]);
+                    }
                     $enrollment->update([
                         'payment_status' => 'APPROVED',
-                        'is_active' => true,
-                        'progress_percentage' => max($enrollment->progress_percentage, 15),
+                        'is_active' => $shouldActivate,
+                        'progress_percentage' => $enrollment->progress_percentage ?? 0,
                     ]);
                 }
             }

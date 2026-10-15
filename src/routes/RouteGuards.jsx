@@ -142,6 +142,7 @@ export const PaymentApprovalGuard = ({ children }) => {
  */
 export const OnboardingGuard = ({ children }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -158,7 +159,10 @@ export const OnboardingGuard = ({ children }) => {
     if (!user.email_verified_at) {
       return <Navigate to={`/verify-email?email=${encodeURIComponent(user.email)}`} replace />;
     }
-    if (user.payment_status === 'APPROVED') {
+    // If student is paying for an additional brevet invoice, allow them to view payment pending screen
+    const searchParams = new URLSearchParams(location.search);
+    const invoiceId = searchParams.get('invoice_id');
+    if (user.payment_status === 'APPROVED' && !invoiceId) {
       return <Navigate to="/dashboard/student" replace />;
     }
   }

@@ -57,21 +57,36 @@ export const GoogleAuthButton = ({
   const [savingConfig, setSavingConfig] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Check backend Google OAuth config on mount
+  // Check backend Google OAuth config on mount or when brevetId changes
   useEffect(() => {
     apiClient
-      .get(ENDPOINTS.AUTH_GOOGLE_URL)
+      .get(ENDPOINTS.AUTH_GOOGLE_URL, { params: { brevet_id: brevetId } })
       .then((res) => {
         setOauthConfig(res);
       })
       .catch(() => {});
-  }, []);
+  }, [brevetId]);
 
   const handleGoogleClick = () => {
+    // Persist selected brevet so it's guaranteed preserved across any redirect flow
+    if (brevetId) {
+      try {
+        localStorage.setItem('nac_pending_brevet_id', brevetId);
+      } catch (e) {}
+    }
+
     // 1. If backend has valid Google Client ID, immediately redirect to accounts.google.com!
     if (oauthConfig?.is_configured && oauthConfig?.auth_url) {
+      let targetUrl = oauthConfig.auth_url;
+      const stateObj = JSON.stringify({ brevet_id: brevetId });
+      if (targetUrl.includes('state=')) {
+        targetUrl = targetUrl.replace(/state=[^&]*/, `state=${encodeURIComponent(stateObj)}`);
+      } else {
+        targetUrl += (targetUrl.includes('?') ? '&' : '?') + `state=${encodeURIComponent(stateObj)}`;
+      }
+
       showToast('Membuka halaman pemilihan akun Google...', 'loading', 2500);
-      window.location.href = oauthConfig.auth_url;
+      window.location.href = targetUrl;
       return;
     }
 
@@ -79,7 +94,8 @@ export const GoogleAuthButton = ({
     const viteClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (viteClientId) {
       const redirectUri = encodeURIComponent(oauthConfig?.redirect_uri || 'http://localhost:8000/api/auth/google/callback');
-      const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${viteClientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20profile%20email&prompt=select_account`;
+      const stateObj = encodeURIComponent(JSON.stringify({ brevet_id: brevetId }));
+      const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${viteClientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20profile%20email&prompt=select_account&state=${stateObj}`;
       showToast('Membuka halaman pemilihan akun Google...', 'loading', 2500);
       window.location.href = googleUrl;
       return;
@@ -295,8 +311,8 @@ export const GoogleAuthButton = ({
                   disabled={loading}
                   onClick={() =>
                     handleSimulateAccount({
-                      name: 'Mugi Aadha',
-                      email: 'mugiaadha@gmail.com',
+                      name: 'Demo Student Tester',
+                      email: 'demo.student@gmail.com',
                       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
                     })
                   }
@@ -305,12 +321,12 @@ export const GoogleAuthButton = ({
                   <div className="flex items-center gap-2.5 overflow-hidden">
                     <img
                       src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80"
-                      alt="Mugi Aadha"
+                      alt="Demo Student Tester"
                       className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0"
                     />
                     <div className="overflow-hidden">
-                      <span className="font-bold text-slate-800 text-[11px] block truncate">Mugi Aadha</span>
-                      <span className="text-[10px] text-slate-500 block truncate">mugiaadha@gmail.com</span>
+                      <span className="font-bold text-slate-800 text-[11px] block truncate">Demo Student Tester</span>
+                      <span className="text-[10px] text-slate-500 block truncate">demo.student@gmail.com</span>
                     </div>
                   </div>
                   <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 shrink-0">

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import paymentService from '../../services/paymentService';
+import userService from '../../services/userService';
 import isDevMode from '../../config/devMode';
 import Badge from '../../components/common/Badge';
 import {
@@ -17,6 +18,7 @@ import {
   ExternalLink,
   ShieldCheck,
   ArrowRight,
+  ArrowLeft,
   Sparkles,
   Loader2,
   X,
@@ -24,14 +26,17 @@ import {
 } from 'lucide-react';
 
 export const PaymentPendingPage = () => {
-  const { user, refreshProfile, switchRole, logout } = useAuth();
+  const { user, refreshProfile, switchRole, setPaymentStatus, logout } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const invoiceIdParam = searchParams.get('invoice_id');
   const fileInputRef = useRef(null);
 
   const [copied, setCopied] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileInfo, setFileInfo] = useState(null);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(
     user?.active_brevet?.payment_proof_url || null
   );
@@ -40,27 +45,56 @@ export const PaymentPendingPage = () => {
   const [simulating, setSimulating] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  // If already approved, automatically redirect to student dashboard
+  const [loadingInvoice, setLoadingInvoice] = useState(Boolean(invoiceIdParam));
+
+  // Load specific invoice if query parameter invoice_id is present
+  useEffect(() => {
+    if (invoiceIdParam) {
+      setLoadingInvoice(true);
+      userService
+        .getEnrollments()
+        .then((list) => {
+          const found = list.find(
+            (e) => e.invoice_id === invoiceIdParam || e.brevet_id === invoiceIdParam || e.slug === invoiceIdParam
+          );
+          if (found) {
+            setSelectedInvoice(found);
+            if (found.payment_proof_url) {
+              setPreviewUrl(found.payment_proof_url);
+            }
+          }
+        })
+        .catch((err) => console.warn('Failed to load invoice param enrollment', err))
+        .finally(() => setLoadingInvoice(false));
+    }
+  }, [invoiceIdParam]);
+
+  // If already approved, automatically redirect to student dashboard (unless explicitly viewing an unapproved invoice)
   useEffect(() => {
     if (user?.role === 'student' && user?.payment_status === 'APPROVED') {
-      navigate('/dashboard/student');
+      if (!invoiceIdParam) {
+        navigate('/dashboard/student');
+      } else if (!loadingInvoice && selectedInvoice && selectedInvoice.payment_status === 'APPROVED') {
+        navigate('/dashboard/student/my-courses');
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, invoiceIdParam, selectedInvoice, loadingInvoice]);
 
   // Sync previewUrl if user already has an uploaded payment proof in database
   useEffect(() => {
-    if (user?.active_brevet?.payment_proof_url && !selectedFile) {
-      setPreviewUrl(user.active_brevet.payment_proof_url);
-      const isPdf = user.active_brevet.payment_proof_url.toLowerCase().endsWith('.pdf');
+    const proofUrl = selectedInvoice?.payment_proof_url || user?.active_brevet?.payment_proof_url;
+    if (proofUrl && !selectedFile) {
+      setPreviewUrl(proofUrl);
+      const isPdf = proofUrl.toLowerCase().endsWith('.pdf');
       setFileInfo({
         name: isPdf ? 'Dokumen_Bukti_Transfer.pdf' : 'Bukti_Transfer_Tersimpan.jpg',
         size: 'Tersimpan di server',
         isPdf,
       });
     }
-  }, [user?.active_brevet?.payment_proof_url, selectedFile]);
+  }, [user?.active_brevet?.payment_proof_url, selectedInvoice, selectedFile]);
 
-  const invoice = user?.active_brevet || {
+  const invoice = selectedInvoice || user?.active_brevet || {
     id: 'brevet-ab',
     title: 'Brevet Pajak A & B Terpadu',
     invoice_id: 'INV-NAC-2026-0892',
@@ -161,10 +195,22 @@ export const PaymentPendingPage = () => {
     try {
       setSimulating(true);
       showToast('Menjalankan simulasi persetujuan instan...', 'loading', 1500);
-      await paymentService.approvePayment(invoice.invoice_id || 'INV-NAC-2026-0892');
-      await switchRole('student', 'APPROVED');
+      try {
+        await paymentService.approvePayment(invoice.invoice_id || 'INV-NAC-2026-0892');
+      } catch (e) {
+        console.warn('Backend payment approve notice:', e);
+      }
+      // Only toggle global user status if not already approved
+      if (user?.payment_status !== 'APPROVED' && setPaymentStatus) {
+        await setPaymentStatus('APPROVED');
+      }
+      await refreshProfile();
       showToast('Pembayaran berhasil disetujui! Membuka akses kelas...', 'success', 3000);
-      navigate('/dashboard/student');
+      if (invoiceIdParam) {
+        navigate('/dashboard/student/my-courses');
+      } else {
+        navigate('/dashboard/student');
+      }
     } catch (err) {
       showToast('Gagal memproses simulasi approval.', 'error');
     } finally {
@@ -200,7 +246,26 @@ export const PaymentPendingPage = () => {
         </div>
 
         {user && (
-          <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 text-xs text-slate-500 shrink-0">
+          <div className="flex items-center gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 text-xs text-slate-500 shrink-0">
+            {user.role === 'student' && user.email_verified_at && (
+              invoiceIdParam ? (
+                <Link
+                  to="/dashboard/student/my-courses"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Kembali ke Kursus Saya
+                </Link>
+              ) : (
+                <Link
+                  to="/dashboard/student"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Dashboard Mahasiswa
+                </Link>
+              )
+            )}
             <span>Akun: <strong>{user.email}</strong></span>
             <button
               type="button"
@@ -208,7 +273,7 @@ export const PaymentPendingPage = () => {
                 await logout();
                 navigate('/login');
               }}
-              className="text-slate-500 hover:text-rose-600 font-medium ml-2 transition"
+              className="text-slate-500 hover:text-rose-600 font-medium ml-1 transition"
             >
               (Ganti Akun)
             </button>

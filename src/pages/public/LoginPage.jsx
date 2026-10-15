@@ -3,6 +3,8 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import GoogleAuthButton from '../../components/auth/GoogleAuthButton';
+import apiClient from '../../services/api/apiClient';
+import ENDPOINTS from '../../services/api/endpoints';
 import isDevMode from '../../config/devMode';
 import {
   Lock,
@@ -57,10 +59,35 @@ export const LoginPage = () => {
       setLoginError(authError);
     } else if (googleToken) {
       hasProcessedGoogleRef.current = true;
+      try {
+        Object.keys(localStorage).forEach((k) => {
+          if (k.startsWith('nac_completed_lessons_')) {
+            localStorage.removeItem(k);
+          }
+        });
+      } catch (e) {}
       localStorage.setItem('nac_auth_token', googleToken);
+
+      const targetBrevetParam = params.get('brevet_id') || localStorage.getItem('nac_pending_brevet_id');
+      if (targetBrevetParam) {
+        try {
+          localStorage.removeItem('nac_pending_brevet_id');
+        } catch (e) {}
+      }
+
       window.history.replaceState({}, document.title, window.location.pathname);
 
-      refreshProfile().then((userData) => {
+      refreshProfile().then(async (userData) => {
+        // If a specific brevet was targeted during registration/login, ensure it is set active
+        if (targetBrevetParam && userData?.role === 'student' && userData?.active_brevet?.id !== targetBrevetParam) {
+          try {
+            await apiClient.post(ENDPOINTS.USER_SET_ACTIVE_BREVET, { brevet_id: targetBrevetParam });
+            userData = await refreshProfile();
+          } catch (e) {
+            console.warn('Auto set active brevet notice:', e);
+          }
+        }
+
         showToast(`Selamat datang kembali, ${userData?.name || 'Mahasiswa'}!`, 'success', 3500);
         if (userData?.role === 'admin') {
           navigate('/admin/dashboard', { replace: true });
