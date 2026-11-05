@@ -65,10 +65,13 @@
             },
             {
               "id": "les-01-03",
-              "title": "Bahan Bacaan & Dokumen Regulasi UU HPP No. 7/2021 (Google Drive)",
-              "type": "pdf",
-              "duration": "40 Halaman",
-              "url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "title": "Bahan Bacaan & Dokumen Regulasi UU HPP No. 7/2021",
+              "type": "video",
+              "duration": "40 Menit",
+              "video_url": "https://www.youtube.com/watch?v=fWsmuziF7hM",
+              "url": "https://www.youtube.com/watch?v=fWsmuziF7hM",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "pdf",
               "is_preview": false
             }
           ],
@@ -100,9 +103,12 @@
             {
               "id": "les-02-02",
               "title": "Simulasi Payroll Spreadsheet & Perhitungan PPh 21 Masa Desember",
-              "type": "excel",
-              "duration": "File Praktik",
-              "url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "type": "video",
+              "duration": "45 Menit",
+              "video_url": "https://www.youtube.com/watch?v=stBBwh6cq48",
+              "url": "https://www.youtube.com/watch?v=stBBwh6cq48",
+              "gdrive_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "excel",
               "is_preview": false
             },
             {
@@ -110,8 +116,8 @@
               "title": "Praktik Pembuatan Bukti Potong 1721-A1 & 1721-VIII pada e-Bupot 21/26",
               "type": "video",
               "duration": "55 Menit",
-              "video_url": "https://www.youtube.com/watch?v=FfuYTRQnNuo",
-              "url": "https://www.youtube.com/watch?v=FfuYTRQnNuo",
+              "video_url": "https://www.youtube.com/watch?v=jmzNTUhkdDE",
+              "url": "https://www.youtube.com/watch?v=jmzNTUhkdDE",
               "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
               "gdrive_type": "word",
               "is_preview": false
@@ -136,18 +142,21 @@
               "title": "Analisis Kasus Pemotongan & Pemungutan PPh Unifikasi",
               "type": "video",
               "duration": "50 Menit",
-              "video_url": "https://www.youtube.com/watch?v=fHL6QAEy_ZI",
-              "url": "https://www.youtube.com/watch?v=fHL6QAEy_ZI",
+              "video_url": "https://www.youtube.com/watch?v=CvX-ML_YJ_I",
+              "url": "https://www.youtube.com/watch?v=CvX-ML_YJ_I",
               "gdrive_url": "https://docs.google.com/presentation/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
               "gdrive_type": "ppt",
               "is_preview": false
             },
             {
               "id": "les-03-02",
-              "title": "Template Kertas Kerja Rekapitulasi e-Bupot Unifikasi (Google Drive)",
-              "type": "excel",
-              "duration": "Kertas Kerja",
-              "url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "title": "Template Kertas Kerja Rekapitulasi e-Bupot Unifikasi",
+              "type": "video",
+              "duration": "40 Menit",
+              "video_url": "https://www.youtube.com/watch?v=-_52s4rxPX4",
+              "url": "https://www.youtube.com/watch?v=-_52s4rxPX4",
+              "gdrive_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "excel",
               "is_preview": false
             }
           ],
@@ -178,10 +187,13 @@
             },
             {
               "id": "les-04-02",
-              "title": "Panduan Modul e-Faktur 4.0 & Skema Pajak Masukan (Google Drive)",
-              "type": "pdf",
-              "duration": "90 Halaman",
-              "url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "title": "Panduan Modul e-Faktur 4.0 & Skema Pajak Masukan",
+              "type": "video",
+              "duration": "45 Menit",
+              "video_url": "https://www.youtube.com/watch?v=gcrzrIn0D-w",
+              "url": "https://www.youtube.com/watch?v=gcrzrIn0D-w",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "pdf",
               "is_preview": false
             }
           ],
@@ -204,18 +216,21 @@
               "title": "Teknik Kertas Kerja Rekonsiliasi Fiskal Positif & Negatif",
               "type": "video",
               "duration": "75 Menit",
-              "video_url": "https://www.youtube.com/watch?v=V0ODG8bEmeo",
-              "url": "https://www.youtube.com/watch?v=V0ODG8bEmeo",
+              "video_url": "https://www.youtube.com/watch?v=VQV6qiuiE-s",
+              "url": "https://www.youtube.com/watch?v=VQV6qiuiE-s",
               "gdrive_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
               "gdrive_type": "excel",
               "is_preview": false
             },
             {
               "id": "les-05-02",
-              "title": "Master Template Kertas Kerja Rekonsiliasi Fiskal Formulir 1771 (Google Sheets)",
-              "type": "excel",
-              "duration": "Format XLS",
-              "url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "title": "Master Template Kertas Kerja Rekonsiliasi Fiskal Formulir 1771",
+              "type": "video",
+              "duration": "60 Menit",
+              "video_url": "https://www.youtube.com/watch?v=0n8wIxviags",
+              "url": "https://www.youtube.com/watch?v=0n8wIxviags",
+              "gdrive_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "excel",
               "is_preview": false
             }
           ],
@@ -317,10 +332,13 @@
             },
             {
               "id": "les-c-02-02",
-              "title": "Template Dokumen Penentuan Harga Transfer (TP Doc Local File) - Google Drive",
-              "type": "word",
-              "duration": "Template Dokumen",
-              "url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "title": "Template Dokumen Penentuan Harga Transfer (TP Doc Local File)",
+              "type": "video",
+              "duration": "50 Menit",
+              "video_url": "https://www.youtube.com/watch?v=g_A8yM18csw",
+              "url": "https://www.youtube.com/watch?v=g_A8yM18csw",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "word",
               "is_preview": false
             }
           ],
@@ -384,10 +402,13 @@
             },
             {
               "id": "les-core-01-02",
-              "title": "E-Book Panduan Interaktif Navigasi Coretax DJP (Google Drive)",
-              "type": "pdf",
-              "duration": "Dokumen PDF",
-              "url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "title": "E-Book Panduan Interaktif Navigasi Coretax DJP",
+              "type": "video",
+              "duration": "40 Menit",
+              "video_url": "https://www.youtube.com/watch?v=uYYykelu4FI",
+              "url": "https://www.youtube.com/watch?v=uYYykelu4FI",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "pdf",
               "is_preview": false
             }
           ],

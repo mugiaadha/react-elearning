@@ -51,7 +51,7 @@ export const CourseLearningPage = () => {
     // Purge any legacy un-scoped key
     try {
       localStorage.removeItem(`nac_completed_lessons_${slug}`);
-    } catch (e) {}
+    } catch (e) { }
 
     // Priority 1: User's real backend enrollment data
     if (user?.active_brevet && (user.active_brevet.slug === slug || user.active_brevet.id === slug)) {
@@ -64,7 +64,7 @@ export const CourseLearningPage = () => {
       if (saved) {
         try {
           return JSON.parse(saved);
-        } catch (e) {}
+        } catch (e) { }
       }
     }
     return [];
@@ -78,7 +78,7 @@ export const CourseLearningPage = () => {
     if (!slug) return;
     try {
       localStorage.removeItem(`nac_completed_lessons_${slug}`);
-    } catch (e) {}
+    } catch (e) { }
 
     if (user?.active_brevet && (user.active_brevet.slug === slug || user.active_brevet.id === slug)) {
       setCompletedLessonIds(user.active_brevet.completed_lessons || []);
@@ -91,7 +91,7 @@ export const CourseLearningPage = () => {
         try {
           setCompletedLessonIds(JSON.parse(saved));
           return;
-        } catch (e) {}
+        } catch (e) { }
       }
     }
 
@@ -137,7 +137,7 @@ export const CourseLearningPage = () => {
           try {
             const parsed = JSON.parse(saved);
             freshCompleted = Array.from(new Set([...freshCompleted, ...parsed]));
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -162,7 +162,7 @@ export const CourseLearningPage = () => {
         if (existingCert) {
           setCertificateData(existingCert);
         }
-      } catch (certErr) {}
+      } catch (certErr) { }
     } catch (err) {
       console.error(err);
     } finally {
@@ -378,7 +378,7 @@ export const CourseLearningPage = () => {
       if (user?.id) {
         localStorage.removeItem(`nac_completed_lessons_${user.id}_${slug}`);
       }
-    } catch (e) {}
+    } catch (e) { }
 
     setCompletedLessonIds([]);
     try {
@@ -408,7 +408,7 @@ export const CourseLearningPage = () => {
         if (user?.id) {
           localStorage.setItem(`nac_completed_lessons_${user.id}_${slug}`, JSON.stringify(updated));
         }
-      } catch (e) {}
+      } catch (e) { }
 
       // Calculate accurately updated progress percentage
       const newCompletedLessons = allCourseLessons.filter((l) => updated.includes(l.id));
@@ -485,7 +485,7 @@ export const CourseLearningPage = () => {
           if (user?.id) {
             localStorage.setItem(`nac_completed_lessons_${user.id}_${slug}`, JSON.stringify(nextCompleted));
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       // Calculate progress percentage after this exam submission
@@ -537,7 +537,7 @@ export const CourseLearningPage = () => {
             spread: 90,
             origin: { y: 0.6 },
           });
-        } catch (e) {}
+        } catch (e) { }
       }
     } catch (err) {
       console.error('Failed to submit exam', err);
@@ -619,7 +619,15 @@ export const CourseLearningPage = () => {
   }
 
   // Find all Google Drive documents in this active module for students to download
-  const gdriveDocuments = regularLessons.filter((l) => l.type !== 'video' && l.url);
+  const gdriveDocuments = regularLessons
+    .filter((l) => l.gdrive_url || (l.type !== 'video' && l.url))
+    .map((l) => ({
+      id: `doc-${l.id}`,
+      title: l.gdrive_title || l.title,
+      type: l.gdrive_type || (l.type !== 'video' ? l.type : 'pdf'),
+      url: l.gdrive_url || l.url,
+      duration: l.gdrive_type ? `Dokumen ${l.gdrive_type.toUpperCase()}` : (l.duration || 'Bahan Ajar'),
+    }));
 
   // Next chapter destination when clicking "Lanjut"
   const nextChapterId =

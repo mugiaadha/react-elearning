@@ -152,7 +152,7 @@ export const TeacherDashboardPage = () => {
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/20 transition text-white"
             >
               <Users className="w-4 h-4 text-amber-300" />
-              Monitoring Mahasiswa ({dashboardData?.total_students_count || 142} Siswa)
+              Monitoring Mahasiswa ({dashboardData?.total_students_count || 0} Siswa)
             </Link>
           </div>
         </div>
@@ -178,7 +178,7 @@ export const TeacherDashboardPage = () => {
             </div>
           </div>
           <div className="text-2xl font-black text-slate-900 font-mono">
-            {dashboardData?.active_classes_count || 2} Program
+            {dashboardData?.active_classes_count || 0} Program
           </div>
           <span className="text-[11px] text-teal-700 font-semibold block truncate">Brevet AB & Brevet C</span>
         </div>
@@ -191,9 +191,9 @@ export const TeacherDashboardPage = () => {
             </div>
           </div>
           <div className="text-2xl font-black text-slate-900 font-mono">
-            {dashboardData?.total_students_count || 142} Siswa
+            {dashboardData?.total_students_count || 0} Siswa
           </div>
-          <span className="text-[11px] text-emerald-600 font-semibold block">92 aktif minggu ini</span>
+          <span className="text-[11px] text-emerald-600 font-semibold block">0 aktif minggu ini</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
@@ -259,11 +259,10 @@ export const TeacherDashboardPage = () => {
             <button
               key={f.key}
               onClick={() => setStatusFilter(f.key)}
-              className={`px-3 py-1.5 rounded-xl font-bold transition ${
-                statusFilter === f.key
-                  ? 'bg-nac-primary text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              className={`px-3 py-1.5 rounded-xl font-bold transition ${statusFilter === f.key
+                ? 'bg-nac-primary text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
             >
               {f.label}
             </button>
@@ -366,11 +365,10 @@ export const TeacherDashboardPage = () => {
 
                       {/* Display Existing Teacher Feedback */}
                       {sub.teacher_feedback && (
-                        <div className={`p-2.5 rounded-xl border text-xs ${
-                          isRevision
-                            ? 'bg-orange-50/80 border-orange-200 text-orange-900'
-                            : 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
-                        }`}>
+                        <div className={`p-2.5 rounded-xl border text-xs ${isRevision
+                          ? 'bg-orange-50/80 border-orange-200 text-orange-900'
+                          : 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+                          }`}>
                           <span className="font-bold block text-[10px] uppercase tracking-wider mb-0.5">
                             {isRevision ? 'Catatan Revisi Terakhir dari Pengajar:' : 'Catatan Apresiasi Pengajar:'}
                           </span>
@@ -530,15 +528,14 @@ export const TeacherDashboardPage = () => {
                 <button
                   type="submit"
                   disabled={submittingReview}
-                  className={`btn-primary text-xs ${
-                    reviewModalType === 'APPROVE' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold'
-                  }`}
+                  className={`btn-primary text-xs ${reviewModalType === 'APPROVE' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold'
+                    }`}
                 >
                   {submittingReview
                     ? 'Menyimpan...'
                     : reviewModalType === 'APPROVE'
-                    ? 'Simpan Kelulusan & Nilai'
-                    : 'Kirimkan Permintaan Revisi'}
+                      ? 'Simpan Kelulusan & Nilai'
+                      : 'Kirimkan Permintaan Revisi'}
                 </button>
               </div>
             </form>

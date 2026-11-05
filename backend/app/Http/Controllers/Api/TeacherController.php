@@ -213,9 +213,12 @@ class TeacherController extends Controller
 
         foreach ($curriculum as $index => &$mod) {
             if (($mod['id'] ?? '') === $moduleId) {
-                if ($request->has('title')) $mod['title'] = $request->input('title');
-                if ($request->has('duration')) $mod['duration'] = $request->input('duration');
-                if ($request->has('lessons')) $mod['lessons'] = $request->input('lessons');
+                if ($request->has('title'))
+                    $mod['title'] = $request->input('title');
+                if ($request->has('duration'))
+                    $mod['duration'] = $request->input('duration');
+                if ($request->has('lessons'))
+                    $mod['lessons'] = $request->input('lessons');
                 if ($request->has('exam')) {
                     $mod['exam'] = array_merge($mod['exam'] ?? [], $request->input('exam'));
                 }
@@ -481,7 +484,7 @@ class TeacherController extends Controller
                     $q->where('brevet_id', $submission->brevet_id);
                     if ($submission->brevet) {
                         $q->orWhere('brevet_id', $submission->brevet->id)
-                          ->orWhere('brevet_id', $submission->brevet->slug);
+                            ->orWhere('brevet_id', $submission->brevet->slug);
                     }
                 })
                 ->first();
@@ -549,7 +552,7 @@ class TeacherController extends Controller
                     $q->where('brevet_id', $submission->brevet_id);
                     if ($submission->brevet) {
                         $q->orWhere('brevet_id', $submission->brevet->id)
-                          ->orWhere('brevet_id', $submission->brevet->slug);
+                            ->orWhere('brevet_id', $submission->brevet->slug);
                     }
                 })
                 ->first();
@@ -586,9 +589,9 @@ class TeacherController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'active_classes_count' => max($brevetsCount, 3),
-                'total_students_count' => max($totalStudents, 142),
-                'average_score' => 94.2,
+                'active_classes_count' => max($brevetsCount, 0),
+                'total_students_count' => max($totalStudents, 0),
+                'average_score' => 0,
                 'pending_count' => $pendingCount,
                 'revision_count' => $revisionCount,
                 'approved_count' => $approvedCount,
