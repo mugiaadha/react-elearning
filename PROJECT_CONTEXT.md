@@ -13,6 +13,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
   - Backend API: `http://127.0.0.1:8000/api` (`cd backend && php artisan serve --port=8000`)
   - Queue Worker: `php artisan queue:listen` (untuk email verification & reminder)
   - Full Stack (All-in-one): `npm run dev`
+  - Docker Compose: `npm run docker:up` / `docker compose up -d` (Backend `8000`, Frontend `5173`, Queue Worker)
 - **Core Environment Keys**:
   - FE (`.env`): `VITE_API_BASE_URL=http://127.0.0.1:8000/api`, `VITE_GOOGLE_CLIENT_ID`, `VITE_DEV_MODE=true`, `VITE_MIDTRANS_CLIENT_KEY`
   - BE (`backend/.env`): `DB_CONNECTION=sqlite`, `FRONTEND_URL=http://localhost:5173`, `MAIL_MAILER=smtp`, `GOOGLE_CLIENT_ID`, `VITE_MIDTRANS_SERVER_KEY`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
@@ -243,3 +244,27 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 
     - **Validasi Media & Seeder Kurikulum**: Master kurikulum di `backend/database/data/brevets_data.json` memuat video materi YouTube riil untuk seluruh bab dan dokumen Google Drive (Excel, Word, PDF); helper `learningHelpers.js` menangani sanitasi URL (embed, shorts, channel mapping @DDTCIndonesia & @DitjenPajakRI) dengan strict-origin policy. Seluruh soal latihan & ujian modul diarahkan ke dokumen studi kasus terstandar Google Docs.
     - **Scoping 1 Bab 1 Dokumen Pendamping (Contextual Handout)**: Pada tampilan pembelajaran siswa (`CourseLearningPage.jsx` & `LessonContentView.jsx`), dokumen Google Drive yang ditampilkan di bawah video kini di-scope secara ketat 1-to-1 dengan bab materi yang sedang aktif (`activeLesson.gdrive_url`). Siswa hanya melihat dan mengunduh bahan ajar yang relevan dengan video yang sedang ditonton, sehingga tidak membingungkan atau tercampur dengan dokumen bab lain dalam modul.
+
+
+---
+
+## 6. Docker Stack & Anti-php2shell Security Architecture
+
+1. **Docker Orchestration**:
+   - `docker-compose.yml` (Development) & `docker-compose.prod.yml` (Production Nginx SPA).
+   - Container Services:
+     - `nac-backend`: PHP 8.2 CLI SQLite port `8000`.
+     - `nac-queue-worker`: Background queue worker (`queue:listen`).
+     - `nac-frontend`: Vite development server / Nginx production port `5173`.
+   - Script Shortcuts di `package.json`: `npm run docker:up`, `npm run docker:down`, `npm run docker:build`, `npm run docker:logs`, `npm run docker:restart`, `npm run docker:seed`.
+
+2. **Hardening Anti-php2shell / Webshell Execution Prevention**:
+   - **PHP Engine (`backend/docker/security.ini`)**: Menonaktifkan fungsi berbahaya via `disable_functions` (`exec`, `passthru`, `shell_exec`, `system`, `proc_open`, `popen`, `show_source`, dll), `allow_url_include = Off`, `expose_php = Off`.
+   - **Upload Whitelist & Signature Inspection (`AuthController::submitTask`)**:
+     - Whitelist ketat: `pdf,doc,docx,xls,xlsx,csv,zip,rar,jpg,jpeg,png`.
+     - Blacklist & double-extension block: Menolak file seperti `shell.php.jpg` atau ekstensi eksekutabel lainnya.
+     - Deep inspection: Membaca 4KB header file untuk mendeteksi signature kode PHP (`<?php`, `eval(`, `system(`, `passthru(`, dll) meskipun disamarkan dalam file PDF atau gambar.
+   - **File Naming & Path Isolation**:
+     - File di-rename acak (`jawaban_{id}_{randomToken}.{ext}`).
+     - Storage publik dilindungi [.htaccess](file:///c:/workspace/belajar-react/elearning-react/backend/storage/app/public/.htaccess) (`php_flag engine off`) dan rule block Nginx untuk mencegah eksekusi langsung.
+   - **Automated Security Tests**: [SecurityWebshellTest.php](file:///c:/workspace/belajar-react/elearning-react/backend/tests/Feature/SecurityWebshellTest.php) menguji pencegahan unggahan file `.php`, file double-extension, file PDF bersignature PHP, serta kelolosan file PDF yang valid.

@@ -1,0 +1,52 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nac-backend-prod
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://localhost:8000
+      - FRONTEND_URL=http://localhost
+      - DB_CONNECTION=sqlite
+    networks:
+      - nac-network
+
+  queue:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nac-queue-prod
+    restart: always
+    command: ["php", "artisan", "queue:work", "--tries=3"]
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_CONNECTION=sqlite
+    depends_on:
+      - backend
+    networks:
+      - nac-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: nac-frontend-prod
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - nac-network
+
+networks:
+  nac-network:
+    driver: bridge
+

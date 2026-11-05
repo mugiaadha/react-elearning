@@ -1,0 +1,91 @@
+services:
+  # ---------------------------------------------
+  # 1. Laravel 12 Backend API
+  # ---------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nac-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+      - backend-vendor:/var/www/html/vendor
+    environment:
+      - APP_NAME=NAC-ELEARNING
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - FRONTEND_URL=http://localhost:5173
+      - DB_CONNECTION=sqlite
+      - QUEUE_CONNECTION=database
+    networks:
+      - nac-network
+
+  # ---------------------------------------------
+  # 2. Laravel Queue Worker (Email OTP & Async)
+  # ---------------------------------------------
+  queue:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nac-queue-worker
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:listen", "--tries=2", "--backoff=1800"]
+    volumes:
+      - ./backend:/var/www/html
+      - backend-vendor:/var/www/html/vendor
+    environment:
+      - APP_NAME=NAC-ELEARNING
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - FRONTEND_URL=http://localhost:5173
+      - DB_CONNECTION=sqlite
+      - QUEUE_CONNECTION=database
+    depends_on:
+      - backend
+    networks:
+      - nac-network
+
+  # ---------------------------------------------
+  # 3. React 19 + Vite Frontend (Dev Server)
+  # ---------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: nac-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+      - ./vite.config.js:/app/vite.config.js
+      - ./tailwind.config.js:/app/tailwind.config.js
+      - ./postcss.config.js:/app/postcss.config.js
+      - frontend-node-modules:/app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api
+      - VITE_DEV_MODE=true
+    depends_on:
+      - backend
+    networks:
+      - nac-network
+
+# ---------------------------------------------
+# Named Volumes & Networks
+# ---------------------------------------------
+volumes:
+  backend-vendor:
+  frontend-node-modules:
+
+networks:
+  nac-network:
+    driver: bridge
+

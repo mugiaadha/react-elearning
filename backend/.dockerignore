@@ -1,0 +1,16 @@
+vendor
+bootstrap/cache/*.php
+!bootstrap/cache/.gitignore
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+.env
+.env.backup
+.phpunit.cache
+.git
+.github
+node_modules
+npm-debug.log
+yarn-error.log
+
