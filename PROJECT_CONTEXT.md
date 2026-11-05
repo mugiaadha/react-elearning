@@ -102,7 +102,8 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 | :--- | :--- | :--- |
 | **`users`** | Akun pengguna (`id`, `string_id`, `name`, `email`, `role`, `avatar`, `payment_status`, `google_id`, `email_verified_at`). Role: `student`, `teacher`, `admin`. | `hasMany(Enrollment)`, `hasMany(Payment)`, `hasMany(Certificate)` |
 | **`brevets`** | Program pelatihan (`id`: `brevet-ab`, `brevet-c`, `coretax-mastery`, `slug`, `title`, `price`, `instructor`, `curriculum` [JSON]). | `hasMany(Batch)`, `hasMany(Enrollment)`, `hasMany(Payment)` |
-| **`batches`** | Angkatan kelas / Cohort (`id`, `brevet_id`, `batch_name`, `batch_code`, `start_date`, `end_date`, `status`: `open`/`ongoing`/`finished`, `curriculum` [JSON snapshot terkunci]). | `belongsTo(Brevet)`, `hasMany(Enrollment)`, `hasMany(Submission)` |
+| **`batches`** | Angkatan kelas / Cohort (`id`, `brevet_id`, `assigned_teacher_id`, `batch_name`, `batch_code`, `start_date`, `end_date`, `status`: `open`/`ongoing`/`finished`, `curriculum` [JSON snapshot terkunci]). | `belongsTo(Brevet)`, `belongsTo(User, assignedTeacher)`, `belongsToMany(User, batch_teachers)`, `hasMany(Enrollment)`, `hasMany(Submission)` |
+| **`batch_teachers`** | Tabel pivot multi-guru per batch (`batch_id`, `teacher_id`, `role`: `primary`/`reviewer`). | `belongsTo(Batch)`, `belongsTo(User)` |
 | **`enrollments`** | Kursus yang diambil siswa (`user_id`, `brevet_id`, `batch_id`, `status`: `ACTIVE`/`PASSED`, `passed_at`, `invoice_number`, `is_active`, `payment_status`, `payment_method`, `progress_percentage`, `completed_lessons` [JSON]). | `belongsTo(User)`, `belongsTo(Brevet)`, `belongsTo(Batch)` |
 | **`payments`** | Riwayat transaksi tagihan Midtrans (`id`: `PAY-XXXX`, `invoice_number`, `user_id`, `brevet_id`, `amount`, `payment_method`, `payment_type`, `snap_token`, `snap_redirect_url`, `transaction_id`, `transaction_status`, `fraud_status`, `settlement_time`, `status`: `PENDING_APPROVAL` / `APPROVED` / `REJECTED`). | `belongsTo(User)`, `belongsTo(Brevet)` |
 | **`submissions`** | Tugas / ulangan modul siswa (`id`: `sub-XXXX`, `user_id`, `brevet_id`, `batch_id`, `module_id`, `task`, `submission_url`, `status`: `PENDING` / `APPROVED` / `REVISION`, `score`, `teacher_feedback`). | `belongsTo(User)`, `belongsTo(Brevet)`, `belongsTo(Batch)` |
@@ -160,9 +161,11 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 ### E. Backoffice Admin & Teacher Portal
 - `GET  /admin/stats` : Ringkasan statistik siswa aktif, revenue, dan guru.
 - `GET/POST /admin/teachers` : Manajemen & undangan akun instruktur/guru.
-- `GET  /teacher/dashboard` : Ringkasan metrik kelas binaan guru.
+- `GET  /teacher/teachers` : Daftar seluruh pengajar aktif untuk penugasan tim reviewer angkatan.
+- `GET  /teacher/dashboard` : Ringkasan metrik kelas binaan guru (termasuk kelas di mana guru menjadi co-reviewer).
 - `GET  /teacher/brevets/{id}/batches` : Daftar batch & jumlah siswa terdaftar per program.
 - `POST /teacher/brevets/{id}/batches` : Buka angkatan baru dengan snapshot kurikulum terkunci.
+- `PUT  /teacher/brevets/{id}/batches/{batchId}` : Edit info angkatan, atur tim guru reviewer, dan ubah status dengan aturan eksklusivitas.
 - `GET  /teacher/submissions` : Daftar ujian modul siswa yang perlu dinilai/revisi.
 - `POST /teacher/submissions/{id}/review` : Berikan revisi (`status: REVISION`) atau lulus (`status: APPROVED`) beserta nilai.
 - `GET/POST /teacher/materials` : Unggah materi ajar tambahan untuk modul.
@@ -226,5 +229,17 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Pemberian Batch Otomatis**: Setiap pendaftaran baru (onboarding, Google OAuth, maupun brevet tambahan) otomatis diikatkan ke batch aktif (`status: 'open'` / `'ongoing'`) dari program brevet terkait.
    - **Tampilan UI Konsisten**: Nama angkatan (contoh: "Batch 42 - Reguler", "Batch 1 - Akselerasi Coretax DJP") ditampilkan jelas pada Dashboard Siswa, Kursus Saya, Silabus Sidebar, dan Portal Pengajar.
    - **Manajemen Batch di Portal Guru**: Pengajar dapat membuka angkatan baru kapan saja via tombol *"+ Buka Angkatan Baru"* (`CreateBatchModal.jsx`) pada `TeacherCoursesPage.jsx`, menyematkan materi susulan/opsional via `AddLessonModal.jsx`, serta memfilter dan memonitor siswa per angkatan pada `TeacherStudentsPage.jsx` dan `TeacherDashboardPage.jsx`.
+   - **Aturan Spesial Status Batch (Eksklusivitas Status Aktif)**:
+     * Dalam 1 program brevet, status **`open` (Dalam Pendaftaran)** dan **`ongoing` (Sedang Berjalan)** masing-masing **hanya boleh ada maksimal 1 angkatan**.
+     * Jika pengajar membuka atau mengedit status angkatan menjadi `open` atau `ongoing`, angkatan lain dalam program brevet tersebut yang memiliki status sama akan **otomatis diubah menjadi `finished` (nonaktif)**.
+     * Status **`finished` (nonaktif / selesai)** tidak memiliki batasan jumlah (bebas berapa saja).
+   - **Edit Angkatan & Multi-Guru Reviewer (Co-Teaching)**:
+     * Angkatan dapat diedit kapan saja (`EditBatchModal.jsx` / `PUT /teacher/brevets/{id}/batches/{batchId}`) untuk memperbarui nama, tanggal pelaksanaan, status, dan tim guru.
+     * Guru pengampu dapat menugaskan guru-guru lain ke dalam angkatan (`batch_teachers` pivot table) untuk membantu memantau kelas dan menilai lembar jawaban studi kasus murid.
+     * Seluruh guru yang ditugaskan (baik pengampu utama maupun tim reviewer) otomatis mendapatkan akses data mahasiswa dan antrean penilaian tugas batch tersebut pada portal dashboard pengajar (`TeacherController::getTeacherBatchIds`).
+   - **Otomasi Pembuatan Batch & Assign Guru**: Saat pengajar membuka angkatan baru (`POST /teacher/brevets/{id}/batches`), sistem secara otomatis meng-assign angkatan baru ke guru yang sedang login (`assigned_teacher_id = auth()->id()`).
+   - **Scoping Mahasiswa & Tugas Berbasis Batch**: Data mahasiswa pada daftar monitoring (`GET /teacher/students`), antrean penilaian tugas (`GET /teacher/submissions`), dan metrik ringkasan dashboard (`GET /teacher/dashboard`) ter-filter secara otomatis hanya untuk mahasiswa yang terdaftar di angkatan (batch) yang diampu oleh guru yang sedang login (`assigned_teacher_id = auth()->id()`). Akun administrator tetap memiliki visibilitas global.
+   - **Review Soal & Jawaban Studi Kasus**: API pengumpulan tugas (`GET /teacher/submissions`) menyertakan metadata soal ujian (`question_url`, `question_title`, `question_description`) dari kurikulum modul terkait. Dashboard pengajar menampilkan tombol cepat "Review Soal Ujian (GDrive)" berdampingan dengan "Buka Jawaban Murid (GDrive)" serta panel acuan penilaian di dalam modal evaluasi agar instruktur dapat membandingkan soal dan jawaban mahasiswa dengan mudah.
 
-    - **Validasi Media & Seeder Kurikulum**: Master kurikulum di `backend/database/data/brevets_data.json` memuat video materi YouTube riil untuk seluruh bab dan dokumen Google Drive (Excel, Word, PDF); helper `learningHelpers.js` menangani sanitasi URL (embed, shorts, channel mapping @DDTCIndonesia & @DitjenPajakRI) dengan strict-origin policy. Frontend menampilkan pemutar video interaktif di bagian atas dan daftar dokumen pendamping Google Drive yang dapat diunduh di bagian bawah.
+    - **Validasi Media & Seeder Kurikulum**: Master kurikulum di `backend/database/data/brevets_data.json` memuat video materi YouTube riil untuk seluruh bab dan dokumen Google Drive (Excel, Word, PDF); helper `learningHelpers.js` menangani sanitasi URL (embed, shorts, channel mapping @DDTCIndonesia & @DitjenPajakRI) dengan strict-origin policy. Seluruh soal latihan & ujian modul diarahkan ke dokumen studi kasus terstandar Google Docs.
+    - **Scoping 1 Bab 1 Dokumen Pendamping (Contextual Handout)**: Pada tampilan pembelajaran siswa (`CourseLearningPage.jsx` & `LessonContentView.jsx`), dokumen Google Drive yang ditampilkan di bawah video kini di-scope secara ketat 1-to-1 dengan bab materi yang sedang aktif (`activeLesson.gdrive_url`). Siswa hanya melihat dan mengunduh bahan ajar yang relevan dengan video yang sedang ditonton, sehingga tidak membingungkan atau tercampur dengan dokumen bab lain dalam modul.

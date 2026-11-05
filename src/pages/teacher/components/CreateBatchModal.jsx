@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Calendar, ShieldCheck, Sparkles, Plus, X, Lock } from 'lucide-react';
+import { Users, Calendar, ShieldCheck, Sparkles, Plus, X, Lock, Check, UserCheck, AlertCircle } from 'lucide-react';
 import apiClient from '../../../services/api/apiClient';
 import ENDPOINTS from '../../../services/api/endpoints';
 import { useToast } from '../../../context/ToastContext';
@@ -18,8 +18,29 @@ export const CreateBatchModal = ({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [status, setStatus] = useState('open');
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState([]);
+  const [availableTeachers, setAvailableTeachers] = useState([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // Fetch available teachers
+  useEffect(() => {
+    if (isOpen) {
+      const fetchTeachers = async () => {
+        try {
+          setLoadingTeachers(true);
+          const res = await apiClient.get(ENDPOINTS.TEACHER_LIST);
+          setAvailableTeachers(res.data || []);
+        } catch (err) {
+          console.warn('Failed to load teachers list', err);
+        } finally {
+          setLoadingTeachers(false);
+        }
+      };
+      fetchTeachers();
+    }
+  }, [isOpen]);
 
   // Initialize sensible defaults when modal opens
   useEffect(() => {
@@ -39,11 +60,20 @@ export const CreateBatchModal = ({
       setStartDate(today.toISOString().split('T')[0]);
       setEndDate(inTwoMonths.toISOString().split('T')[0]);
       setStatus('open');
+      setSelectedTeacherIds([]);
       setError(null);
     }
   }, [isOpen, currentBrevet, existingBatchesCount]);
 
   if (!isOpen || !currentBrevet) return null;
+
+  const toggleTeacher = (teacherId) => {
+    setSelectedTeacherIds((prev) =>
+      prev.includes(teacherId)
+        ? prev.filter((id) => id !== teacherId)
+        : [...prev, teacherId]
+    );
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,6 +92,7 @@ export const CreateBatchModal = ({
         start_date: startDate || undefined,
         end_date: endDate || undefined,
         status: status,
+        teacher_ids: selectedTeacherIds,
       };
 
       const res = await apiClient.post(
@@ -112,15 +143,15 @@ export const CreateBatchModal = ({
           </button>
         </div>
 
-        {/* Explain Immutable Snapshot Benefit */}
+        {/* Explain Immutable Snapshot Benefit & Auto Deactivation */}
         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-2xl p-3.5 text-xs text-emerald-950 flex items-start gap-2.5">
           <Lock className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <span className="font-bold text-emerald-900 block">
-              Kurikulum Snapshot Terkunci Otomatis (Cohort-Based)
+              Kurikulum Terkunci & Aturan Status Tunggal
             </span>
             <p className="text-[11px] text-emerald-800 leading-relaxed">
-              Seluruh modul dan bab materi master saat ini ({currentBrevet.curriculum?.length || 0} modul) akan disalin dan dikunci untuk angkatan ini. Perubahan kurikulum di masa depan tidak akan mengganggu progres murid di angkatan ini.
+              Status <strong>Dalam Pendaftaran</strong> dan <strong>Sedang Berjalan</strong> hanya boleh aktif untuk 1 angkatan per program. Jika Anda membuka angkatan dengan status tersebut, angkatan lama dengan status yang sama otomatis dinonaktifkan (selesai).
             </p>
           </div>
         </div>
@@ -200,6 +231,72 @@ export const CreateBatchModal = ({
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs"
               />
             </div>
+          </div>
+
+          {/* Tim Guru Pengampu & Reviewer (Multi-Teacher Assignment) */}
+          <div className="pt-2 border-t border-slate-100 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-slate-800 flex items-center gap-1.5">
+                <UserCheck className="w-4 h-4 text-nac-primary" />
+                <span>Tugaskan Guru Tambahan (Reviewer Jawaban)</span>
+              </label>
+              <span className="text-[10px] text-slate-400 font-semibold">
+                {selectedTeacherIds.length} Guru Dipilih
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Opsional: Pilih guru lain yang ingin ditugaskan untuk ikut memantau kelas dan membantu menilai jawaban tugas murid.
+            </p>
+
+            {loadingTeachers ? (
+              <div className="py-2 text-center text-slate-400 text-xs animate-pulse">
+                Memuat daftar pengajar...
+              </div>
+            ) : availableTeachers.length > 0 && (
+              <div className="grid grid-cols-1 gap-2 max-h-36 overflow-y-auto pr-1">
+                {availableTeachers.map((tch) => {
+                  const isSelected = selectedTeacherIds.includes(tch.id);
+
+                  return (
+                    <div
+                      key={tch.id}
+                      onClick={() => toggleTeacher(tch.id)}
+                      className={`p-2 rounded-xl border flex items-center justify-between gap-2.5 cursor-pointer transition ${
+                        isSelected
+                          ? 'bg-amber-50/80 border-amber-300 text-amber-950 font-medium'
+                          : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img
+                          src={tch.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+                          alt={tch.name}
+                          className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200"
+                        />
+                        <div className="min-w-0">
+                          <span className="text-xs font-semibold truncate block">
+                            {tch.name}
+                          </span>
+                          <span className="text-[10px] text-slate-400 block truncate">
+                            {tch.email}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 transition ${
+                          isSelected
+                            ? 'bg-amber-500 text-slate-950'
+                            : 'border border-slate-300 bg-slate-50'
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">

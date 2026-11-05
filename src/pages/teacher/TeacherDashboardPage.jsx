@@ -378,22 +378,37 @@ export const TeacherDashboardPage = () => {
                     </div>
 
                     <div className="md:col-span-4 flex flex-col sm:flex-row md:flex-col gap-2 justify-end">
-                      {/* Open Google Drive Submission Link */}
-                      {sub.submission_url ? (
-                        <a
-                          href={sub.submission_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200 transition shadow-sm"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5 text-sky-600" />
-                          Buka Lembar Jawaban (Google Drive)
-                        </a>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic text-center">
-                          (Link Google Drive tidak terdeteksi)
-                        </span>
-                      )}
+                      {/* Action Links: Buka Soal Ujian & Buka Jawaban Mahasiswa */}
+                      <div className="flex flex-col gap-1.5">
+                        {sub.question_url && (
+                          <a
+                            href={sub.question_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200 transition shadow-2xs"
+                            title="Buka Soal Studi Kasus Ujian di Google Drive"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Review Soal Ujian (GDrive)</span>
+                          </a>
+                        )}
+
+                        {sub.submission_url ? (
+                          <a
+                            href={sub.submission_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200 transition shadow-2xs"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5 text-sky-600" />
+                            <span>Buka Jawaban Murid (GDrive)</span>
+                          </a>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic text-center">
+                            (Link Google Drive tidak terdeteksi)
+                          </span>
+                        )}
+                      </div>
 
                       {/* Evaluation Action Buttons */}
                       <div className="flex items-center gap-2">
@@ -453,6 +468,65 @@ export const TeacherDashboardPage = () => {
               >
                 &times;
               </button>
+            </div>
+
+            {/* Lembar Acuan Penilaian: Soal Ujian & Jawaban Murid */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <BookOpen className="w-3.5 h-3.5 text-nac-primary" />
+                  Lembar Acuan Penilaian
+                </span>
+                <span className="text-[11px] font-medium text-slate-500 truncate max-w-[200px]">
+                  {activeSubmission.question_title || activeSubmission.module_title}
+                </span>
+              </div>
+
+              {activeSubmission.question_description && (
+                <div className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200 space-y-1">
+                  <span className="font-bold text-slate-800 block text-[11px]">
+                    Instruksi / Soal Studi Kasus:
+                  </span>
+                  <p className="text-[11px] text-slate-600 leading-relaxed line-clamp-3">
+                    {activeSubmission.question_description}
+                  </p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                {activeSubmission.question_url ? (
+                  <a
+                    href={activeSubmission.question_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 border border-amber-300/70 transition shadow-2xs"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Lihat Soal Ujian (GDrive)</span>
+                    <ExternalLink className="w-3 h-3 text-amber-600" />
+                  </a>
+                ) : (
+                  <span className="text-[10px] text-slate-400 italic text-center p-2">
+                    (Soal online tidak dilampirkan)
+                  </span>
+                )}
+
+                {activeSubmission.submission_url ? (
+                  <a
+                    href={activeSubmission.submission_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-sky-500/10 hover:bg-sky-500/20 text-sky-900 border border-sky-300/70 transition shadow-2xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-sky-700" />
+                    <span>Buka Jawaban Murid (GDrive)</span>
+                  </a>
+                ) : (
+                  <span className="text-[10px] text-slate-400 italic text-center p-2">
+                    (Jawaban murid tidak ditemukan)
+                  </span>
+                )}
+              </div>
             </div>
 
             <form onSubmit={handleSubmitReview} className="space-y-4 text-xs">

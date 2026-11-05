@@ -76,6 +76,20 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $teacher2 = User::updateOrCreate(
+            ['email' => 'hendra.wijaya@nactaxcenter.id'],
+            [
+                'name' => 'dr. Hendra Wijaya, M.Si., BKP',
+                'password' => Hash::make('password123'),
+                'string_id' => 'usr-teacher-02',
+                'phone' => '+62 813-4455-6677',
+                'role' => 'teacher',
+                'avatar' => 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
+                'payment_status' => 'APPROVED',
+                'email_verified_at' => now(),
+            ]
+        );
+
         $admin = User::updateOrCreate(
             ['email' => 'admin@nactaxcenter.id'],
             [
@@ -127,6 +141,7 @@ class DatabaseSeeder extends Seeder
             ['batch_code' => 'BAT-AB-42'],
             [
                 'brevet_id' => 'brevet-ab',
+                'assigned_teacher_id' => $teacher->id,
                 'batch_name' => 'Batch 42 - Reguler',
                 'status' => 'ongoing',
                 'start_date' => now()->startOfMonth(),
@@ -134,11 +149,13 @@ class DatabaseSeeder extends Seeder
                 'curriculum' => Brevet::find('brevet-ab')?->curriculum ?? [],
             ]
         );
+        $batchAB->teachers()->syncWithoutDetaching([$teacher->id, $teacher2->id]);
 
         $batchC = \App\Models\Batch::updateOrCreate(
             ['batch_code' => 'BAT-C-18'],
             [
                 'brevet_id' => 'brevet-c',
+                'assigned_teacher_id' => $teacher->id,
                 'batch_name' => 'Batch 18 - Eksekutif',
                 'status' => 'ongoing',
                 'start_date' => now()->startOfMonth(),
@@ -146,11 +163,13 @@ class DatabaseSeeder extends Seeder
                 'curriculum' => Brevet::find('brevet-c')?->curriculum ?? [],
             ]
         );
+        $batchC->teachers()->syncWithoutDetaching([$teacher->id]);
 
         $batchCore = \App\Models\Batch::updateOrCreate(
             ['batch_code' => 'BAT-CORE-01'],
             [
                 'brevet_id' => 'coretax-mastery',
+                'assigned_teacher_id' => $teacher->id,
                 'batch_name' => 'Batch 1 - Akselerasi Coretax DJP',
                 'status' => 'ongoing',
                 'start_date' => now()->startOfMonth(),
@@ -158,6 +177,7 @@ class DatabaseSeeder extends Seeder
                 'curriculum' => Brevet::find('coretax-mastery')?->curriculum ?? [],
             ]
         );
+        $batchCore->teachers()->syncWithoutDetaching([$teacher->id]);
 
         // 3. Seed Enrollments
         Enrollment::updateOrCreate(

@@ -19,12 +19,14 @@ import {
   FolderPlus,
   Users,
   Calendar,
-  Lock
+  Lock,
+  Edit3
 } from 'lucide-react';
 import apiClient from '../../services/api/apiClient';
 import ENDPOINTS from '../../services/api/endpoints';
 import { CreateBrevetModal } from './components/CreateBrevetModal';
 import { CreateBatchModal } from './components/CreateBatchModal';
+import { EditBatchModal } from './components/EditBatchModal';
 import { CreateModuleModal } from './components/CreateModuleModal';
 import { AddLessonModal } from './components/AddLessonModal';
 import { EditExamModal } from './components/EditExamModal';
@@ -42,6 +44,8 @@ export const TeacherCoursesPage = () => {
   // Modals state
   const [isBrevetModalOpen, setIsBrevetModalOpen] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [isEditBatchModalOpen, setIsEditBatchModalOpen] = useState(false);
+  const [selectedBatchToEdit, setSelectedBatchToEdit] = useState(null);
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
@@ -566,14 +570,27 @@ export const TeacherCoursesPage = () => {
                       </div>
                     </div>
 
-                    <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                    <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 text-[11px] text-slate-500">
                       <span className="flex items-center gap-1 text-emerald-700 font-medium">
                         <Lock className="w-3 h-3 text-emerald-600" />
-                        Kurikulum Terkunci
+                        Terkunci
                       </span>
-                      <span className="font-mono text-slate-400">
-                        {modulesCount} Modul
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-slate-400">
+                          {modulesCount} Modul
+                        </span>
+                        <button
+                          onClick={() => {
+                            setSelectedBatchToEdit(batch);
+                            setIsEditBatchModalOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100/80 px-2.5 py-1 rounded-lg border border-amber-200/70 transition"
+                          title="Edit Angkatan dan Pengampu"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>Edit</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -663,6 +680,21 @@ export const TeacherCoursesPage = () => {
         currentBrevet={currentBrevet}
         existingBatchesCount={batches.length}
         onBatchCreated={() => {
+          fetchBatches(currentBrevet?.id || selectedBrevetId);
+          fetchBrevets();
+        }}
+      />
+
+      {/* MODAL 1C: Edit Cohort Batch */}
+      <EditBatchModal
+        isOpen={isEditBatchModalOpen}
+        onClose={() => {
+          setIsEditBatchModalOpen(false);
+          setSelectedBatchToEdit(null);
+        }}
+        batch={selectedBatchToEdit}
+        currentBrevet={currentBrevet}
+        onBatchUpdated={() => {
           fetchBatches(currentBrevet?.id || selectedBrevetId);
           fetchBrevets();
         }}

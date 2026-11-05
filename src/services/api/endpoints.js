@@ -50,9 +50,11 @@ export const ENDPOINTS = {
   CERTIFICATE_VERIFY: (certId) => `/certificates/${certId}/verify`,
 
   // Teacher Portal
+  TEACHER_LIST: '/teacher/teachers',
   TEACHER_STUDENTS: '/teacher/students',
   TEACHER_BREVETS: '/teacher/brevets',
   TEACHER_BREVET_BATCHES: (brevetId) => `/teacher/brevets/${brevetId}/batches`,
+  TEACHER_UPDATE_BATCH: (brevetId, batchId) => `/teacher/brevets/${brevetId}/batches/${batchId}`,
   TEACHER_STORE_MODULE: (brevetId) => `/teacher/brevets/${brevetId}/modules`,
   TEACHER_UPDATE_MODULE: (brevetId, moduleId) => `/teacher/brevets/${brevetId}/modules/${moduleId}`,
   TEACHER_DELETE_MODULE: (brevetId, moduleId) => `/teacher/brevets/${brevetId}/modules/${moduleId}`,

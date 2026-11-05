@@ -117,7 +117,7 @@ export const LessonContentView = ({
     <div className="flex items-center justify-between">
       <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
         <FileText className="w-3.5 h-3.5 text-nac-primary" />
-        Dokumen Bahan Ajar Google Drive (Download Materi dari Guru):
+        Dokumen Pendamping Bab Ini (Download Materi):
       </h4>
       <span className="text-[11px] text-slate-400">Unduh & Pelajari</span>
     </div>

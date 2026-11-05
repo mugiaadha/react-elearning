@@ -8,6 +8,7 @@ class Batch extends Model
 {
     protected $fillable = [
         'brevet_id',
+        'assigned_teacher_id',
         'batch_name',
         'batch_code',
         'start_date',
@@ -25,6 +26,18 @@ class Batch extends Model
     public function brevet()
     {
         return $this->belongsTo(Brevet::class, 'brevet_id', 'id');
+    }
+
+    public function assignedTeacher()
+    {
+        return $this->belongsTo(User::class, 'assigned_teacher_id');
+    }
+
+    public function teachers()
+    {
+        return $this->belongsToMany(User::class, 'batch_teachers', 'batch_id', 'teacher_id')
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     public function enrollments()

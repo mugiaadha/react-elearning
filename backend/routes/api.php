@@ -72,11 +72,14 @@ $registerRoutes = function () {
     Route::delete('/admin/teachers/{id}', [AdminController::class, 'deleteTeacher']);
 
     // 7. Teacher Portal
+    Route::get('/teacher/teachers', [TeacherController::class, 'teacherList']);
     Route::get('/teacher/students', [TeacherController::class, 'students']);
     Route::get('/teacher/brevets', [TeacherController::class, 'brevets']);
     Route::post('/teacher/brevets', [TeacherController::class, 'storeBrevet']);
     Route::get('/teacher/brevets/{id}/batches', [TeacherController::class, 'batches']);
     Route::post('/teacher/brevets/{id}/batches', [TeacherController::class, 'storeBatch']);
+    Route::put('/teacher/brevets/{id}/batches/{batchId}', [TeacherController::class, 'updateBatch']);
+    Route::put('/teacher/batches/{batchId}', [TeacherController::class, 'updateBatch']);
     Route::post('/teacher/brevets/{id}/modules', [TeacherController::class, 'storeModule']);
     Route::put('/teacher/brevets/{id}/modules/{moduleId}', [TeacherController::class, 'updateModule']);
     Route::delete('/teacher/brevets/{id}/modules/{moduleId}', [TeacherController::class, 'deleteModule']);

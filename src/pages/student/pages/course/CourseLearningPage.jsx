@@ -618,16 +618,16 @@ export const CourseLearningPage = () => {
     );
   }
 
-  // Find all Google Drive documents in this active module for students to download
-  const gdriveDocuments = regularLessons
-    .filter((l) => l.gdrive_url || (l.type !== 'video' && l.url))
-    .map((l) => ({
-      id: `doc-${l.id}`,
-      title: l.gdrive_title || l.title,
-      type: l.gdrive_type || (l.type !== 'video' ? l.type : 'pdf'),
-      url: l.gdrive_url || l.url,
-      duration: l.gdrive_type ? `Dokumen ${l.gdrive_type.toUpperCase()}` : (l.duration || 'Bahan Ajar'),
-    }));
+  // Find the companion Google Drive document specific to the active lesson (1 video = 1 contextual document)
+  const activeLessonDocuments = (activeLesson?.gdrive_url || (activeLesson?.type !== 'video' && activeLesson?.url))
+    ? [{
+        id: `doc-${activeLesson.id}`,
+        title: activeLesson.gdrive_title || activeLesson.title,
+        type: activeLesson.gdrive_type || (activeLesson.type !== 'video' ? activeLesson.type : 'pdf'),
+        url: activeLesson.gdrive_url || activeLesson.url,
+        duration: activeLesson.gdrive_type ? `Dokumen ${activeLesson.gdrive_type.toUpperCase()}` : (activeLesson.duration || 'Bahan Ajar'),
+      }]
+    : [];
 
   // Next chapter destination when clicking "Lanjut"
   const nextChapterId =
@@ -723,7 +723,7 @@ export const CourseLearningPage = () => {
               regularLessons={regularLessons}
               completedLessonIds={completedLessonIds}
               nextChapterId={nextChapterId}
-              gdriveDocuments={gdriveDocuments}
+              gdriveDocuments={activeLessonDocuments}
               onCompleteAndNext={handleCompleteAndNext}
             />
           ) : (

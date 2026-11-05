@@ -62,4 +62,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(Certificate::class);
     }
+
+    public function assignedBatches()
+    {
+        return $this->hasMany(Batch::class, 'assigned_teacher_id');
+    }
+
+    public function teachingBatches()
+    {
+        return $this->belongsToMany(Batch::class, 'batch_teachers', 'teacher_id', 'batch_id')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
 }
