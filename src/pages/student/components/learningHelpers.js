@@ -13,7 +13,19 @@ export const formatYouTubeEmbedUrl = (url) => {
     return `https://drive.google.com/file/d/${gdriveMatch[1]}/preview`;
   }
 
-  // 2. Comprehensive YouTube URL regex supporting:
+  // 2. Handle YouTube Channel / Handle links by mapping to their featured tax video
+  if (cleanUrl.toLowerCase().includes('@ddtcindonesia')) {
+    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : '';
+    const originParam = origin ? `&origin=${encodeURIComponent(origin)}` : '';
+    return `https://www.youtube.com/embed/M576WGiDBdQ?rel=0&modestbranding=1&enablejsapi=1${originParam}`;
+  }
+  if (cleanUrl.toLowerCase().includes('@ditjenpajakri')) {
+    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : '';
+    const originParam = origin ? `&origin=${encodeURIComponent(origin)}` : '';
+    return `https://www.youtube.com/embed/9ZCWjc-urWQ?rel=0&modestbranding=1&enablejsapi=1${originParam}`;
+  }
+
+  // 3. Comprehensive YouTube URL regex supporting:
   // - youtube.com/watch?v=ID
   // - youtube.com/embed/ID
   // - youtube.com/v/ID

@@ -49,13 +49,18 @@ export const CourseSyllabusSidebar = ({
           const isCurrentModule = activeModuleIndex === mIdx;
 
           // Check module exam submission status
-          const moduleSub = userSubmissions.find(
-            (s) => s.module_id === module.id || s.module_id === module.exam?.id || s.module_id === `exam-${module.id}`
-          );
+          const moduleSub = userSubmissions.find((s) => {
+            if (!s || !s.module_id) return false;
+            return (
+              s.module_id === module.id ||
+              s.module_id === module.exam?.id ||
+              s.module_id === `exam-${module.id}`
+            );
+          });
           const isRevision = moduleSub?.status === 'REVISION';
           const isApproved = moduleSub?.status === 'APPROVED';
           const isPending = moduleSub?.status === 'PENDING';
-          const hasExamSubmitted = Boolean(moduleSub) || completedLessonIds.includes(`exam-${module.id}`);
+          const hasExamSubmitted = Boolean(moduleSub);
 
           return (
             <div
@@ -188,6 +193,7 @@ export const CourseSyllabusSidebar = ({
                         key={les.id}
                         onClick={() => {
                           if (isChapUnlocked) {
+                            setActiveModuleIndex(mIdx);
                             setActiveLessonId(les.id);
                           } else {
                             showToast?.(`Selesaikan Bab ${cIdx} terlebih dahulu untuk membuka Bab ${cIdx + 1}.`, 'warning');
@@ -231,6 +237,7 @@ export const CourseSyllabusSidebar = ({
                       <button
                         onClick={() => {
                           if (isExamUnlocked) {
+                            setActiveModuleIndex(mIdx);
                             setActiveLessonId('EXAM');
                           } else {
                             showToast?.('Selesaikan semua bab materi di modul ini terlebih dahulu sebelum membuka ulangan akhir modul.', 'warning');
@@ -241,7 +248,7 @@ export const CourseSyllabusSidebar = ({
                             ? 'border-slate-200 text-slate-400 bg-slate-50/50 opacity-60 cursor-not-allowed'
                             : isRevision
                             ? 'bg-orange-100/90 text-orange-950 font-extrabold border-orange-400 shadow-sm ring-2 ring-orange-400/50 hover:bg-orange-200/80'
-                            : activeLessonId === 'EXAM'
+                            : activeLessonId === 'EXAM' && activeModuleIndex === mIdx
                             ? 'bg-amber-100/90 text-amber-950 font-extrabold border-amber-300 shadow-sm ring-1 ring-amber-300'
                             : isApproved
                             ? 'bg-emerald-50 text-emerald-900 border-emerald-200'

@@ -487,7 +487,17 @@ class TeacherController extends Controller
                 ->first();
 
             if ($enrollment) {
-                if ($status === 'APPROVED') {
+                // Determine if this submission is for the final module
+                $brevet = $submission->brevet ?? Brevet::find($submission->brevet_id);
+                $curriculum = $enrollment->batch?->curriculum ?: ($brevet?->curriculum ?: []);
+                $lastModule = !empty($curriculum) ? end($curriculum) : null;
+                $isLastModuleExam = $lastModule && (
+                    $submission->module_id === ($lastModule['id'] ?? '') ||
+                    $submission->module_id === ($lastModule['exam']['id'] ?? '') ||
+                    $submission->module_id === ('exam-' . ($lastModule['id'] ?? ''))
+                );
+
+                if ($status === 'APPROVED' && $isLastModuleExam) {
                     $enrollment->update([
                         'status' => 'PASSED',
                         'passed_at' => now(),

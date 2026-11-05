@@ -1,15 +1,12 @@
 /**
  * Centralized API Endpoints Contract
  * 
- * Connected to Laravel REST API at http://127.0.0.1:8000/api
+ * 100% connected to real Laravel REST API at http://127.0.0.1:8000/api
  */
-const IS_MOCK_MODE = import.meta.env.VITE_USE_MOCK_API === 'true';
-
 export const ENDPOINTS = {
-  // Public Brevets
-  BREVETS: IS_MOCK_MODE ? '/api/brevets.json' : '/brevets',
-  BREVET_DETAIL: (idOrSlug) =>
-    IS_MOCK_MODE ? '/api/brevets.json' : `/brevets/${idOrSlug}`,
+  // Public Brevets & Batches
+  BREVETS: '/brevets',
+  BREVET_DETAIL: (idOrSlug) => `/brevets/${idOrSlug}`,
 
   // Auth & User Profile
   AUTH_LOGIN: '/auth/login',
@@ -20,8 +17,8 @@ export const ENDPOINTS = {
   AUTH_SWITCH_ROLE: '/auth/switch-role',
   AUTH_SEND_VERIFICATION: '/auth/send-verification',
   AUTH_VERIFY_EMAIL: '/auth/verify-email',
-  USER_PROFILE: IS_MOCK_MODE ? '/api/user/profile.json' : '/user/profile',
-  USER_ENROLLMENTS: IS_MOCK_MODE ? '/api/user/enrollments.json' : '/user/enrollments',
+  USER_PROFILE: '/user/profile',
+  USER_ENROLLMENTS: '/user/enrollments',
   USER_SET_ACTIVE_BREVET: '/user/set-active-brevet',
   USER_ENROLL_BREVET: '/user/enroll-brevet',
   USER_COURSE_PROGRESS: '/user/course-progress',
@@ -37,19 +34,19 @@ export const ENDPOINTS = {
   PAYMENT_STATUS: (orderId) => `/payments/${orderId}/status`,
   PAYMENT_SYNC: (orderId) => `/payments/${orderId}/sync`,
   PAYMENT_SIMULATE: (orderId) => `/payments/${orderId}/simulate-approval`,
-  ADMIN_PENDING_PAYMENTS: IS_MOCK_MODE ? '/api/admin/pending-payments.json' : '/admin/payments',
+  ADMIN_PENDING_PAYMENTS: '/admin/payments',
   ADMIN_VERIFY_PAYMENT: (paymentId) => `/admin/payments/${paymentId}/verify`,
   ADMIN_REJECT_PAYMENT: (paymentId) => `/admin/payments/${paymentId}/reject`,
 
   // Admin CMS & Stats
-  ADMIN_STATS: IS_MOCK_MODE ? '/api/admin/stats.json' : '/admin/stats',
+  ADMIN_STATS: '/admin/stats',
   ADMIN_STUDENTS: '/admin/students',
   ADMIN_TEACHERS: '/admin/teachers',
   ADMIN_TEACHER_RESEND_INVITE: (id) => `/admin/teachers/${id}/resend-invitation`,
   ADMIN_TEACHER_DELETE: (id) => `/admin/teachers/${id}`,
 
   // Certificates
-  CERTIFICATES: IS_MOCK_MODE ? '/api/certificates.json' : '/certificates',
+  CERTIFICATES: '/certificates',
   CERTIFICATE_VERIFY: (certId) => `/certificates/${certId}/verify`,
 
   // Teacher Portal

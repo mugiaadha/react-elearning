@@ -431,7 +431,13 @@ class AuthController extends Controller
         });
 
         if ($brevetId) {
-            $query->where('brevet_id', $brevetId);
+            $brevet = Brevet::find($brevetId) ?? Brevet::where('slug', $brevetId)->first();
+            $resolvedId = $brevet?->id ?? $brevetId;
+            $slugId = $brevet?->slug ?? $brevetId;
+            $query->where(function ($q) use ($resolvedId, $slugId) {
+                $q->where('brevet_id', $resolvedId)
+                  ->orWhere('brevet_id', $slugId);
+            });
         }
 
         $submissions = $query->orderBy('created_at', 'desc')->get();

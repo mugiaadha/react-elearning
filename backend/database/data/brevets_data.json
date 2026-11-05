@@ -1,0 +1,409 @@
+{
+  "success": true,
+  "message": "Katalog program brevet pajak dan simulasi coretax berhasil diambil.",
+  "data": [
+    {
+      "id": "brevet-ab",
+      "slug": "brevet-ab-terpadu",
+      "badge": "Terpopuler",
+      "title": "Brevet Pajak A & B Terpadu",
+      "tagline": "Kuasai KUP, PPh Orang Pribadi, PPh Badan, Pemotongan & Pemungutan, PPN e-Faktur, hingga Akuntansi Pajak Komprehensif.",
+      "description": "Program pelatihan perpajakan komprehensif berstandar nasional yang dirancang sesuai regulasi terbaru UU Harmonisasi Peraturan Perpajakan (UU HPP) dan pembaruan sistem Coretax DJP. Kurikulum mencakup hak & kewajiban WP, perhitungan PPh 21 skema TER (PP 58/2023), PPh Potput, PPN e-Faktur 4.0, rekonsiliasi fiskal, hingga penyusunan SPT Tahunan 1770/1771.",
+      "level": "Tingkat Dasar - Menengah",
+      "duration": "12 Minggu (36 Pertemuan)",
+      "total_hours": 120,
+      "price": 2750000,
+      "original_price": 3500000,
+      "discount_percentage": 21,
+      "rating": 4.95,
+      "total_reviews": 1240,
+      "total_enrolled": 3820,
+      "thumbnail": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1200&q=80",
+      "instructor": {
+        "id": "inst-01",
+        "name": "Prof. Dr. Irwan Setiawan, M.Ak., Ak., CA, BKP",
+        "title": "Managing Partner NAC Tax Center & Praktisi Pajak Senior",
+        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80",
+        "bio": "Lebih dari 20 tahun membina kepatuhan pajak korporasi nasional dan multinasional, anggota komite perpajakan IAI."
+      },
+      "features": [
+        "Sertifikat Kelulusan Resmi Terverifikasi QR-Code",
+        "Modul Lengkap & Kertas Kerja Excel Praktik",
+        "Simulasi Aplikasi e-Faktur 4.0 & e-Bupot Unifikasi",
+        "Bedah Tuntas Coretax DJP Terbaru",
+        "Grup Diskusi Kasus Pajak bersama BKP"
+      ],
+      "curriculum": [
+        {
+          "id": "mod-ab-01",
+          "order": 1,
+          "title": "Ketentuan Umum dan Tata Cara Perpajakan (KUP) & Coretax Overview",
+          "duration": "10 Jam",
+          "description": "Dasar hukum perpajakan, hak & kewajiban wajib pajak, NPWP/NIK, pembukuan, pemeriksaan, serta pembaruan sistem Coretax DJP.",
+          "lessons": [
+            {
+              "id": "les-01-01",
+              "title": "Materi Dasar Pajak & Tata Cara Pendaftaran Wajib Pajak",
+              "type": "video",
+              "duration": "45 Menit",
+              "video_url": "https://www.youtube.com/watch?v=5UDagUVRnAQ",
+              "url": "https://www.youtube.com/watch?v=5UDagUVRnAQ",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "pdf",
+              "is_preview": true
+            },
+            {
+              "id": "les-01-02",
+              "title": "Konsep Dasar & Asas Perpajakan Sesuai UU HPP",
+              "type": "video",
+              "duration": "50 Menit",
+              "video_url": "https://www.youtube.com/watch?v=f-HMvtcH710",
+              "url": "https://www.youtube.com/watch?v=f-HMvtcH710",
+              "gdrive_url": "https://docs.google.com/presentation/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "ppt",
+              "is_preview": false
+            },
+            {
+              "id": "les-01-03",
+              "title": "Bahan Bacaan & Dokumen Regulasi UU HPP No. 7/2021 (Google Drive)",
+              "type": "pdf",
+              "duration": "40 Halaman",
+              "url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "is_preview": false
+            }
+          ],
+          "exam": {
+            "id": "exam-mod-ab-01",
+            "title": "Latihan & Ulangan Akhir Modul 1: Ketentuan Umum & Tata Cara Perpajakan (KUP)",
+            "description": "Unduh lembar soal studi kasus KUP dari pengajar di atas. Selesaikan analisis hak & kewajiban wajib pajak serta simulasi pendaftaran NIK/NPWP di Coretax, lalu unggah file lembar jawaban Anda di bawah. Modul 2 akan terbuka setelah jawaban terkirim.",
+            "question_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+          }
+        },
+        {
+          "id": "mod-ab-02",
+          "order": 2,
+          "title": "PPh Pasal 21 & 26: Skema TER PP 58/2023 & PMK 168/2023",
+          "duration": "16 Jam",
+          "description": "Perhitungan PPh 21 pegawai tetap skema bulanan dan masa pajak terakhir (Desember), pegawai tidak tetap, tenaga ahli, dan natura/kenikmatan.",
+          "lessons": [
+            {
+              "id": "les-02-01",
+              "title": "Studi Kasus Pemotongan & Pemungutan PPh Karyawan & Badan",
+              "type": "video",
+              "duration": "60 Menit",
+              "video_url": "https://www.youtube.com/watch?v=fHL6QAEy_ZI",
+              "url": "https://www.youtube.com/watch?v=fHL6QAEy_ZI",
+              "gdrive_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "excel",
+              "is_preview": true
+            },
+            {
+              "id": "les-02-02",
+              "title": "Simulasi Payroll Spreadsheet & Perhitungan PPh 21 Masa Desember",
+              "type": "excel",
+              "duration": "File Praktik",
+              "url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "is_preview": false
+            },
+            {
+              "id": "les-02-03",
+              "title": "Praktik Pembuatan Bukti Potong 1721-A1 & 1721-VIII pada e-Bupot 21/26",
+              "type": "video",
+              "duration": "55 Menit",
+              "video_url": "https://www.youtube.com/watch?v=FfuYTRQnNuo",
+              "url": "https://www.youtube.com/watch?v=FfuYTRQnNuo",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "word",
+              "is_preview": false
+            }
+          ],
+          "exam": {
+            "id": "exam-mod-ab-02",
+            "title": "Latihan & Ulangan Akhir Modul 2: PPh 21 & 26 Skema TER (PP 58/2023 & PMK 168/2023)",
+            "description": "Unduh kertas kerja soal studi kasus payroll PPh 21 dari pengajar di atas. Hitung pemotongan skema TER bulanan dan masa Desember pegawai tetap, tenaga ahli, serta natura, lalu unggah file spreadsheet jawaban Anda di bawah. Modul 3 akan terbuka setelah jawaban terkirim.",
+            "question_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+          }
+        },
+        {
+          "id": "mod-ab-03",
+          "order": 3,
+          "title": "PPh Potong Pungut: Pasal 22, 23, 4 ayat (2), dan Pasal 15",
+          "duration": "14 Jam",
+          "description": "Pemotongan atas jasa, dividen, bunga, sewa harta, transaksi real estat, dan ekspor/impor serta penggunaan aplikasi e-Bupot Unifikasi.",
+          "lessons": [
+            {
+              "id": "les-03-01",
+              "title": "Analisis Kasus Pemotongan & Pemungutan PPh Unifikasi",
+              "type": "video",
+              "duration": "50 Menit",
+              "video_url": "https://www.youtube.com/watch?v=fHL6QAEy_ZI",
+              "url": "https://www.youtube.com/watch?v=fHL6QAEy_ZI",
+              "gdrive_url": "https://docs.google.com/presentation/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "ppt",
+              "is_preview": false
+            },
+            {
+              "id": "les-03-02",
+              "title": "Template Kertas Kerja Rekapitulasi e-Bupot Unifikasi (Google Drive)",
+              "type": "excel",
+              "duration": "Kertas Kerja",
+              "url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "is_preview": false
+            }
+          ],
+          "exam": {
+            "id": "exam-mod-ab-03",
+            "title": "Latihan & Ulangan Akhir Modul 3: PPh Potput Unifikasi (Pasal 22, 23, 4(2), 15)",
+            "description": "Unduh lembar studi kasus transaksi potong pungut unifikasi. Selesaikan rekapitulasi bukti potong dan SPT Masa Unifikasi, lalu unggah file lembar jawaban Anda di bawah. Modul 4 akan terbuka setelah jawaban terkirim.",
+            "question_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+          }
+        },
+        {
+          "id": "mod-ab-04",
+          "order": 4,
+          "title": "Pajak Pertambahan Nilai (PPN) & PPnBM Serta e-Faktur 4.0",
+          "duration": "18 Jam",
+          "description": "Konsep BKP/JKP, Pajak Masukan vs Pajak Keluaran, PPN atas KMS, fasilitas PPN dibebaskan/tidak dipungut, dan upload e-Faktur versi 4.0.",
+          "lessons": [
+            {
+              "id": "les-04-01",
+              "title": "Kelas Edukasi Pajak: Update Ketentuan PPN & Faktur Pajak Terbaru",
+              "type": "video",
+              "duration": "60 Menit",
+              "video_url": "https://www.youtube.com/watch?v=8dnjk00PrP4",
+              "url": "https://www.youtube.com/watch?v=8dnjk00PrP4",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "pdf",
+              "is_preview": false
+            },
+            {
+              "id": "les-04-02",
+              "title": "Panduan Modul e-Faktur 4.0 & Skema Pajak Masukan (Google Drive)",
+              "type": "pdf",
+              "duration": "90 Halaman",
+              "url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "is_preview": false
+            }
+          ],
+          "exam": {
+            "id": "exam-mod-ab-04",
+            "title": "Latihan & Ulangan Akhir Modul 4: PPN, PPnBM & Simulasi e-Faktur 4.0",
+            "description": "Unduh lembar studi kasus transaksi faktur pajak masukan dan keluaran. Hitung PPN kurang/lebih bayar dan buat rekonsiliasi SPT Masa PPN 1111, lalu unggah file lembar jawaban Anda di bawah. Modul 5 akan terbuka setelah jawaban terkirim.",
+            "question_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+          }
+        },
+        {
+          "id": "mod-ab-05",
+          "order": 5,
+          "title": "Rekonsiliasi Fiskal & SPT Tahunan PPh Badan (Formulir 1771)",
+          "duration": "20 Jam",
+          "description": "Penyesuaian beda tetap dan beda waktu, perhitungan kredit pajak luar negeri (PPh 24), kompensasi kerugian, dan pelaporan SPT Badan.",
+          "lessons": [
+            {
+              "id": "les-05-01",
+              "title": "Teknik Kertas Kerja Rekonsiliasi Fiskal Positif & Negatif",
+              "type": "video",
+              "duration": "75 Menit",
+              "video_url": "https://www.youtube.com/watch?v=V0ODG8bEmeo",
+              "url": "https://www.youtube.com/watch?v=V0ODG8bEmeo",
+              "gdrive_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "excel",
+              "is_preview": false
+            },
+            {
+              "id": "les-05-02",
+              "title": "Master Template Kertas Kerja Rekonsiliasi Fiskal Formulir 1771 (Google Sheets)",
+              "type": "excel",
+              "duration": "Format XLS",
+              "url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "is_preview": false
+            }
+          ],
+          "exam": {
+            "id": "exam-mod-ab-05",
+            "title": "Ujian Komprehensif Modul 5: Rekonsiliasi Fiskal & SPT Tahunan PPh Badan 1771",
+            "description": "Unduh laporan keuangan komersial perusahaan manufaktur/jasa dari pengajar di atas. Selesaikan kertas kerja rekonsiliasi fiskal positif dan negatif serta pengisian Formulir SPT Tahunan 1771 (Lampiran I-VI), lalu unggah file lembar jawaban komprehensif Anda di bawah untuk evaluasi kelulusan akhir.",
+            "question_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+          }
+        }
+      ]
+    },
+    {
+      "id": "brevet-c",
+      "slug": "brevet-c-eksekutif",
+      "badge": "Lanjutan",
+      "title": "Brevet Pajak C Eksekutif",
+      "tagline": "Spesialisasi Perpajakan Internasional, Transfer Pricing, dan Akuntansi Pajak Lanjutan Korporasi.",
+      "description": "Program sertifikasi Brevet C dirancang khusus bagi profesional, konsultan pajak, dan tax manager perusahaan multinasional yang menangani transaksi lintas batas, Persetujuan Penghindaran Pajak Berganda (P3B/Tax Treaty), dan dokumentasi Transfer Pricing (Master File, Local File, CbCR).",
+      "level": "Tingkat Lanjutan",
+      "duration": "8 Minggu (24 Pertemuan)",
+      "total_hours": 80,
+      "price": 3850000,
+      "original_price": 4500000,
+      "discount_percentage": 14,
+      "rating": 4.98,
+      "total_reviews": 680,
+      "total_enrolled": 1450,
+      "thumbnail": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+      "instructor": {
+        "id": "inst-02",
+        "name": "Dr. Hendrawan Kartiko, S.E., S.H., LL.M., BKP C",
+        "title": "International Tax Specialist & Partner NAC Advisory",
+        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80",
+        "bio": "Menangani sengketa Transfer Pricing di Pengadilan Pajak serta advisor korporasi penanaman modal asing (PMA)."
+      },
+      "features": [
+        "Sertifikat Spesialis Brevet C NAC Terakreditasi",
+        "Studi Kasus Tax Treaty (P3B) Multilateral Instrument (MLI)",
+        "Penyusunan TP Doc Berdasarkan PMK 172/2023",
+        "Bedah Kasus Sengketa Pajak Internasional",
+        "Akses Database Dokumen Putusan Pengadilan Pajak"
+      ],
+      "curriculum": [
+        {
+          "id": "mod-c-01",
+          "order": 1,
+          "title": "Pajak Internasional & Interpretasi Tax Treaty (P3B)",
+          "duration": "14 Jam",
+          "description": "Prinsip domisili vs sumber, Bentuk Usaha Tetap (BUT), Beneficial Ownership, dan penerapan DGT Form.",
+          "lessons": [
+            {
+              "id": "les-c-01-01",
+              "title": "Prinsip Dasar P3B Berdasarkan OECD & UN Model Convention",
+              "type": "video",
+              "duration": "60 Menit",
+              "video_url": "https://www.youtube.com/watch?v=2Oel4P46QjM",
+              "url": "https://www.youtube.com/watch?v=2Oel4P46QjM",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "pdf",
+              "is_preview": true
+            },
+            {
+              "id": "les-c-01-02",
+              "title": "Penentuan Bentuk Usaha Tetap (Permanent Establishment) Era Digital",
+              "type": "video",
+              "duration": "55 Menit",
+              "video_url": "https://www.youtube.com/watch?v=r5L1XRZaCRk",
+              "url": "https://www.youtube.com/watch?v=r5L1XRZaCRk",
+              "gdrive_url": "https://docs.google.com/presentation/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "ppt",
+              "is_preview": false
+            }
+          ],
+          "exam": {
+            "id": "exam-mod-c-01",
+            "title": "Latihan & Ulangan Akhir Modul 1: Tax Treaty (P3B) & BUT Era Digital",
+            "description": "Unduh lembar studi kasus transaksi lintas batas dan penentuan BUT. Analisis hak pemajakan dan penerapan pasal-pasal Tax Treaty, lalu unggah file jawaban Anda di bawah. Modul 2 akan terbuka setelah jawaban terkirim.",
+            "question_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+          }
+        },
+        {
+          "id": "mod-c-02",
+          "order": 2,
+          "title": "Transfer Pricing & Regulasi PMK 172/2023",
+          "duration": "18 Jam",
+          "description": "Penerapan Prinsip Kewajaran dan Kelaziman Usaha (PKKU/ALP), pemilihan metode TP, dan penyusunan TP Documentation.",
+          "lessons": [
+            {
+              "id": "les-c-02-01",
+              "title": "Analisis Kesebandingan & Transfer Pricing (Kanal DDTC Indonesia)",
+              "type": "video",
+              "duration": "70 Menit",
+              "video_url": "https://www.youtube.com/@DDTCIndonesia",
+              "url": "https://www.youtube.com/@DDTCIndonesia",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "word",
+              "is_preview": false
+            },
+            {
+              "id": "les-c-02-02",
+              "title": "Template Dokumen Penentuan Harga Transfer (TP Doc Local File) - Google Drive",
+              "type": "word",
+              "duration": "Template Dokumen",
+              "url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "is_preview": false
+            }
+          ],
+          "exam": {
+            "id": "exam-mod-c-02",
+            "title": "Ujian Akhir Modul 2: Transfer Pricing & Dokumentasi PMK 172/2023",
+            "description": "Unduh studi kasus analisis kesebandingan transaksi afiliasi internasional. Susun ringkasan TP Documentation (Local File) sesuai prinsip ALP/PKKU, lalu unggah dokumen jawaban final Anda di bawah.",
+            "question_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+          }
+        }
+      ]
+    },
+    {
+      "id": "coretax-mastery",
+      "slug": "simulasi-coretax-djp",
+      "badge": "Terbaru 2026",
+      "title": "Mastery & Simulasi Coretax DJP",
+      "tagline": "Pelatihan Intensif Transisi Sistem Administrasi Perpajakan Baru (Coretax System).",
+      "description": "Kuasai seluruh alur kerja operasional Coretax DJP mulai dari Deposit Pajak, Faktur Pajak Baru, e-Bupot Terintegrasi, hingga pelaporan SPT terpadu sebelum diberlakukan penuh oleh Direktorat Jenderal Pajak.",
+      "level": "Semua Tingkat",
+      "duration": "3 Minggu (9 Pertemuan)",
+      "total_hours": 30,
+      "price": 1250000,
+      "original_price": 1750000,
+      "discount_percentage": 28,
+      "rating": 4.92,
+      "total_reviews": 510,
+      "total_enrolled": 2100,
+      "thumbnail": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+      "instructor": {
+        "id": "inst-03",
+        "name": "Ratna Paramitha, S.E., M.Si., BKP",
+        "title": "Tax Tech Lead & IT Perpajakan Specialist",
+        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80",
+        "bio": "Spesialis implementasi automasi pelaporan pajak dan integrasi ERP dengan sistem Coretax DJP."
+      },
+      "features": [
+        "Akses Praktik Simulasi Dashboard Coretax",
+        "Panduan Deposit Pajak & Buku Besar Wajib Pajak (Tax Ledger)",
+        "Tata Cara Permohonan Layanan Pajak Mandiri Online",
+        "Sertifikat Spesialisasi Coretax DJP NAC"
+      ],
+      "curriculum": [
+        {
+          "id": "mod-core-01",
+          "order": 1,
+          "title": "Pengenalan Arsitektur & Antarmuka Coretax DJP",
+          "duration": "8 Jam",
+          "description": "Perubahan paradigma administrasi pajak, integrasi layanan, dan manajemen akses akun wajib pajak.",
+          "lessons": [
+            {
+              "id": "les-core-01-01",
+              "title": "Navigasi Antarmuka & Layanan Akun Wajib Pajak (Kanal Ditjen Pajak RI)",
+              "type": "video",
+              "duration": "45 Menit",
+              "video_url": "https://www.youtube.com/@DitjenPajakRI",
+              "url": "https://www.youtube.com/@DitjenPajakRI",
+              "gdrive_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "gdrive_type": "pdf",
+              "is_preview": true
+            },
+            {
+              "id": "les-core-01-02",
+              "title": "E-Book Panduan Interaktif Navigasi Coretax DJP (Google Drive)",
+              "type": "pdf",
+              "duration": "Dokumen PDF",
+              "url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+              "is_preview": false
+            }
+          ],
+          "exam": {
+            "id": "exam-mod-core-01",
+            "title": "Ujian Akhir Spesialisasi: Simulasi Transaksi & Pelaporan Coretax DJP",
+            "description": "Unduh soal simulasi komprehensif sistem Coretax DJP dari pengajar di atas. Selesaikan simulasi deposit pajak, tax ledger, pembuatan faktur unifikasi baru, dan pelaporan SPT terpadu, lalu unggah file bukti pengerjaan Anda di bawah.",
+            "question_url": "https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing"
+          }
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "total": 3,
+    "page": 1,
+    "per_page": 10
+  }
+}

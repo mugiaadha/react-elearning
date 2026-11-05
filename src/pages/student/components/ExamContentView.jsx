@@ -65,14 +65,14 @@ export const ExamContentView = ({
               Download Soal
             </a>
           )}
-          {activeModuleIndex < (course?.curriculum?.length || 0) - 1 ? (
+          {activeModuleSubmission && activeModuleIndex < (course?.curriculum?.length || 0) - 1 ? (
             <button
               type="button"
               onClick={onNextModule}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Sudah Selesai (Lanjut ke Modul {activeModuleIndex + 2})</span>
+              <span>Lanjut ke Modul {activeModuleIndex + 2}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : isApprovedByTeacher ? (
@@ -295,27 +295,44 @@ export const ExamContentView = ({
 
       {/* Tombol Navigasi Lanjut ke Modul Berikutnya atau Status Kelulusan & Sertifikat di Bab Akhir */}
       {activeModuleIndex < (course?.curriculum?.length || 0) - 1 ? (
-        <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-          <div className="space-y-0.5">
-            <h5 className="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              Langkah Selanjutnya: Modul {activeModuleIndex + 2}
-            </h5>
-            <p className="text-[11px] text-slate-500">
-              Setelah selesai mempelajari materi bab akhir atau mengunggah lembar jawaban, klik tombol di samping untuk langsung melanjutkan pembelajaran ke modul berikutnya.
-            </p>
-          </div>
+        activeModuleSubmission ? (
+          <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-emerald-50/80 p-4 rounded-xl border border-emerald-200">
+            <div className="space-y-0.5">
+              <h5 className="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                Jawaban Terkirim • Akses Modul {activeModuleIndex + 2} Terbuka
+              </h5>
+              <p className="text-[11px] text-slate-600">
+                Lembar jawaban ulangan Anda telah diterima. Klik tombol di samping untuk langsung mempelajari Modul {activeModuleIndex + 2}.
+              </p>
+            </div>
 
-          <button
-            type="button"
-            onClick={onNextModule}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition shrink-0"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Sudah Selesai (Lanjut ke Modul {activeModuleIndex + 2})</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={onNextModule}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition shrink-0"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Lanjut ke Modul {activeModuleIndex + 2}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-amber-50/70 p-4 rounded-xl border border-amber-200">
+            <div className="space-y-0.5">
+              <h5 className="font-bold text-amber-950 text-xs sm:text-sm flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-600" />
+                Modul {activeModuleIndex + 2} Terkunci
+              </h5>
+              <p className="text-[11px] text-amber-900">
+                Selesaikan pengerjaan studi kasus dan unggah file lembar jawaban ulangan modul ini melalui form di atas untuk membuka akses ke Modul {activeModuleIndex + 2}.
+              </p>
+            </div>
+            <span className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-200/80 text-amber-950 font-bold text-xs border border-amber-300">
+              Wajib Unggah Jawaban
+            </span>
+          </div>
+        )
       ) : isApprovedByTeacher ? (
         <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-amber-500/10 via-yellow-500/15 to-amber-500/10 p-5 rounded-2xl border-2 border-amber-400 shadow-sm animate-in fade-in">
           <div className="space-y-1">

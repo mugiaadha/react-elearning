@@ -90,8 +90,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 2. Seed Brevets from brevets.json if exists
-        $brevetsJsonPath = base_path('../public/api/brevets.json');
+        // 2. Seed Brevets from database/data/brevets_data.json
+        $brevetsJsonPath = database_path('data/brevets_data.json');
         if (file_exists($brevetsJsonPath)) {
             $json = json_decode(file_get_contents($brevetsJsonPath), true);
             $brevets = $json['data'] ?? [];
@@ -279,8 +279,8 @@ class DatabaseSeeder extends Seeder
             Payment::updateOrCreate(['id' => $p['id']], $p);
         }
 
-        // 5. Seed Certificates
-        $certsJsonPath = base_path('../public/api/certificates.json');
+        // 5. Seed Certificates from database/data/certificates_data.json
+        $certsJsonPath = database_path('data/certificates_data.json');
         if (file_exists($certsJsonPath)) {
             $json = json_decode(file_get_contents($certsJsonPath), true);
             $certs = $json['data'] ?? [];

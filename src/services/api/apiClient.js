@@ -3,8 +3,7 @@ import axios from 'axios';
 /**
  * NAC Tax Center - HTTP REST API Client
  * 
- * Configured to seamlessly target static mock JSON files during development (/public/api/...)
- * or the actual Backend API in production by simply updating VITE_API_BASE_URL.
+ * Connected directly to Laravel REST API Backend (http://127.0.0.1:8000/api)
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
@@ -29,14 +28,7 @@ apiClient.interceptors.request.use(
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
-    
-    // In dev mode, append timestamp cache-busting to static JSON files to ensure fresh reads
-    if (config.url && config.url.endsWith('.json')) {
-      config.params = {
-        ...config.params,
-        _t: Date.now(),
-      };
-    }
+
     return config;
   },
   (error) => {

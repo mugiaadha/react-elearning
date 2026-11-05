@@ -116,7 +116,7 @@ export const BrevetCatalogPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {loading ? (
           <div className="col-span-3 text-center py-16 text-slate-500">
-            Memuat daftar program dari static mock API (/api/brevets.json)...
+            Memuat daftar program sertifikasi dari server backend...
           </div>
         ) : filtered.length === 0 ? (
           <div className="col-span-3 text-center py-16 text-slate-500">

@@ -194,16 +194,28 @@ export const CourseLearningPage = () => {
   // Active lesson index among regular lessons
   const activeLessonIndex = regularLessons.findIndex((l) => l.id === activeLesson?.id);
 
-  // Submission record for this module's exam
-  const activeModuleSubmission = userSubmissions.find(
-    (s) => s.module_id === activeModule?.id || s.module_id === activeModuleExam.id || s.module_id === `exam-${activeModule?.id}`
-  );
+  // Submission record for this module's exam (strictly isolated per module ID)
+  const activeModuleSubmission = userSubmissions.find((s) => {
+    if (!s || !s.module_id) return false;
+    const targetModId = activeModule?.id;
+    const targetExamId = activeModuleExam?.id;
+    return (
+      s.module_id === targetModId ||
+      s.module_id === targetExamId ||
+      s.module_id === `exam-${targetModId}`
+    );
+  });
 
   // Identify all modules in the curriculum that need revision from teacher
   const modulesNeedingRevision = (course?.curriculum || []).map((mod, modIdx) => {
-    const sub = userSubmissions.find(
-      (s) => s.module_id === mod.id || s.module_id === mod.exam?.id || s.module_id === `exam-${mod.id}`
-    );
+    const sub = userSubmissions.find((s) => {
+      if (!s || !s.module_id) return false;
+      return (
+        s.module_id === mod.id ||
+        s.module_id === mod.exam?.id ||
+        s.module_id === `exam-${mod.id}`
+      );
+    });
     if (sub && sub.status === 'REVISION') {
       return {
         ...mod,
@@ -224,9 +236,14 @@ export const CourseLearningPage = () => {
     // Check if student submitted previous module exam
     const prevExamKey = `exam-${prevModule.id}`;
     const hasSubmittedPrevExam =
-      userSubmissions.some(
-        (s) => s.module_id === prevModule.id || s.module_id === prevModule.exam?.id || s.module_id === prevExamKey
-      ) || completedLessonIds.includes(prevExamKey);
+      userSubmissions.some((s) => {
+        if (!s || !s.module_id) return false;
+        return (
+          s.module_id === prevModule.id ||
+          s.module_id === prevModule.exam?.id ||
+          s.module_id === prevExamKey
+        );
+      }) || completedLessonIds.includes(prevExamKey);
 
     return Boolean(hasSubmittedPrevExam);
   };
@@ -268,9 +285,14 @@ export const CourseLearningPage = () => {
   const completedModulesList = course?.curriculum?.filter((m) => {
     const examKey = `exam-${m.id}`;
     return (
-      userSubmissions.some(
-        (s) => s.module_id === m.id || s.module_id === m.exam?.id || s.module_id === examKey
-      ) || completedLessonIds.includes(examKey)
+      userSubmissions.some((s) => {
+        if (!s || !s.module_id) return false;
+        return (
+          s.module_id === m.id ||
+          s.module_id === m.exam?.id ||
+          s.module_id === examKey
+        );
+      }) || completedLessonIds.includes(examKey)
     );
   }) || [];
 
@@ -291,12 +313,14 @@ export const CourseLearningPage = () => {
   // Teacher approves on teacher dashboard with status === 'APPROVED'
   const isFinalModule = activeModuleIndex === (course?.curriculum?.length || 1) - 1;
   const finalModule = course?.curriculum?.[(course?.curriculum?.length || 1) - 1];
-  const finalExamSubmission = userSubmissions.find(
-    (s) =>
-      s.module_id === finalModule?.id ||
-      s.module_id === `exam-${finalModule?.id}` ||
-      s.module_id === finalModule?.exam?.id
-  );
+  const finalExamSubmission = userSubmissions.find((s) => {
+    if (!s || !s.module_id || !finalModule) return false;
+    return (
+      s.module_id === finalModule.id ||
+      s.module_id === `exam-${finalModule.id}` ||
+      s.module_id === finalModule.exam?.id
+    );
+  });
 
   const hasFinalExamApproved = Boolean(
     finalExamSubmission && finalExamSubmission.status === 'APPROVED'
@@ -523,31 +547,12 @@ export const CourseLearningPage = () => {
     }
   };
 
-  // Selesaikan Bab Akhir dan Lanjut ke Modul Berikutnya
-  const handleNextModule = async () => {
-    // Record exam completion for the current module in state and persistent storage
-    const currentModule = course?.curriculum?.[activeModuleIndex];
-    const isFinalModuleIndex = activeModuleIndex >= (course?.curriculum?.length || 1) - 1;
-
-    // For non-final modules, progressing to next module marks previous module exam completed.
-    // For the final module, the exam CANNOT be auto-completed without actual submission!
-    if (currentModule && !isFinalModuleIndex) {
-      const examKey = `exam-${currentModule.id}`;
-      if (!completedLessonIds.includes(examKey)) {
-        const nextCompleted = [...completedLessonIds, examKey];
-        setCompletedLessonIds(nextCompleted);
-        const storageKey = getUserLessonKey();
-        if (storageKey) {
-          try {
-            localStorage.setItem(storageKey, JSON.stringify(nextCompleted));
-          } catch (e) {}
-        }
-        userService.updateCourseProgress({
-          slug: course?.slug || slug || 'brevet-ab-terpadu',
-          lessonId: examKey,
-          completed: true,
-        }).catch((err) => console.warn('Sync exam progress notice:', err));
-      }
+  // Lanjut ke Modul Berikutnya (Hanya setelah ulangan modul ini selesai diunggah)
+  const handleNextModule = () => {
+    // Pastikan ulangan modul saat ini telah diunggah sebelum diizinkan lanjut
+    if (!activeModuleSubmission && activeModuleIndex < (course?.curriculum?.length || 0) - 1) {
+      showToast('Silakan unggah lembar jawaban ujian modul ini terlebih dahulu sebelum melanjutkan ke modul berikutnya.', 'warning');
+      return;
     }
 
     if (activeModuleIndex < (course?.curriculum?.length || 0) - 1) {

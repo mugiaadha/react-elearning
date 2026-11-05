@@ -14,7 +14,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
   - Queue Worker: `php artisan queue:listen` (untuk email verification & reminder)
   - Full Stack (All-in-one): `npm run dev`
 - **Core Environment Keys**:
-  - FE (`.env`): `VITE_API_BASE_URL=http://127.0.0.1:8000/api`, `VITE_USE_MOCK_API=false`, `VITE_GOOGLE_CLIENT_ID`, `VITE_DEV_MODE=true`, `VITE_MIDTRANS_CLIENT_KEY`
+  - FE (`.env`): `VITE_API_BASE_URL=http://127.0.0.1:8000/api`, `VITE_GOOGLE_CLIENT_ID`, `VITE_DEV_MODE=true`, `VITE_MIDTRANS_CLIENT_KEY`
   - BE (`backend/.env`): `DB_CONNECTION=sqlite`, `FRONTEND_URL=http://localhost:5173`, `MAIL_MAILER=smtp`, `GOOGLE_CLIENT_ID`, `VITE_MIDTRANS_SERVER_KEY`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
 
 ---
@@ -191,6 +191,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Antar Modul**: Modul ke-`N` terkunci sampai ujian lembar kerja Modul ke-`N-1` dikumpulkan oleh siswa.
    - **Antar Bab dalam Modul**: Bab 1 terbuka otomatis; Bab ke-`M` hanya terbuka jika Bab ke-`M-1` sudah ditandai selesai.
    - **Bab Akhir (Ulangan Modul)**: Hanya terbuka jika seluruh materi pelajaran biasa dalam modul tersebut sudah selesai.
+   - **Isolasi Submisi Ujian Per-Modul**: Setiap modul kurikulum memiliki ulangan studi kasus terpisah (`mod.exam`). Status "Terkumpul" pada sidebar dan tombol "Lanjut ke Modul Berikutnya" hanya aktif jika berkas jawaban untuk modul spesifik tersebut telah berhasil diunggah (`Boolean(moduleSub)`). Transisi antar modul tidak pernah meng-autocomplete ujian tanpa berkas jawaban riil.
    - **Flagging Revisi Guru**: Modul dengan status submission `REVISION` **WAJIB** ditandai dengan tema **Oranye** (`border-orange-400`, badge `⚠️ Perlu Revisi Guru`, animasi berkedip), bukan hijau, dan menyediakan tombol direct-action untuk langsung memperbaiki.
 
 5. **Multi-Brevet Active Classroom**:
@@ -226,3 +227,4 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Tampilan UI Konsisten**: Nama angkatan (contoh: "Batch 42 - Reguler", "Batch 1 - Akselerasi Coretax DJP") ditampilkan jelas pada Dashboard Siswa, Kursus Saya, Silabus Sidebar, dan Portal Pengajar.
    - **Manajemen Batch di Portal Guru**: Pengajar dapat membuka angkatan baru kapan saja via tombol *"+ Buka Angkatan Baru"* (`CreateBatchModal.jsx`) pada `TeacherCoursesPage.jsx`, menyematkan materi susulan/opsional via `AddLessonModal.jsx`, serta memfilter dan memonitor siswa per angkatan pada `TeacherStudentsPage.jsx` dan `TeacherDashboardPage.jsx`.
 
+    - **Validasi Media & Seeder Kurikulum**: Master kurikulum di `backend/database/data/brevets_data.json` memuat video materi YouTube riil dan dokumen Google Drive; helper `learningHelpers.js` menangani sanitasi URL (embed, shorts, channel mapping @DDTCIndonesia & @DitjenPajakRI) dengan strict-origin policy.
