@@ -116,6 +116,8 @@ jobs:
           file: ./backend/Dockerfile
           push: false
           tags: nac-backend:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build Frontend Docker Image (Production Multi-stage)
         uses: docker/build-push-action@v5
@@ -125,4 +127,6 @@ jobs:
           target: production
           push: false
           tags: nac-frontend:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 

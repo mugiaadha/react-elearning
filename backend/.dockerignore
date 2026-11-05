@@ -5,11 +5,14 @@ storage/framework/cache/data/*
 storage/framework/sessions/*
 storage/framework/views/*
 storage/logs/*
+storage/app/public/*
+storage/app/submissions/*
 .env
 .env.backup
 .phpunit.cache
 .git
 .github
+public/storage
 node_modules
 npm-debug.log
 yarn-error.log

@@ -11,5 +11,6 @@ backend/vendor
 backend/storage/framework/cache/data/*
 backend/storage/framework/sessions/*
 backend/storage/framework/views/*
+backend/public/storage
 backend/storage/logs/*
 
