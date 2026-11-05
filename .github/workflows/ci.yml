@@ -1,0 +1,128 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ========================================================
+  # 1. FRONTEND JOB: Linting, Typecheck & Production Build
+  # ========================================================
+  frontend:
+    name: Frontend (React 19 & Vite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Linter (oxlint)
+        run: npm run lint
+
+      - name: Build Frontend Application
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: https://api.elearning.taxcenter.id/api
+          VITE_DEV_MODE: 'false'
+
+      - name: Check Build Artifacts
+        run: |
+          test -d dist || { echo "dist directory missing!"; exit 1; }
+          test -f dist/index.html || { echo "index.html missing!"; exit 1; }
+          echo "Frontend build successfully generated in dist/"
+
+  # ========================================================
+  # 2. BACKEND JOB: PHP 8.2, SQLite & PHPUnit Security Tests
+  # ========================================================
+  backend:
+    name: Backend (Laravel 12 & PHP 8.2)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, sqlite3, pdo_sqlite, bcmath, zip, pcntl
+          coverage: none
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup Environment File
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run PHPUnit Test Suite (Including Anti-Webshell & Security Tests)
+        run: php vendor/bin/phpunit --testdox
+
+  # ========================================================
+  # 3. DOCKER BUILD JOB: Validate Dockerfiles & Compose Stack
+  # ========================================================
+  docker:
+    name: Docker Build & Compose Check
+    runs-on: ubuntu-latest
+    needs: [frontend, backend]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker Compose Configuration (Development)
+        run: docker compose -f docker-compose.yml config
+
+      - name: Validate Docker Compose Configuration (Production)
+        run: docker compose -f docker-compose.prod.yml config
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: nac-backend:ci-test
+
+      - name: Build Frontend Docker Image (Production Multi-stage)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: production
+          push: false
+          tags: nac-frontend:ci-test
+

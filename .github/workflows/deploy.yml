@@ -1,0 +1,62 @@
+name: Production Deployment (CD)
+
+# Workflow ini akan berjalan otomatis saat ada push tag baru (misal: v1.0.0)
+# atau dapat dijalankan secara manual melalui menu Actions -> Run workflow.
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    name: Deploy to Server via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH Remote Command
+        uses: appleboy/ssh-action@v1.0.3
+        if: env.DEPLOY_HOST != ''
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            set -e
+            echo "🚀 Starting Deployment on $(hostname)..."
+            cd ${{ secrets.DEPLOY_PATH || '/var/www/elearning' }}
+            
+            # Tarik kode terbaru
+            git fetch --all
+            git checkout main
+            git pull origin main
+            
+            # Restart container stack menggunakan Docker Compose Production
+            echo "🐳 Rebuilding and restarting containers..."
+            docker compose -f docker-compose.prod.yml down
+            docker compose -f docker-compose.prod.yml up -d --build
+            
+            # Bersihkan cache Laravel di container backend
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan optimize:clear
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
+            
+            echo "✅ Deployment successful and live!"
+
