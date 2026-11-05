@@ -1,25 +1,72 @@
 import { Video, FileText } from 'lucide-react';
 
 /**
- * Convert any YouTube URL into an embeddable format
+ * Convert any YouTube or Google Drive video URL into a stable embeddable format
  */
 export const formatYouTubeEmbedUrl = (url) => {
-  if (!url) return '';
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
-  if (match && match[1]) {
-    let videoId = match[1];
-    if (videoId === 'dQw4w9WgXcQ') {
-      videoId = 'V74l_zS1x8E';
-    }
-    return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`;
+  if (!url || typeof url !== 'string') return '';
+  const cleanUrl = url.trim();
+
+  // 1. Handle Google Drive video preview links
+  const gdriveMatch = cleanUrl.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i);
+  if (gdriveMatch && gdriveMatch[1]) {
+    return `https://drive.google.com/file/d/${gdriveMatch[1]}/preview`;
   }
-  if (url.includes('/embed/')) {
-    if (url.includes('dQw4w9WgXcQ')) {
-      return 'https://www.youtube-nocookie.com/embed/V74l_zS1x8E?rel=0&modestbranding=1&enablejsapi=1';
-    }
-    return url;
+
+  // 2. Comprehensive YouTube URL regex supporting:
+  // - youtube.com/watch?v=ID
+  // - youtube.com/embed/ID
+  // - youtube.com/v/ID
+  // - youtu.be/ID (with or without ?si=...)
+  // - youtube.com/shorts/ID
+  // - youtube.com/live/ID
+  // - m.youtube.com/...
+  const ytMatch = cleanUrl.match(
+    /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\w-]{11})/i
+  );
+
+  if (ytMatch && ytMatch[1]) {
+    const videoId = ytMatch[1];
+    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : '';
+    const originParam = origin ? `&origin=${encodeURIComponent(origin)}` : '';
+    // Use official www.youtube.com (not youtube-nocookie which triggers cross-origin cookie blocks)
+    return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1${originParam}`;
   }
-  return url;
+
+  // 3. Fallback for raw /embed/ URLs: normalize domain and ensure origin
+  if (cleanUrl.includes('/embed/')) {
+    const normalized = cleanUrl.replace('youtube-nocookie.com', 'youtube.com');
+    if (!normalized.includes('origin=') && typeof window !== 'undefined' && window.location.origin) {
+      const sep = normalized.includes('?') ? '&' : '?';
+      return `${normalized}${sep}origin=${encodeURIComponent(window.location.origin)}`;
+    }
+    return normalized;
+  }
+
+  return cleanUrl;
+};
+
+/**
+ * Extract clean, direct watch URL for opening directly in YouTube
+ */
+export const getDirectWatchUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  const cleanUrl = url.trim();
+
+  // If Google Drive
+  if (cleanUrl.includes('drive.google.com')) {
+    return cleanUrl.replace('/preview', '/view');
+  }
+
+  const ytMatch = cleanUrl.match(
+    /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\w-]{11})/i
+  );
+
+  if (ytMatch && ytMatch[1]) {
+    return `https://www.youtube.com/watch?v=${ytMatch[1]}`;
+  }
+
+  return cleanUrl;
 };
 
 /**
@@ -28,7 +75,7 @@ export const formatYouTubeEmbedUrl = (url) => {
 export const getMaterialTypeMeta = (type) => {
   switch (type) {
     case 'video':
-      return { label: 'Video YouTube', bg: 'bg-rose-50 text-rose-700 border-rose-200', icon: Video };
+      return { label: 'Video Kuliah', bg: 'bg-rose-50 text-rose-700 border-rose-200', icon: Video };
     case 'excel':
       return { label: 'Spreadsheet Excel (GDrive)', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: FileText };
     case 'word':

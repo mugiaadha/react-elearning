@@ -8,7 +8,7 @@ import {
   Download,
   HelpCircle,
 } from 'lucide-react';
-import { formatYouTubeEmbedUrl, getMaterialTypeMeta } from './learningHelpers';
+import { formatYouTubeEmbedUrl, getDirectWatchUrl, getMaterialTypeMeta } from './learningHelpers';
 
 export const LessonContentView = ({
   activeLesson,
@@ -19,29 +19,42 @@ export const LessonContentView = ({
   gdriveDocuments = [],
   onCompleteAndNext,
 }) => {
+  const videoSourceUrl = activeLesson?.video_url || activeLesson?.url;
+  const embedUrl = formatYouTubeEmbedUrl(videoSourceUrl);
+  const directWatchUrl = getDirectWatchUrl(videoSourceUrl);
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       {/* 1. LAYAR BESAR DI ATAS: VIDEO YOUTUBE DARI GURU */}
-      {activeLesson?.type === 'video' && (activeLesson.video_url || activeLesson.url) ? (
+      {activeLesson?.type === 'video' && videoSourceUrl ? (
         <div className="bg-slate-950 overflow-hidden">
           <div className="aspect-video bg-slate-950 relative flex items-center justify-center">
             <iframe
+              key={embedUrl}
               className="w-full h-full border-0"
-              src={formatYouTubeEmbedUrl(activeLesson.video_url || activeLesson.url)}
+              src={embedUrl}
               title={activeLesson.title || 'Video Pembelajaran Perpajakan'}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
             ></iframe>
           </div>
-          <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-            <span>Video Kuliah Interaktif Terintegrasi Sistem Belajar</span>
+          <div className="p-3 bg-slate-900 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Video Kuliah Interaktif Terintegrasi</span>
+              <span className="text-slate-600 hidden sm:inline">•</span>
+              <span className="text-[11px] text-slate-500 hidden sm:inline">
+                Jika video bertuliskan "Video Unavailable", pemilik video membatasi pemutaran embed.
+              </span>
+            </div>
             <a
-              href={activeLesson.video_url || activeLesson.url}
+              href={directWatchUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 text-xs font-semibold hover:underline"
+              className="inline-flex items-center gap-1.5 text-amber-300 hover:text-amber-200 text-xs font-semibold hover:underline shrink-0"
             >
-              <span>Buka Video di YouTube (Tab Baru)</span>
+              <span>Buka Langsung di YouTube</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
