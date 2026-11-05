@@ -20,19 +20,26 @@ class Payment extends Model
         'brevet_title',
         'amount',
         'payment_method',
+        'payment_type',
         'transaction_time',
-        'proof_image_url',
         'status',
-        'sender_account_name',
+        'snap_token',
+        'snap_redirect_url',
+        'transaction_id',
+        'transaction_status',
+        'fraud_status',
+        'settlement_time',
+        'metadata',
         'notes',
-        'rejection_reason',
         'approved_at',
     ];
 
     protected $casts = [
         'amount' => 'integer',
         'transaction_time' => 'datetime',
+        'settlement_time' => 'datetime',
         'approved_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
     public function user()

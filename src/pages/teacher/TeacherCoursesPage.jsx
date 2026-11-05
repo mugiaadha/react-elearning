@@ -17,11 +17,14 @@ import {
   Award,
   ChevronRight,
   FolderPlus,
-  Users
+  Users,
+  Calendar,
+  Lock
 } from 'lucide-react';
 import apiClient from '../../services/api/apiClient';
 import ENDPOINTS from '../../services/api/endpoints';
 import { CreateBrevetModal } from './components/CreateBrevetModal';
+import { CreateBatchModal } from './components/CreateBatchModal';
 import { CreateModuleModal } from './components/CreateModuleModal';
 import { AddLessonModal } from './components/AddLessonModal';
 import { EditExamModal } from './components/EditExamModal';
@@ -30,12 +33,15 @@ import { TeacherModuleCard } from './components/TeacherModuleCard';
 export const TeacherCoursesPage = () => {
   const [brevets, setBrevets] = useState([]);
   const [selectedBrevetId, setSelectedBrevetId] = useState('');
+  const [batches, setBatches] = useState([]);
+  const [loadingBatches, setLoadingBatches] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');
 
   // Modals state
   const [isBrevetModalOpen, setIsBrevetModalOpen] = useState(false);
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
@@ -100,9 +106,30 @@ export const TeacherCoursesPage = () => {
     }
   };
 
+  // Fetch cohort batches for the selected brevet
+  const fetchBatches = async (brevetId) => {
+    if (!brevetId) return;
+    try {
+      setLoadingBatches(true);
+      const res = await apiClient.get(ENDPOINTS.TEACHER_BREVET_BATCHES(brevetId));
+      setBatches(res.data || []);
+    } catch (err) {
+      console.warn('Failed to load batches', err);
+      setBatches([]);
+    } finally {
+      setLoadingBatches(false);
+    }
+  };
+
   useEffect(() => {
     fetchBrevets();
   }, []);
+
+  useEffect(() => {
+    if (selectedBrevetId) {
+      fetchBatches(selectedBrevetId);
+    }
+  }, [selectedBrevetId]);
 
   const currentBrevet = brevets.find((b) => b.id === selectedBrevetId) || brevets[0];
 
@@ -422,7 +449,14 @@ export const TeacherCoursesPage = () => {
             </p>
           </div>
 
-          <div className="shrink-0 flex items-center gap-3">
+          <div className="shrink-0 flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => setIsBatchModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition shadow"
+            >
+              <Users className="w-4 h-4 text-amber-300" />
+              <span>Buka Angkatan Baru</span>
+            </button>
             <button
               onClick={() => setIsModuleModalOpen(true)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 transition shadow"
@@ -431,6 +465,121 @@ export const TeacherCoursesPage = () => {
               Tambah Modul Baru
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Cohort Batches Management Card */}
+      {currentBrevet && (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-amber-600" />
+                  Angkatan Kelas & Kurikulum Terkunci (Cohort Batches)
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                  {batches.length} Angkatan
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Setiap angkatan memiliki snapshot kurikulum mandiri. Murid lama tidak akan terpengaruh modul tambahan baru di masa depan.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsBatchModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition shadow-sm self-start sm:self-auto shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Buka Angkatan Baru</span>
+            </button>
+          </div>
+
+          {loadingBatches ? (
+            <div className="py-8 text-center text-xs text-slate-400 space-y-2">
+              <RefreshCw className="w-5 h-5 text-amber-600 animate-spin mx-auto" />
+              <p>Memuat daftar angkatan kelas...</p>
+            </div>
+          ) : batches.length === 0 ? (
+            <div className="py-6 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center space-y-2">
+              <p className="text-xs text-slate-500">
+                Belum ada angkatan khusus yang tercatat untuk program ini.
+              </p>
+              <button
+                onClick={() => setIsBatchModalOpen(true)}
+                className="text-xs font-bold text-amber-700 hover:underline inline-flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" /> Buka Angkatan Pertama Sekarang
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {batches.map((batch) => {
+                const isFinished = batch.status === 'finished';
+                const isOngoing = batch.status === 'ongoing';
+                const isOpen = batch.status === 'open';
+
+                const statusBadge = isOpen
+                  ? { label: 'Pendaftaran Dibuka', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                  : isOngoing
+                  ? { label: 'Sedang Berjalan', bg: 'bg-sky-50 text-sky-700 border-sky-200' }
+                  : { label: 'Selesai', bg: 'bg-slate-50 text-slate-600 border-slate-200' };
+
+                const modulesCount = Array.isArray(batch.curriculum)
+                  ? batch.curriculum.length
+                  : (currentBrevet.curriculum?.length || 0);
+
+                return (
+                  <div
+                    key={batch.id}
+                    className="p-4 rounded-2xl border border-slate-200/90 bg-white hover:border-amber-300 transition shadow-sm space-y-3 flex flex-col justify-between"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="font-extrabold text-slate-900 text-sm">
+                            {batch.batch_name}
+                          </h4>
+                          <span className="text-[10px] text-slate-400 font-mono font-semibold">
+                            {batch.batch_code || `BAT-${batch.id}`}
+                          </span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${statusBadge.bg}`}>
+                          {statusBadge.label}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 text-xs text-slate-500 pt-1">
+                        <div className="flex items-center gap-1.5 text-[11px]">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>
+                            {batch.start_date ? new Date(batch.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Segera'} - {batch.end_date ? new Date(batch.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Selesai'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[11px]">
+                          <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="font-semibold text-slate-700">
+                            {batch.enrollments_count ?? 0} Siswa Terdaftar
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                      <span className="flex items-center gap-1 text-emerald-700 font-medium">
+                        <Lock className="w-3 h-3 text-emerald-600" />
+                        Kurikulum Terkunci
+                      </span>
+                      <span className="font-mono text-slate-400">
+                        {modulesCount} Modul
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -505,6 +654,18 @@ export const TeacherCoursesPage = () => {
         setBrevetForm={setBrevetForm}
         onSubmit={handleCreateBrevet}
         submitting={submitting}
+      />
+
+      {/* MODAL 1B: Create Cohort Batch */}
+      <CreateBatchModal
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        currentBrevet={currentBrevet}
+        existingBatchesCount={batches.length}
+        onBatchCreated={() => {
+          fetchBatches(currentBrevet?.id || selectedBrevetId);
+          fetchBrevets();
+        }}
       />
 
       {/* MODAL 2: Create Module */}

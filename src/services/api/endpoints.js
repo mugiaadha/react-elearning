@@ -32,9 +32,12 @@ export const ENDPOINTS = {
   ADMIN_EMAIL_TEMPLATE: (id) => `/admin/email-templates/${id}`,
   ADMIN_EMAIL_TEST_SEND: '/admin/email-templates/test-send',
 
-  // Payments & Onboarding
-  PAYMENT_PROOF_UPLOAD: IS_MOCK_MODE ? '/api/user/profile.json' : '/payments/proof',
-  ADMIN_PENDING_PAYMENTS: IS_MOCK_MODE ? '/api/admin/pending-payments.json' : '/admin/payments/pending',
+  // Payments & Midtrans Gateway
+  PAYMENT_SNAP_TOKEN: '/payments/snap-token',
+  PAYMENT_STATUS: (orderId) => `/payments/${orderId}/status`,
+  PAYMENT_SYNC: (orderId) => `/payments/${orderId}/sync`,
+  PAYMENT_SIMULATE: (orderId) => `/payments/${orderId}/simulate-approval`,
+  ADMIN_PENDING_PAYMENTS: IS_MOCK_MODE ? '/api/admin/pending-payments.json' : '/admin/payments',
   ADMIN_VERIFY_PAYMENT: (paymentId) => `/admin/payments/${paymentId}/verify`,
   ADMIN_REJECT_PAYMENT: (paymentId) => `/admin/payments/${paymentId}/reject`,
 
@@ -52,6 +55,7 @@ export const ENDPOINTS = {
   // Teacher Portal
   TEACHER_STUDENTS: '/teacher/students',
   TEACHER_BREVETS: '/teacher/brevets',
+  TEACHER_BREVET_BATCHES: (brevetId) => `/teacher/brevets/${brevetId}/batches`,
   TEACHER_STORE_MODULE: (brevetId) => `/teacher/brevets/${brevetId}/modules`,
   TEACHER_UPDATE_MODULE: (brevetId, moduleId) => `/teacher/brevets/${brevetId}/modules/${moduleId}`,
   TEACHER_DELETE_MODULE: (brevetId, moduleId) => `/teacher/brevets/${brevetId}/modules/${moduleId}`,

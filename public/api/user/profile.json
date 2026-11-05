@@ -17,9 +17,7 @@
       "invoice_id": "INV-NAC-2026-0892",
       "amount": 2750000,
       "registered_date": "2026-10-12T09:30:00Z",
-      "payment_method": "QRIS Dinamis / Virtual Account BCA",
-      "payment_proof_url": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
-      "proof_uploaded": true,
+      "payment_method": "Midtrans Payment Gateway (QRIS / VA / CC)",
       "progress_percentage": 0
     },
     "completed_brevets": [],

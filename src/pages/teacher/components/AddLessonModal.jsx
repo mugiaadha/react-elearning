@@ -90,6 +90,30 @@ export const AddLessonModal = ({
             </span>
           </div>
 
+          {/* Toggle Materi Susulan / Update Regulasi (Opsional) */}
+          <div className="bg-amber-50/70 p-3 rounded-xl border border-amber-200/80">
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={Boolean(lessonForm.is_update)}
+                onChange={(e) => setLessonForm({
+                  ...lessonForm,
+                  is_update: e.target.checked,
+                  is_optional: e.target.checked,
+                })}
+                className="mt-0.5 rounded text-amber-600 focus:ring-amber-500 w-4 h-4"
+              />
+              <div>
+                <span className="font-bold text-slate-900 block">
+                  Tandai sebagai Materi Susulan / Update Regulasi (Opsional)
+                </span>
+                <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
+                  Materi ini akan diberi lencana khusus dan tidak menurunkan persentase kelulusan bagi murid yang sudah berjalan/lulus.
+                </span>
+              </div>
+            </label>
+          </div>
+
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"

@@ -50,8 +50,14 @@ $registerRoutes = function () {
     Route::get('/certificates/{certId}/verify', [CertificateController::class, 'show']);
     Route::post('/certificates', [CertificateController::class, 'store']);
 
-    // 5. Payments
-    Route::post('/payments/proof', [PaymentController::class, 'uploadProof']);
+    // 5. Midtrans Payments Gateway & Monitoring
+    Route::post('/payments/snap-token', [PaymentController::class, 'createSnapToken']);
+    Route::post('/payments/notification', [PaymentController::class, 'handleNotification']);
+    Route::post('/payments/webhook', [PaymentController::class, 'handleNotification']);
+    Route::get('/payments/{orderId}/status', [PaymentController::class, 'checkStatus']);
+    Route::post('/payments/{orderId}/sync', [PaymentController::class, 'checkStatus']);
+    Route::post('/payments/{orderId}/simulate-approval', [PaymentController::class, 'simulateApproval']);
+    Route::get('/admin/payments', [PaymentController::class, 'pending']);
     Route::get('/admin/payments/pending', [PaymentController::class, 'pending']);
     Route::get('/admin/pending-payments', [PaymentController::class, 'pending']);
     Route::post('/admin/payments/{id}/verify', [PaymentController::class, 'verify']);

@@ -16,6 +16,7 @@ class Submission extends Model
         'student_email',
         'course',
         'brevet_id',
+        'batch_id',
         'module_id',
         'module_title',
         'task',
@@ -37,5 +38,15 @@ class Submission extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(Batch::class);
+    }
+
+    public function brevet()
+    {
+        return $this->belongsTo(Brevet::class, 'brevet_id');
     }
 }

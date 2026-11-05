@@ -19,7 +19,7 @@ class TeacherController extends Controller
      */
     public function students()
     {
-        $students = User::where('role', 'student')->with('activeEnrollment.brevet')->get()->map(function ($u) {
+        $students = User::where('role', 'student')->with(['activeEnrollment.brevet', 'activeEnrollment.batch'])->get()->map(function ($u) {
             $enrollment = $u->activeEnrollment;
             $brevetTitle = $enrollment?->brevet?->title ?? 'Brevet AB Terpadu';
             $progress = ($enrollment?->progress_percentage ?? 0) . '%';
@@ -43,6 +43,9 @@ class TeacherController extends Controller
                 'name' => $u->name,
                 'email' => $u->email,
                 'enrolled' => $brevetTitle,
+                'batch_id' => $enrollment?->batch_id,
+                'batch_name' => $enrollment?->batch?->batch_name ?? 'Batch 42 - Reguler',
+                'batch_code' => $enrollment?->batch?->batch_code ?? 'BAT-AB-42',
                 'progress' => $progress,
                 'lastActive' => $lastActiveStr,
                 'status' => $status,
@@ -274,6 +277,8 @@ class TeacherController extends Controller
             'type' => 'required|in:video,pdf,excel,word,ppt',
             'url' => 'required|string',
             'duration' => 'nullable|string',
+            'is_optional' => 'nullable|boolean',
+            'is_update' => 'nullable|boolean',
         ]);
 
         $curriculum = $brevet->curriculum ?: [];
@@ -289,6 +294,8 @@ class TeacherController extends Controller
                     'url' => $validated['url'],
                     'video_url' => $validated['type'] === 'video' ? $validated['url'] : null,
                     'duration' => $validated['duration'] ?: '30 Menit',
+                    'is_optional' => (bool) ($request->input('is_optional', false) || $request->input('is_update', false)),
+                    'is_update' => (bool) $request->input('is_update', false),
                 ];
                 $lessons[] = $newLesson;
                 $mod['lessons'] = $lessons;
@@ -403,13 +410,19 @@ class TeacherController extends Controller
             $query->where('status', $status);
         }
 
-        $submissions = $query->get()->map(function ($s) {
+        $submissions = $query->with(['batch', 'user.activeEnrollment.batch'])->get()->map(function ($s) {
+            $batchName = $s->batch?->batch_name ?? $s->user?->activeEnrollment?->batch?->batch_name ?? 'Batch 42 - Reguler';
+            $batchCode = $s->batch?->batch_code ?? $s->user?->activeEnrollment?->batch?->batch_code ?? 'BAT-AB-42';
+
             return [
                 'id' => $s->id,
                 'student_name' => $s->student_name,
                 'student_email' => $s->student_email,
                 'course' => $s->course,
                 'brevet_id' => $s->brevet_id,
+                'batch_id' => $s->batch_id ?? $s->user?->activeEnrollment?->batch_id,
+                'batch_name' => $batchName,
+                'batch_code' => $batchCode,
                 'module_id' => $s->module_id,
                 'module_title' => $s->module_title ?? $s->task,
                 'task' => $s->task,

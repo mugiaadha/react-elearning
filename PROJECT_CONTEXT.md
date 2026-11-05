@@ -4,7 +4,7 @@
 
 ## 1. Project Overview & Tech Stack
 
-Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet AB, Brevet C, dan Mastery Simulasi Coretax) dengan sistem RBAC, onboarding multi-tahap, verifikasi email SMTP, payment gateway manual/QRIS, serta portal pembelajaran modular.
+Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet AB, Brevet C, dan Mastery Simulasi Coretax) dengan sistem RBAC, onboarding multi-tahap, verifikasi email SMTP, payment gateway otomatis Midtrans Snap (QRIS Dinamis, Virtual Account BCA/Mandiri/BNI/BRI/Permata, Kartu Kredit 3DS, & Gerai Retail), serta portal pembelajaran modular.
 
 - **Frontend**: React 19, Vite 8, React Router v7, Tailwind CSS v3, Axios, Lucide React, Canvas Confetti.
 - **Backend**: Laravel 12, PHP 8.2+, Laravel Sanctum (Token Auth), SQLite (default `database.sqlite`), Blade Email Templates.
@@ -14,8 +14,8 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
   - Queue Worker: `php artisan queue:listen` (untuk email verification & reminder)
   - Full Stack (All-in-one): `npm run dev`
 - **Core Environment Keys**:
-  - FE (`.env`): `VITE_API_BASE_URL=http://127.0.0.1:8000/api`, `VITE_USE_MOCK_API=false`, `VITE_GOOGLE_CLIENT_ID`, `VITE_DEV_MODE=true`
-  - BE (`backend/.env`): `DB_CONNECTION=sqlite`, `FRONTEND_URL=http://localhost:5173`, `MAIL_MAILER=smtp`, `GOOGLE_CLIENT_ID`
+  - FE (`.env`): `VITE_API_BASE_URL=http://127.0.0.1:8000/api`, `VITE_USE_MOCK_API=false`, `VITE_GOOGLE_CLIENT_ID`, `VITE_DEV_MODE=true`, `VITE_MIDTRANS_CLIENT_KEY`
+  - BE (`backend/.env`): `DB_CONNECTION=sqlite`, `FRONTEND_URL=http://localhost:5173`, `MAIL_MAILER=smtp`, `GOOGLE_CLIENT_ID`, `VITE_MIDTRANS_SERVER_KEY`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
 
 ---
 
@@ -41,7 +41,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 │   │   │   └── endpoints.js          # Centralized contract URL API backend
 │   │   ├── brevetService.js          # Fetch katalog program & detail kurikulum
 │   │   ├── userService.js            # Profile, verification email, password, switch active brevet
-│   │   ├── paymentService.js         # Upload bukti transfer, approval admin
+│   │   ├── paymentService.js         # Midtrans Snap Token, status sync, instant simulation, approval
 │   │   └── certificateService.js     # Validasi QR code & penerbitan sertifikat digital
 │   ├── layouts/
 │   │   ├── FrontofficePublicLayout   # Navbar publik + footer institusi
@@ -49,7 +49,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 │   │   └── BackofficeLayout          # Admin CMS management layout
 │   ├── pages/
 │   │   ├── public/                   # HomePage, BrevetCatalog, BrevetDetail, Login, Register, VerifyEmail
-│   │   ├── onboarding/               # PaymentPendingPage (tunggu approval bayar / upload struk)
+│   │   ├── onboarding/               # PaymentPendingPage (Midtrans Snap multi-channel payment gateway)
 │   │   ├── student/                  # Pola Arsitektur Role Student:
 │   │   │   ├── StudentDashboard.jsx  # File halaman utama langsung di root role
 │   │   │   ├── components/           # Komponen privat HANYA digunakan oleh student:
@@ -69,16 +69,18 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 │   │   │   ├── TeacherCoursesPage.jsx# Kelola kurikulum & materi modul (modular, ~540 lines)
 │   │   │   └── components/           # Sub-komponen modal & kartu kurikulum:
 │   │   │       ├── CreateBrevetModal.jsx      # Modal tambah program brevet baru
+│   │   │       ├── CreateBatchModal.jsx       # Modal buka angkatan baru (immutable snapshot)
 │   │   │       ├── CreateModuleModal.jsx      # Modal tambah modul kurikulum & ujian awal
-│   │   │       ├── AddLessonModal.jsx         # Modal tambah bab materi video / file
+│   │   │       ├── AddLessonModal.jsx         # Modal tambah bab materi video / file / opsional
 │   │   │       ├── EditExamModal.jsx          # Modal konfigurasi ujian studi kasus
 │   │   │       └── TeacherModuleCard.jsx      # Kartu modul, daftar materi, & status ujian
 │   │   └── admin/                    # AdminDashboard, AdminPayments, AdminStudents, AdminTeachers, Brevets, EmailTemplates
 │   └── components/
 │       ├── auth/GoogleAuthButton.jsx # Google OAuth 2.0 & instant account switcher
 │       └── common/Badge.jsx          # Status pill visual standar (APPROVED, PENDING, REVISION, dll)
+│   └── hooks/                        # Custom React hooks
 └── backend/
-    ├── .env                          # DB, Mail SMTP, APP_URL, FRONTEND_URL
+    ├── .env                          # DB, Mail SMTP, APP_URL, FRONTEND_URL, Midtrans Keys
     ├── routes/api.php                # Seluruh endpoint REST API Laravel
     ├── database/
     │   ├── database.sqlite           # SQLite DB file
@@ -86,8 +88,10 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
     │   └── seeders/DatabaseSeeder    # Default accounts (admin, teacher, students, 3 program brevet)
     └── app/
         ├── Models/                   # User, Brevet, Enrollment, Payment, Submission, Certificate, EmailTemplate
-        ├── Http/Controllers/Api/     # AuthController, BrevetController, TeacherController, AdminController, etc.
-        └── Services/MailService.php  # Pengiriman email verifikasi OTP, welcome, approval payment
+        ├── Http/Controllers/Api/     # AuthController, BrevetController, TeacherController, PaymentController, etc.
+        └── Services/
+            ├── MailService.php       # Pengiriman email verifikasi OTP, welcome, approval payment
+            └── MidtransService.php   # Snap token creation, webhook SHA512 signature verify & auto-settlement
 ```
 
 ---
@@ -99,8 +103,8 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 | **`users`** | Akun pengguna (`id`, `string_id`, `name`, `email`, `role`, `avatar`, `payment_status`, `google_id`, `email_verified_at`). Role: `student`, `teacher`, `admin`. | `hasMany(Enrollment)`, `hasMany(Payment)`, `hasMany(Certificate)` |
 | **`brevets`** | Program pelatihan (`id`: `brevet-ab`, `brevet-c`, `coretax-mastery`, `slug`, `title`, `price`, `instructor`, `curriculum` [JSON]). | `hasMany(Batch)`, `hasMany(Enrollment)`, `hasMany(Payment)` |
 | **`batches`** | Angkatan kelas / Cohort (`id`, `brevet_id`, `batch_name`, `batch_code`, `start_date`, `end_date`, `status`: `open`/`ongoing`/`finished`, `curriculum` [JSON snapshot terkunci]). | `belongsTo(Brevet)`, `hasMany(Enrollment)`, `hasMany(Submission)` |
-| **`enrollments`** | Kursus yang diambil siswa (`user_id`, `brevet_id`, `batch_id`, `status`: `ACTIVE`/`PASSED`, `passed_at`, `invoice_number`, `is_active`, `payment_status`, `progress_percentage`, `completed_lessons` [JSON]). | `belongsTo(User)`, `belongsTo(Brevet)`, `belongsTo(Batch)` |
-| **`payments`** | Riwayat transaksi tagihan (`id`: `PAY-XXXX`, `invoice_number`, `user_id`, `brevet_id`, `amount`, `status`: `PENDING_APPROVAL` / `APPROVED` / `REJECTED`, `proof_image_url`). | `belongsTo(User)`, `belongsTo(Brevet)` |
+| **`enrollments`** | Kursus yang diambil siswa (`user_id`, `brevet_id`, `batch_id`, `status`: `ACTIVE`/`PASSED`, `passed_at`, `invoice_number`, `is_active`, `payment_status`, `payment_method`, `progress_percentage`, `completed_lessons` [JSON]). | `belongsTo(User)`, `belongsTo(Brevet)`, `belongsTo(Batch)` |
+| **`payments`** | Riwayat transaksi tagihan Midtrans (`id`: `PAY-XXXX`, `invoice_number`, `user_id`, `brevet_id`, `amount`, `payment_method`, `payment_type`, `snap_token`, `snap_redirect_url`, `transaction_id`, `transaction_status`, `fraud_status`, `settlement_time`, `status`: `PENDING_APPROVAL` / `APPROVED` / `REJECTED`). | `belongsTo(User)`, `belongsTo(Brevet)` |
 | **`submissions`** | Tugas / ulangan modul siswa (`id`: `sub-XXXX`, `user_id`, `brevet_id`, `batch_id`, `module_id`, `task`, `submission_url`, `status`: `PENDING` / `APPROVED` / `REVISION`, `score`, `teacher_feedback`). | `belongsTo(User)`, `belongsTo(Brevet)`, `belongsTo(Batch)` |
 | **`certificates`**| Sertifikat digital resmi kelulusan (`certificate_id`, `user_id`, `recipient_name`, `course_title`, `grade`, `score`, `verification_url`). | `belongsTo(User)` |
 | **`email_templates`** | Template email dinamis SMTP (`template_key`, `subject`, `body_html`, `variables_json`). | Standalone CMS |
@@ -143,11 +147,15 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 - `POST /certificates` : Terbitkan sertifikat kelulusan (nilai & yudisium dihitung dinamis dari submission).
 - `GET  /certificates/{certId}/verify` : Verifikasi keabsahan sertifikat publik via QR Code.
 
-### D. Payments & Billing
-- `POST /payments/proof` : Unggah bukti transfer / struk pembayaran siswa.
-- `GET  /admin/payments/pending` : Daftar pembayaran menunggu approval admin.
-- `POST /admin/payments/{id}/verify` : Approve pembayaran siswa -> Ruang kelas terbuka otomatis.
-- `POST /admin/payments/{id}/reject` : Tolak bukti bayar dengan catatan alasan.
+### D. Midtrans Payments Gateway & Monitoring
+- `POST /payments/snap-token` : Inisiasi transaksi dan ambil Snap Token Midtrans untuk tagihan siswa.
+- `POST /payments/notification` / `/payments/webhook` : Webhook handler Midtrans (validasi signature SHA512 & auto-settlement).
+- `GET  /payments/{orderId}/status` : Cek dan sinkronkan status transaksi terkini dari Midtrans Core API.
+- `POST /payments/{orderId}/sync` : Manual sync status pembayaran dari Midtrans API ke database.
+- `POST /payments/{orderId}/simulate-approval` : (Dev Mode) Simulasi instant settlement pembayaran.
+- `GET  /admin/payments` : Daftar transaksi Midtrans & metrik pendapatan untuk pemantauan admin.
+- `POST /admin/payments/{id}/verify` : Manual approval override oleh administrator jika diperlukan.
+- `POST /admin/payments/{id}/reject` : Batalkan transaksi pembayaran secara administratif.
 
 ### E. Backoffice Admin & Teacher Portal
 - `GET  /admin/stats` : Ringkasan statistik siswa aktif, revenue, dan guru.
@@ -176,8 +184,8 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 3. **Onboarding Gatekeeper Flow**:
    - Tahap 1: Registrasi -> Akun dibuat dengan status `PENDING_APPROVAL`.
    - Tahap 2: `VERIFY_EMAIL` -> Siswa diarahkan ke `/verify-email` sampai OTP terverifikasi.
-   - Tahap 3: `PAYMENT` -> Siswa diarahkan ke `/onboarding/payment-pending` untuk upload struk / bayar.
-   - Tahap 4: `COMPLETED` -> Admin menyetujui pembayaran (`status: APPROVED`), seluruh rute `/dashboard/student/*` terbuka penuh.
+   - Tahap 3: `PAYMENT` -> Siswa diarahkan ke `/onboarding/payment-pending` untuk membayar via popup Midtrans Snap (QRIS Dinamis, Virtual Account BCA/Mandiri/BNI/BRI/Permata, Kartu Kredit 3DS, Gerai Retail).
+   - Tahap 4: `COMPLETED` -> Midtrans memvalidasi pembayaran secara real-time via webhook callback (`settlement` / `capture` accept -> `status: APPROVED`), seluruh rute `/dashboard/student/*` terbuka penuh secara otomatis.
 
 4. **Locking Silabus & Kurikulum (Sequential Locking)**:
    - **Antar Modul**: Modul ke-`N` terkunci sampai ujian lembar kerja Modul ke-`N-1` dikumpulkan oleh siswa.
@@ -216,4 +224,5 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Materi Susulan / Update Opsional**: Jika ada materi baru yang ditambahkan pengajar ke master kurikulum setelah siswa lulus/berjalan, sistem menandai materi tersebut sebagai `is_update: true` / `is_optional: true` (`badge: 'Update Baru (Opsional)'`) sehingga siswa tetap dapat memperluas wawasan tanpa mewajibkan ujian ulang atau menurunkan persentase kelulusan.
    - **Pemberian Batch Otomatis**: Setiap pendaftaran baru (onboarding, Google OAuth, maupun brevet tambahan) otomatis diikatkan ke batch aktif (`status: 'open'` / `'ongoing'`) dari program brevet terkait.
    - **Tampilan UI Konsisten**: Nama angkatan (contoh: "Batch 42 - Reguler", "Batch 1 - Akselerasi Coretax DJP") ditampilkan jelas pada Dashboard Siswa, Kursus Saya, Silabus Sidebar, dan Portal Pengajar.
+   - **Manajemen Batch di Portal Guru**: Pengajar dapat membuka angkatan baru kapan saja via tombol *"+ Buka Angkatan Baru"* (`CreateBatchModal.jsx`) pada `TeacherCoursesPage.jsx`, menyematkan materi susulan/opsional via `AddLessonModal.jsx`, serta memfilter dan memonitor siswa per angkatan pada `TeacherStudentsPage.jsx` dan `TeacherDashboardPage.jsx`.
 

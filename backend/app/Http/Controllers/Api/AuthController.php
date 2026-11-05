@@ -521,11 +521,7 @@ class AuthController extends Controller
         $submission->submitted_at = 'Hari ini, ' . date('H:i') . ' WIB';
         $submission->file_size = $fileSizeText;
         $submission->status = 'PENDING'; // Submitted, pending teacher review
-        $submission->score = null;
-        $submission->teacher_feedback = null;
-        $submission->save();
-
-        // Also record this exam in completed lessons of enrollment so next module is unlocked
+        // Resolve enrollment to associate submission with student's cohort batch
         $enrollment = Enrollment::where('user_id', $user->id)
             ->where(function ($q) use ($brevet, $validated) {
                 if ($brevet) {
@@ -535,6 +531,12 @@ class AuthController extends Controller
             })
             ->first();
 
+        $submission->batch_id = $enrollment?->batch_id;
+        $submission->score = null;
+        $submission->teacher_feedback = null;
+        $submission->save();
+
+        // Also record this exam in completed lessons of enrollment so next module is unlocked
         if ($enrollment) {
             $completed = $enrollment->completed_lessons ?: [];
             $examLessonKey = 'exam-' . $validated['module_id'];
@@ -966,9 +968,7 @@ class AuthController extends Controller
                 'invoice_id' => $enrollment?->invoice_number ?? 'INV-NAC-2026-0892',
                 'amount' => $enrollment?->amount ?? 2750000,
                 'registered_date' => $enrollment?->registered_date?->toISOString() ?? now()->toISOString(),
-                'payment_method' => $enrollment?->payment_method ?? 'QRIS Dinamis',
-                'payment_proof_url' => $enrollment?->payment_proof_url,
-                'proof_uploaded' => !empty($enrollment?->payment_proof_url),
+                'payment_method' => $enrollment?->payment_method ?? 'Midtrans Payment Gateway',
                 'payment_status' => $enrollment?->payment_status ?? $user->payment_status,
                 'is_active' => (bool)($enrollment?->is_active ?? false),
                 'progress_percentage' => $enrollment?->progress_percentage ?? 0,

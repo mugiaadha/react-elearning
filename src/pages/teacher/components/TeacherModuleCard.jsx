@@ -104,11 +104,16 @@ export const TeacherModuleCard = ({
                         <span className="font-bold text-slate-900 block truncate">
                           {les.title}
                         </span>
-                        <div className="flex items-center gap-1.5 text-[11px] mt-0.5">
+                        <div className="flex items-center gap-1.5 text-[11px] mt-0.5 flex-wrap">
                           <span className={`px-1.5 py-0.2 rounded border text-[10px] font-semibold ${badge.bg}`}>
                             {badge.label}
                           </span>
                           <span className="text-slate-400">• {les.duration || '30 Min'}</span>
+                          {(les.is_update || les.is_optional) && (
+                            <span className="px-1.5 py-0.5 rounded border text-[9px] font-bold bg-amber-100 text-amber-900 border-amber-300">
+                              Update Baru (Opsional)
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

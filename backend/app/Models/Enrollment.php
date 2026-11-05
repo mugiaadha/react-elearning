@@ -15,8 +15,6 @@ class Enrollment extends Model
         'payment_method',
         'payment_status',
         'status',
-        'payment_proof_url',
-        'payment_notes',
         'progress_percentage',
         'completed_lessons',
         'is_active',

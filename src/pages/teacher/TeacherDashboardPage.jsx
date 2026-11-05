@@ -310,8 +310,16 @@ export const TeacherDashboardPage = () => {
                             ({sub.student_email})
                           </span>
                         </div>
-                        <p className="text-xs text-nac-primary font-semibold mt-0.5">
-                          {sub.course} • <span className="text-slate-700">{sub.module_title || sub.task}</span>
+                        <p className="text-xs text-nac-primary font-semibold mt-0.5 flex flex-wrap items-center gap-1.5">
+                          <span>{sub.course}</span>
+                          <span>•</span>
+                          <span className="text-slate-700">{sub.module_title || sub.task}</span>
+                          {sub.batch_name && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              <Users className="w-3 h-3 text-amber-600" />
+                              {sub.batch_name}
+                            </span>
+                          )}
                         </p>
                       </div>
                     </div>
