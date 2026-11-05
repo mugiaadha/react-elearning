@@ -475,53 +475,12 @@ class AuthController extends Controller
         $submissionUrl = $rawUrl;
         $fileSizeText = 'Link Google Drive / Docs';
 
-        // Handle direct file upload from student with Anti-Webshell / Anti-php2shell defenses
+        // Handle direct file upload from student
         if ($request->hasFile('file')) {
             $uploadedFile = $request->file('file');
-            $originalName = $uploadedFile->getClientOriginalName();
             $extension = strtolower($uploadedFile->getClientOriginalExtension());
-
-            // 1. Strict Whitelist of Allowed Extensions
-            $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'zip', 'rar', 'jpg', 'jpeg', 'png'];
-            if (!in_array($extension, $allowedExtensions, true)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Format file tidak diizinkan. Hanya menerima PDF, Word, Excel, CSV, Zip, atau Gambar.',
-                ], 422);
-            }
-
-            // 2. Reject Dangerous Extensions and Double-Extensions (e.g. exploit.php.jpg)
-            $dangerousPatterns = '/\.(php[0-9]*|phtml|phar|shtml|cgi|pl|sh|bash|exe|bat|cmd|vbs|py|js|jsp)\b/i';
-            if (preg_match($dangerousPatterns, $originalName)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Nama file mengandung ekstensi berisiko yang dilarang oleh sistem keamanan.',
-                ], 422);
-            }
-
-            // 3. Deep Content Inspection (Prevent embedded PHP tags / webshell signatures)
-            $headerContent = '';
-            if (isset($uploadedFile->tempFile) && is_resource($uploadedFile->tempFile)) {
-                rewind($uploadedFile->tempFile);
-                $headerContent = fread($uploadedFile->tempFile, 4096);
-                rewind($uploadedFile->tempFile);
-            } else {
-                $path = $uploadedFile->getRealPath() ?: $uploadedFile->getPathname();
-                if ($path && file_exists($path)) {
-                    $headerContent = @file_get_contents($path, false, null, 0, 4096) ?: '';
-                }
-            }
-
-            if ($headerContent && preg_match('/(<\?php|<\?=|<script\s+language\s*=\s*["\']?php)/i', $headerContent)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'File ditolak karena terdeteksi mengandung script server yang tidak sah.',
-                ], 422);
-            }
-
-            $cleanName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
-            $randomToken = Str::random(12);
-            $filename = 'jawaban_' . Str::slug($user->name) . '_' . ($cleanName ?: 'file') . '_' . $randomToken . '.' . $extension;
+            $cleanName = Str::slug(pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME));
+            $filename = 'jawaban_' . Str::slug($user->name) . '_' . $cleanName . '_' . time() . '.' . $extension;
             
             $path = $uploadedFile->storeAs('submissions', $filename, 'public');
             $submissionUrl = asset('storage/' . $path);
