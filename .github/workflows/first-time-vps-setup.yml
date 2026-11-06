@@ -162,20 +162,20 @@ jobs:
             mkdir -p backend/storage/app/public
             chmod -R 777 backend/storage 2>/dev/null || true
 
-            # 7. Tarik Docker Images dari GHCR & Jalankan MariaDB Backend
+            # 7. Tarik Docker Images dari GHCR
             echo "[6/8] Menarik Docker Images dari GHCR..."
             if [ -n "$GHCR_TOKEN" ]; then
               echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             fi
             docker compose -f docker-compose.prod.yml pull
 
-            echo "  -> Menjalankan database MariaDB & Backend..."
-            docker compose -f docker-compose.prod.yml up -d mariadb backend queue
-
             # 8. Eksekusi Pure Docker SSL Setup & Jalankan Stack
             echo "[7/8] Mengonfigurasi Let's Encrypt SSL di dalam Docker..."
             chmod +x scripts/setup-ssl.sh
             bash scripts/setup-ssl.sh "${TARGET_EMAIL}" "${TARGET_DOMAIN}"
+
+            # Jalankan backend dan queue
+            docker compose -f docker-compose.prod.yml up -d backend queue
 
             # Setup Laravel APP_KEY, Migrasi Database, & Cache
             echo "🗄️ Inisialisasi Database Laravel..."
