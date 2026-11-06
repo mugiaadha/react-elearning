@@ -16,6 +16,11 @@ echo "=========================================================="
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
+# Pastikan backend/.env tersedia agar docker compose tidak gagal membaca env_file
+if [ ! -f backend/.env ] && [ -f backend/.env.example ]; then
+  cp backend/.env.example backend/.env
+fi
+
 # 1. Pastikan port 80 & 443 bebas untuk Certbot Standalone
 echo "[1/4] Membebaskan port 80 & 443..."
 if command -v systemctl &> /dev/null; then

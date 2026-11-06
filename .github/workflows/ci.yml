@@ -124,7 +124,9 @@ jobs:
         run: docker compose -f docker-compose.yml config
 
       - name: Validate Docker Compose Configuration (Production)
-        run: docker compose -f docker-compose.prod.yml config
+        run: |
+          cp backend/.env.example backend/.env
+          docker compose -f docker-compose.prod.yml config
 
       - name: Build & Push Backend Docker Image to GHCR
         uses: docker/build-push-action@v5
