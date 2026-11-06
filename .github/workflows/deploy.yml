@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Target Environment'
+        description: 'Target Environments'
         required: true
         default: 'production'
         type: choice
