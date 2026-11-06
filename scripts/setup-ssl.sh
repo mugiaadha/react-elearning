@@ -1,147 +1,80 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Setup Lengkap: Optimasi Memory + Docker + Nginx SSL untuk elearning.socket-clenicapp.my.id
+# Script Otomasi Let's Encrypt SSL (100% Pure Docker - No Host Nginx)
 # ==============================================================================
 set -e
 
-EMAIL="$1"
+EMAIL="${1:-admin@socket-clenicapp.my.id}"
 DOMAIN="${2:-elearning.socket-clenicapp.my.id}"
 
 echo "=========================================================="
-echo " Setup VPS & SSL untuk: https://$DOMAIN"
+echo "  Pure Docker Let's Encrypt SSL Setup"
+echo "  Domain : https://$DOMAIN"
+echo "  Email  : $EMAIL"
 echo "=========================================================="
 
-if [ "$EUID" -ne 0 ]; then
-  echo "[-] Harap jalankan script ini sebagai root atau dengan sudo:"
-  echo "    sudo bash $0 [email-kamu@example.com]"
-  exit 1
-fi
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd || pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
-# ------------------------------------------------------------------------------
-# [1/7] Optimasi Kernel Memory (Aman untuk RAM 1 GB)
-# ------------------------------------------------------------------------------
-echo "[1/7] Mengonfigurasi parameter memory kernel..."
-sysctl -w vm.swappiness=10 >/dev/null
-sysctl -w vm.vfs_cache_pressure=50 >/dev/null
-
-grep -q '^vm.swappiness' /etc/sysctl.conf && sed -i 's/^vm.swappiness.*/vm.swappiness=10/' /etc/sysctl.conf || echo 'vm.swappiness=10' >> /etc/sysctl.conf
-grep -q '^vm.vfs_cache_pressure' /etc/sysctl.conf && sed -i 's/^vm.vfs_cache_pressure.*/vm.vfs_cache_pressure=50/' /etc/sysctl.conf || echo 'vm.vfs_cache_pressure=50' >> /etc/sysctl.conf
-
-# ------------------------------------------------------------------------------
-# [2/7] Pasang Docker Engine Resmi & Optimasi Ukuran Log
-# ------------------------------------------------------------------------------
-echo "[2/7] Memeriksa & memasang Docker Engine..."
-if ! command -v docker &>/dev/null; then
-  apt-get update -y
-  apt-get install -y ca-certificates curl gnupg
-  install -m 0755 -d /etc/apt/keyrings
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg --yes
-  chmod a+r /etc/apt/keyrings/docker.gpg
-  echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-  apt-get update -y
-  DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+# 1. Matikan Nginx host jika sebelumnya pernah terinstall/aktif agar port 80 & 443 bebas untuk Docker
+if command -v systemctl &> /dev/null; then
+  echo "[1/6] Memastikan port 80 & 443 bebas dari Nginx host..."
+  systemctl stop nginx 2>/dev/null || true
+  systemctl disable nginx 2>/dev/null || true
 fi
 
-# Batasi log Docker agar disk 20GB tidak habis
-mkdir -p /etc/docker
-cat <<EOF > /etc/docker/daemon.json
-{
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "10m",
-    "max-file": "3"
-  },
-  "live-restore": true
-}
-EOF
-systemctl restart docker
+# 2. Siapkan folder certbot untuk sertifikat dan ACME challenge
+echo "[2/6] Menyiapkan direktori certbot volume..."
+mkdir -p "./certbot/conf/live/$DOMAIN"
+mkdir -p "./certbot/www"
 
-# ------------------------------------------------------------------------------
-# [3/7] Konfigurasi Port Container Frontend
-# ------------------------------------------------------------------------------
-echo "[3/7] Memeriksa port Docker Frontend..."
-if [ -f "docker-compose.prod.yml" ]; then
-  if grep -q "FRONTEND_PORT=127.0.0.1:8080" .env 2>/dev/null; then
-      echo "  -> Port docker sudah 127.0.0.1:8080"
+# 3. Buat sertifikat dummy self-signed jika sertifikat asli belum ada
+# Tujuannya agar Nginx Docker bisa menyala pertama kali tanpa crash karena missing .pem
+if [ ! -f "./certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
+  echo "[3/6] Sertifikat belum ada. Membuat dummy cert sementara untuk inisialisasi Nginx Docker..."
+  if command -v openssl &> /dev/null; then
+    openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+      -keyout "./certbot/conf/live/$DOMAIN/privkey.pem" \
+      -out "./certbot/conf/live/$DOMAIN/fullchain.pem" \
+      -subj "/CN=$DOMAIN"
   else
-      echo "  -> Mengalihkan port Docker frontend ke 127.0.0.1:8080..."
-      if grep -q "FRONTEND_PORT=" .env 2>/dev/null; then
-          sed -i 's/^FRONTEND_PORT=.*/FRONTEND_PORT=127.0.0.1:8080/' .env
-      else
-          echo "FRONTEND_PORT=127.0.0.1:8080" >> .env
-      fi
-      echo "  -> Menjalankan container frontend..."
-      docker compose -f docker-compose.prod.yml up -d frontend || true
+    docker run --rm \
+      -v "$(pwd)/certbot/conf:/etc/letsencrypt" \
+      alpine/openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+      -keyout "/etc/letsencrypt/live/$DOMAIN/privkey.pem" \
+      -out "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" \
+      -subj "/CN=$DOMAIN"
   fi
 else
-  echo "  [i] Catatan: file docker-compose.prod.yml belum ditemukan di direktori ini, lewati build container."
+  echo "[3/6] Direktori sertifikat sudah tersedia."
 fi
 
-# ------------------------------------------------------------------------------
-# [4/7] Memasang Nginx & Certbot di Host VPS
-# ------------------------------------------------------------------------------
-echo "[4/7] Memasang Nginx & Certbot di Host VPS..."
-apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot python3-certbot-nginx
+# 4. Jalankan stack Docker (Frontend Nginx akan mendengarkan port 80 & 443)
+echo "[4/6] Menjalankan Frontend Nginx Docker..."
+docker compose -f docker-compose.prod.yml up -d frontend
+sleep 3
 
-# ------------------------------------------------------------------------------
-# [5/7] Konfigurasi Nginx Reverse Proxy
-# ------------------------------------------------------------------------------
-echo "[5/7] Mengonfigurasi Nginx Reverse Proxy untuk $DOMAIN..."
-CONF_SRC="$SCRIPT_DIR/nginx/host-vps-nginx.conf.example"
-CONF_DEST="/etc/nginx/sites-available/$DOMAIN"
+# 5. Minta sertifikat asli Let's Encrypt melalui container Certbot
+echo "[5/6] Menerbitkan sertifikat SSL resmi Let's Encrypt via Docker Certbot..."
+docker compose -f docker-compose.prod.yml run --rm --entrypoint "\
+  certbot certonly --webroot -w /var/www/certbot \
+  -d $DOMAIN \
+  --email $EMAIL \
+  --agree-tos \
+  --no-eff-email \
+  --non-interactive \
+  --force-renewal" certbot
 
-if [ -f "$CONF_SRC" ]; then
-    cp "$CONF_SRC" "$CONF_DEST"
-    sed -i "s/server_name .*/server_name $DOMAIN;/" "$CONF_DEST"
-else
-    cat <<EOF > "$CONF_DEST"
-server {
-    listen 80;
-    server_name $DOMAIN;
+# 6. Reload Nginx Docker untuk memuat sertifikat Let's Encrypt yang baru terbit
+echo "[6/6] Memuat ulang Nginx di dalam container Docker..."
+docker compose -f docker-compose.prod.yml exec -T frontend nginx -s reload
 
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-
-    client_max_body_size 50M;
-}
-EOF
-fi
-
-ln -sf "$CONF_DEST" "/etc/nginx/sites-enabled/$DOMAIN"
-rm -f /etc/nginx/sites-enabled/default
-
-# ------------------------------------------------------------------------------
-# [6/7] Uji & Muat Ulang Nginx
-# ------------------------------------------------------------------------------
-echo "[6/7] Menguji & memuat ulang Nginx..."
-nginx -t
-systemctl restart nginx
-
-# ------------------------------------------------------------------------------
-# [7/7] Meminta Sertifikat SSL Let's Encrypt
-# ------------------------------------------------------------------------------
-echo "[7/7] Meminta sertifikat SSL Let's Encrypt via Certbot..."
-if [ -n "$EMAIL" ]; then
-    certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect
-else
-    certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos --register-unsafely-without-email --redirect
-fi
+# Jalankan daemon certbot untuk auto-renewal background setiap 12 jam
+docker compose -f docker-compose.prod.yml up -d certbot
 
 echo "=========================================================="
-echo " SELAMAT! Setup & SSL Let's Encrypt Berhasil Dipasang!"
-echo " Akses sekarang: https://$DOMAIN"
+echo "🎉 SELAMAT! SSL Let's Encrypt Berhasil Dipasang di Docker!"
+echo "🌐 Akses sekarang: https://$DOMAIN"
+echo "🔒 Nginx berjalan murni di Docker tanpa menyentuh VPS OS host."
+echo "🔄 Container certbot aktif berjalan di background untuk auto-renew."
 echo "=========================================================="

@@ -203,9 +203,15 @@ jobs:
             fi
 
             # 3. Pastikan direktori database & storage di host siap dengan permission yang benar
-            mkdir -p backend/database backend/storage/app/public
+            mkdir -p backend/database backend/storage/app/public certbot/conf/live/elearning.socket-clenicapp.my.id certbot/www
             touch backend/database/database.sqlite
             chmod -R 777 backend/database backend/storage 2>/dev/null || true
+            if [ ! -f certbot/conf/live/elearning.socket-clenicapp.my.id/fullchain.pem ]; then
+              openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+                -keyout certbot/conf/live/elearning.socket-clenicapp.my.id/privkey.pem \
+                -out certbot/conf/live/elearning.socket-clenicapp.my.id/fullchain.pem \
+                -subj "/CN=elearning.socket-clenicapp.my.id" 2>/dev/null || true
+            fi
 
             # 4. Login ke GitHub Container Registry di VPS jika image bersifat privat
             if [ -n "$GHCR_TOKEN" ]; then

@@ -288,17 +288,22 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 
 3. **First-Time VPS Provisioning Workflow (`.github/workflows/first-time-vps-setup.yml`)**:
    - Workflow khusus via `workflow_dispatch` untuk setup VPS baru dari nol secara 100% otomatis tanpa sentuh terminal VPS.
-   - Menginstal Docker Engine & Compose plugin, git, curl, clone repo ke target directory, inisialisasi `.env`, pull GHCR images, menjalankan database migrations, hingga instalasi Host Nginx & penerbitan SSL Let's Encrypt resmi secara otomatis.
+   - Menginstal Docker Engine & Compose plugin, git, curl, clone repo ke target directory, inisialisasi `.env`, pull GHCR images, menjalankan database migrations, hingga penerbitan SSL Let's Encrypt resmi murni via container Certbot.
 
 ---
 
-## 8. Domain & SSL/TLS Architecture (`elearning.socket-clenicapp.my.id`)
+## 8. Domain & SSL/TLS Architecture (`elearning.socket-clenicapp.my.id` - Pure Docker Stack)
 
-1. **Production Domain & DNS**:
-   - Domain: `elearning.socket-clenicapp.my.id` (A record -> `202.10.34.198`).
-   - Port 80 & 443 SSL: Diarahkan ke Host Nginx reverse proxy dengan terminasi SSL Let's Encrypt.
-   - Frontend container port dipetakan dinamis via `${FRONTEND_PORT:-80}:80` (pada mode Host Nginx diatur ke `127.0.0.1:8080`).
+1. **Pure Docker SSL Architecture**:
+   - Host VPS **tidak memerlukan** instalasi Nginx maupun Certbot di level OS host.
+   - Frontend container (`nac-frontend-prod`) meng-expose langsung port `80:80` dan `443:443`.
+   - Nginx di dalam container menangani:
+     - Port 80: ACME challenge (`/.well-known/acme-challenge/` dari volume `./certbot/www`) dan auto-redirect HTTP ke HTTPS 301.
+     - Port 443: Terminasi SSL Let's Encrypt (mounted dari volume `./certbot/conf:/etc/letsencrypt:ro`), SPA Vite routing, dan proxy pass API backend.
+   - Container `nac-certbot-prod` (`certbot/certbot`) berjalan di latar belakang untuk melakukan auto-renew sertifikat setiap 12 jam secara berkala.
 
-2. **Automated SSL Setup Script (`scripts/setup-ssl.sh`)**:
-   - Menyediakan automasi 1-command untuk instalasi `nginx`, `certbot`, dan `python3-certbot-nginx` di VPS.
-   - Mengalihkan port frontend docker ke `127.0.0.1:8080`, mengonfigurasi host reverse proxy di `/etc/nginx/sites-available/elearning.socket-clenicapp.my.id`, menerbitkan sertifikat Let's Encrypt secara otomatis dengan redirect HTTP->HTTPS 301, serta memastikan auto-renewal (`certbot.timer`) aktif.
+2. **Automated Docker SSL Script (`scripts/setup-ssl.sh`)**:
+   - Mematikan Nginx host jika ada agar port 80/443 bebas untuk Docker.
+   - Membuat fallback dummy self-signed cert jika cert belum ada (mencegah crash Nginx startup).
+   - Menjalankan container Certbot resmi (`certbot/certbot`) dengan `--webroot` untuk menerbitkan sertifikat Let's Encrypt riil.
+   - Me-reload Nginx di dalam container (`nginx -s reload`) dan menyalakan daemon auto-renew.
