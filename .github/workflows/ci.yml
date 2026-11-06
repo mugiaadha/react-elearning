@@ -42,7 +42,7 @@ jobs:
       - name: Build Frontend Application
         run: npm run build
         env:
-          VITE_API_BASE_URL: https://api.elearning.taxcenter.id/api
+          VITE_API_BASE_URL: https://elearning.socket-clenicapp.my.id/api
           VITE_DEV_MODE: 'false'
 
       - name: Check Build Artifacts
@@ -144,9 +144,101 @@ jobs:
           context: .
           file: ./Dockerfile
           target: production
+          build-args: |
+            VITE_API_BASE_URL=https://elearning.socket-clenicapp.my.id/api
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.IMAGE_FRONTEND }}:latest
             ${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ========================================================
+  # 4. DEPLOY JOB: SSH to VPS & Pull pre-built GHCR Images
+  # ========================================================
+  deploy:
+    name: Deploy to Server via SSH
+    runs-on: ubuntu-latest
+    needs: [docker]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH Remote Command
+        uses: appleboy/ssh-action@v1.0.3
+        if: env.DEPLOY_HOST != ''
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ secrets.GHCR_USER || github.actor }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          command_timeout: 30m
+          envs: GHCR_TOKEN,GHCR_USER
+          script: |
+            set -e
+            echo "🚀 Starting Deployment on $(hostname)..."
+            cd ${{ secrets.DEPLOY_PATH || '/var/www/elearning' }}
+            
+            # 1. Tarik file konfigurasi terbaru dari git (docker-compose.prod.yml, nginx, dll)
+            echo "📥 Fetching latest configuration files..."
+            git fetch --all
+            git checkout main
+            git pull origin main
+            
+            # 2. Otomatisasi inisialisasi .env dari .env.example jika belum ada
+            if [ ! -f .env ]; then
+              echo "📄 Initializing root .env from .env.example..."
+              cp .env.example .env
+            fi
+
+            if [ ! -f backend/.env ]; then
+              echo "📄 Initializing backend/.env from backend/.env.example..."
+              cp backend/.env.example backend/.env
+            fi
+
+            # 3. Pastikan direktori database & storage di host siap dengan permission yang benar
+            mkdir -p backend/database backend/storage/app/public
+            touch backend/database/database.sqlite
+            chmod -R 777 backend/database backend/storage 2>/dev/null || true
+
+            # 4. Login ke GitHub Container Registry di VPS jika image bersifat privat
+            if [ -n "$GHCR_TOKEN" ]; then
+              echo "🔑 Logging in to GitHub Container Registry..."
+              echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            fi
+            
+            # 5. Tarik pre-built image dari GHCR (tidak ada kompilasi di VPS)
+            echo "🐳 Pulling pre-built images from GHCR..."
+            docker compose -f docker-compose.prod.yml pull
+            
+            # 6. Restart container stack secara instan dengan image baru
+            echo "🚀 Launching containers with new images..."
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            
+            # 7. Tunggu sejenak agar backend container siap
+            echo "⏳ Waiting for backend container..."
+            sleep 5
+            
+            # 8. Pastikan APP_KEY terisi otomatis jika belum ada di backend/.env
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan key:generate --force
+            
+            # 9. Jalankan migrasi database TERLEBIH DAHULU agar seluruh tabel (users, cache, dll) terbuat
+            echo "🗄️ Running database migrations..."
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
+            
+            # 10. Bersihkan dan buat cache Laravel (aman tanpa error 'no such table: cache')
+            echo "🧹 Optimizing Laravel configuration and routes..."
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan config:clear || true
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan route:clear || true
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan view:clear || true
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache
+            
+            echo "✅ Deployment successful and live without high CPU / memory overhead!"

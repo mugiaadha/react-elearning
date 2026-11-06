@@ -280,7 +280,8 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Frontend Image**: `ghcr.io/mugiaadha/react-elearning/frontend:latest` (multi-stage Nginx production container dengan konfigurasi SPA routing & reverse proxy di `nginx/default.conf`).
    - **Production Compose (`docker-compose.prod.yml`)**: Menggunakan directive `image: ghcr.io/...` tanpa directive `build:`, mencegah server VPS mengalami memory exhausted atau CPU timeout.
 
-2. **Automated CI/CD Workflow (`.github/workflows/ci.yml` & `deploy.yml`)**:
+2. **Unified Sequential CI/CD Workflow (`.github/workflows/ci.yml`)**:
+   - **Single Trigger Architecture**: Hanya 1 trigger pipeline saat push ke branch `main` (atau `workflow_dispatch`). Seluruh tahapan berjalan secara strictly sequential: `[frontend, backend]` -> `docker (build & push GHCR)` -> `deploy (SSH pull & restart)`.
    - **Permissions**: `packages: write` & `contents: read` dengan login otomatis ke `ghcr.io` via `${{ secrets.GITHUB_TOKEN }}`.
    - **Build & Push Layer Cache**: Memanfaatkan GitHub Actions cache (`type=gha`) sehingga build berulang hanya memakan waktu hitungan detik.
    - **Zero-Compile SSH Deployment**: Workflow `deploy.yml` melakukan inisialisasi otomatis file `.env` dari `.env.example` (smooth first deployment tanpa sentuhan manual), `docker login ghcr.io`, `docker compose pull`, `docker compose up -d` langsung di VPS dengan safety timeout 30 menit (`command_timeout: 30m`), dilanjutkan migrasi database `migrate --force` dan caching Laravel yang aman tanpa error `no such table: cache`.
