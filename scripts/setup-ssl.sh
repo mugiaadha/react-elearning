@@ -129,7 +129,7 @@ rm -f /etc/nginx/sites-enabled/default
 # ------------------------------------------------------------------------------
 echo "[6/7] Menguji & memuat ulang Nginx..."
 nginx -t
-systemctl reload nginx
+systemctl restart nginx
 
 # ------------------------------------------------------------------------------
 # [7/7] Meminta Sertifikat SSL Let's Encrypt
