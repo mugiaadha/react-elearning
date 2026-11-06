@@ -303,7 +303,6 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - Container `nac-certbot-prod` (`certbot/certbot`) berjalan di latar belakang untuk melakukan auto-renew sertifikat setiap 12 jam secara berkala.
 
 2. **Automated Docker SSL Script (`scripts/setup-ssl.sh`)**:
-   - Mematikan Nginx host jika ada agar port 80/443 bebas untuk Docker.
-   - Membuat fallback dummy self-signed cert jika cert belum ada (mencegah crash Nginx startup).
-   - Menjalankan container Certbot resmi (`certbot/certbot`) dengan `--webroot` untuk menerbitkan sertifikat Let's Encrypt riil.
-   - Me-reload Nginx di dalam container (`nginx -s reload`) dan menyalakan daemon auto-renew.
+   - Mematikan Nginx host & container frontend lama jika ada agar port 80 bebas murni.
+   - Menggunakan Certbot Standalone (`docker run --rm -p 80:80 certbot/certbot certonly --standalone`) untuk menerbitkan sertifikat Let's Encrypt resmi pertama kali secara instan tanpa ketergantungan web server.
+   - Menjalankan seluruh Docker stack production (`docker compose up -d`) dengan sertifikat valid yang sudah tersedia di disk, lalu container `certbot` aktif di background untuk auto-renew via webroot.

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Script Otomasi Let's Encrypt SSL (100% Pure Docker - No Host Nginx)
+# Script Otomasi Let's Encrypt SSL (Certbot Standalone -> Pure Docker Stack)
 # ==============================================================================
 set -e
 
@@ -8,7 +8,7 @@ EMAIL="${1:-admin@socket-clenicapp.my.id}"
 DOMAIN="${2:-elearning.socket-clenicapp.my.id}"
 
 echo "=========================================================="
-echo "  Pure Docker Let's Encrypt SSL Setup"
+echo "  Pure Docker Let's Encrypt SSL Setup (Standalone Mode)"
 echo "  Domain : https://$DOMAIN"
 echo "  Email  : $EMAIL"
 echo "=========================================================="
@@ -16,91 +16,45 @@ echo "=========================================================="
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
-# 1. Matikan Nginx host jika sebelumnya pernah terinstall/aktif agar port 80 & 443 bebas untuk Docker
+# 1. Pastikan port 80 & 443 bebas untuk Certbot Standalone
+echo "[1/4] Membebaskan port 80 & 443..."
 if command -v systemctl &> /dev/null; then
-  echo "[1/6] Memastikan port 80 & 443 bebas dari Nginx host..."
   systemctl stop nginx 2>/dev/null || true
   systemctl disable nginx 2>/dev/null || true
 fi
+docker compose -f docker-compose.prod.yml stop frontend 2>/dev/null || true
+docker rm -f nac-frontend-prod 2>/dev/null || true
 
-# 2. Siapkan folder certbot untuk ACME webroot
-echo "[2/6] Menyiapkan direktori certbot volume..."
+# 2. Siapkan volume certbot
+echo "[2/4] Menyiapkan direktori volume Certbot..."
+mkdir -p "./certbot/conf"
 mkdir -p "./certbot/www"
 
-# 3. Cek apakah sertifikat Let's Encrypt resmi sudah ada
-IS_REAL_CERT=false
+# 3. Terbitkan sertifikat Let's Encrypt via Certbot Standalone jika belum ada
 if [ -f "./certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
-  if openssl x509 -in "./certbot/conf/live/$DOMAIN/fullchain.pem" -noout -issuer 2>/dev/null | grep -qi "Let's Encrypt"; then
-    IS_REAL_CERT=true
-  fi
-fi
-
-# Jika belum ada sertifikat sama sekali, buat dummy cert agar Nginx Docker bisa boot
-if [ ! -f "./certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
-  echo "[3/6] Sertifikat belum ada. Membuat dummy cert sementara untuk inisialisasi Nginx Docker..."
-  mkdir -p "./certbot/conf/live/$DOMAIN"
-  if command -v openssl &> /dev/null; then
-    openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-      -keyout "./certbot/conf/live/$DOMAIN/privkey.pem" \
-      -out "./certbot/conf/live/$DOMAIN/fullchain.pem" \
-      -subj "/CN=$DOMAIN"
-  else
-    docker run --rm \
-      -v "$(pwd)/certbot/conf:/etc/letsencrypt" \
-      alpine/openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-      -keyout "/etc/letsencrypt/live/$DOMAIN/privkey.pem" \
-      -out "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" \
-      -subj "/CN=$DOMAIN"
-  fi
+  echo "[3/4] Sertifikat Let's Encrypt untuk $DOMAIN sudah ada. Lewati pembuatan baru."
 else
-  echo "[3/6] Sertifikat ditemukan (Status Real Let's Encrypt: $IS_REAL_CERT)."
-fi
-
-# 4. Jalankan Frontend Nginx Docker untuk ACME challenge (tanpa tunggu DB)
-echo "[4/6] Menjalankan Frontend Nginx Docker..."
-docker compose -f docker-compose.prod.yml up -d --no-deps frontend
-sleep 3
-
-# 5. Minta sertifikat asli Let's Encrypt jika belum terpasang
-if [ "$IS_REAL_CERT" = true ]; then
-  echo "[5/6] Sertifikat resmi Let's Encrypt sudah terpasang dan valid. Lewati penerbitan."
-else
-  echo "[5/6] Menerbitkan sertifikat SSL resmi Let's Encrypt via Docker Certbot..."
-  # Hapus direktori dummy agar certbot tidak menolak dengan error "live directory exists"
-  rm -rf "./certbot/conf/live/$DOMAIN"
-  rm -rf "./certbot/conf/archive/$DOMAIN"
-  rm -rf "./certbot/conf/renewal/$DOMAIN.conf"
-
-  docker compose -f docker-compose.prod.yml run --rm --entrypoint "\
-    certbot certonly --webroot -w /var/www/certbot \
-    -d $DOMAIN \
-    --email $EMAIL \
+  echo "[3/4] Menerbitkan sertifikat SSL resmi Let's Encrypt via Certbot Standalone di port 80..."
+  docker run --rm \
+    -p 80:80 \
+    -v "$(pwd)/certbot/conf:/etc/letsencrypt" \
+    -v "$(pwd)/certbot/www:/var/www/certbot" \
+    certbot/certbot certonly \
+    --standalone \
+    -d "$DOMAIN" \
+    --email "$EMAIL" \
     --agree-tos \
     --no-eff-email \
-    --non-interactive" certbot
-
-  # Proteksi: jika certbot gagal, kembalikan dummy cert agar Nginx tidak error saat reload
-  if [ ! -f "./certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
-    echo "[-] Certbot belum berhasil menerbitkan sertifikat. Membuat kembali dummy cert..."
-    mkdir -p "./certbot/conf/live/$DOMAIN"
-    openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-      -keyout "./certbot/conf/live/$DOMAIN/privkey.pem" \
-      -out "./certbot/conf/live/$DOMAIN/fullchain.pem" \
-      -subj "/CN=$DOMAIN"
-    exit 1
-  fi
+    --non-interactive
 fi
 
-# 6. Reload Nginx Docker untuk memuat sertifikat Let's Encrypt yang baru terbit
-echo "[6/6] Memuat ulang Nginx di dalam container Docker..."
-docker compose -f docker-compose.prod.yml exec -T frontend nginx -s reload
-
-# Jalankan daemon certbot untuk auto-renewal background setiap 12 jam
-docker compose -f docker-compose.prod.yml up -d certbot
+# 4. Jalankan stack Docker dengan sertifikat resmi yang sudah siap
+echo "[4/4] Menjalankan Docker Stack (Nginx HTTPS + Backend + MariaDB)..."
+docker compose -f docker-compose.prod.yml up -d
 
 echo "=========================================================="
-echo "🎉 SELAMAT! SSL Let's Encrypt Berhasil Dipasang di Docker!"
+echo "🎉 SELAMAT! SSL Let's Encrypt Berhasil Dipasang!"
 echo "🌐 Akses sekarang: https://$DOMAIN"
-echo "🔒 Nginx berjalan murni di Docker tanpa menyentuh VPS OS host."
+echo "🔒 HTTPS sudah aktif penuh di container Docker Nginx!"
 echo "🔄 Container certbot aktif berjalan di background untuk auto-renew."
 echo "=========================================================="
