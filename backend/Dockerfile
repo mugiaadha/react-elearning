@@ -3,22 +3,19 @@ FROM php:8.2-cli-alpine
 # Set working directory
 WORKDIR /var/www/html
 
-# Install system dependencies and PHP extensions
-# 1. Download installer resmi ekstensi PHP
-ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+# Install system dependencies and PHP extensions via official installer (mlocati/docker-php-extension-installer)
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
-# 2. Package pendukung standar (opsional/sesuai kebutuhan tools CLI)
-RUN apk add --no-cache curl git unzip sqlite
-
-# 3. Install semua ekstensi langsung tanpa compile manual
-RUN install-php-extensions \
-    pdo \
-    pdo_sqlite \
-    bcmath \
-    mbstring \
-    zip \
-    pcntl \
-    intl
+# Install tools & PHP extensions directly without manual compile overhead
+RUN apk add --no-cache curl git unzip sqlite \
+    && install-php-extensions \
+        pdo \
+        pdo_sqlite \
+        bcmath \
+        mbstring \
+        zip \
+        pcntl \
+        intl
 
 # Install Composer from official image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -53,4 +50,3 @@ ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
 
 # Default command
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
-
