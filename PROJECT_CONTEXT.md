@@ -14,6 +14,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
   - Queue Worker: `php artisan queue:listen` (untuk email verification & reminder)
   - Full Stack (All-in-one): `npm run dev`
   - Docker Compose: `npm run docker:up` / `docker compose up -d` (Backend `8000`, Frontend `5173`, Queue Worker)
+  - Production Domain: `https://elearning.socket-clenicapp.my.id`
 - **Core Environment Keys**:
   - FE (`.env`): `VITE_API_BASE_URL=http://127.0.0.1:8000/api`, `VITE_GOOGLE_CLIENT_ID`, `VITE_DEV_MODE=true`, `VITE_MIDTRANS_CLIENT_KEY`
   - BE (`backend/.env`): `DB_CONNECTION=sqlite`, `FRONTEND_URL=http://localhost:5173`, `MAIL_MAILER=smtp`, `GOOGLE_CLIENT_ID`, `VITE_MIDTRANS_SERVER_KEY`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
