@@ -31,7 +31,7 @@ RUN npm ci
 COPY . .
 
 # Set default API URL for build if needed (can be overridden via build arg)
-ARG VITE_API_BASE_URL=https://elearning.socket-clenicapp.my.id/api
+ARG VITE_API_BASE_URL=http://localhost:8000/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 RUN npm run build

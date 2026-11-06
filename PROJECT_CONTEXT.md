@@ -14,7 +14,6 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
   - Queue Worker: `php artisan queue:listen` (untuk email verification & reminder)
   - Full Stack (All-in-one): `npm run dev`
   - Docker Compose: `npm run docker:up` / `docker compose up -d` (Backend `8000`, Frontend `5173`, Queue Worker)
-  - Production Domain: `https://elearning.socket-clenicapp.my.id`
 - **Core Environment Keys**:
   - FE (`.env`): `VITE_API_BASE_URL=http://127.0.0.1:8000/api`, `VITE_GOOGLE_CLIENT_ID`, `VITE_DEV_MODE=true`, `VITE_MIDTRANS_CLIENT_KEY`
   - BE (`backend/.env`): `DB_CONNECTION=sqlite`, `FRONTEND_URL=http://localhost:5173`, `MAIL_MAILER=smtp`, `GOOGLE_CLIENT_ID`, `VITE_MIDTRANS_SERVER_KEY`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
@@ -284,4 +283,4 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 2. **Automated CI/CD Workflow (`.github/workflows/ci.yml` & `deploy.yml`)**:
    - **Permissions**: `packages: write` & `contents: read` dengan login otomatis ke `ghcr.io` via `${{ secrets.GITHUB_TOKEN }}`.
    - **Build & Push Layer Cache**: Memanfaatkan GitHub Actions cache (`type=gha`) sehingga build berulang hanya memakan waktu hitungan detik.
-   - **Zero-Compile SSH Deployment**: Workflow `deploy.yml` melakukan `docker login ghcr.io`, `docker compose pull`, dan `docker compose up -d` langsung di VPS dengan safety timeout 30 menit (`command_timeout: 30m`), dilanjutkan migrasi database `migrate --force` dan caching Laravel yang aman tanpa error `no such table: cache`.
+   - **Zero-Compile SSH Deployment**: Workflow `deploy.yml` melakukan inisialisasi otomatis file `.env` dari `.env.example` (smooth first deployment tanpa sentuhan manual), `docker login ghcr.io`, `docker compose pull`, `docker compose up -d` langsung di VPS dengan safety timeout 30 menit (`command_timeout: 30m`), dilanjutkan migrasi database `migrate --force` dan caching Laravel yang aman tanpa error `no such table: cache`.

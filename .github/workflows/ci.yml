@@ -42,7 +42,7 @@ jobs:
       - name: Build Frontend Application
         run: npm run build
         env:
-          VITE_API_BASE_URL: https://elearning.socket-clenicapp.my.id/api
+          VITE_API_BASE_URL: https://api.elearning.taxcenter.id/api
           VITE_DEV_MODE: 'false'
 
       - name: Check Build Artifacts
@@ -144,8 +144,6 @@ jobs:
           context: .
           file: ./Dockerfile
           target: production
-          build-args: |
-            VITE_API_BASE_URL=https://elearning.socket-clenicapp.my.id/api
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.IMAGE_FRONTEND }}:latest

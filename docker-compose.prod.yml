@@ -8,9 +8,8 @@ services:
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
-      - APP_URL=https://elearning.socket-clenicapp.my.id
-      - FRONTEND_URL=https://elearning.socket-clenicapp.my.id
-      - SANCTUM_STATEFUL_DOMAINS=elearning.socket-clenicapp.my.id
+      - APP_URL=http://localhost:8000
+      - FRONTEND_URL=http://localhost
       - DB_CONNECTION=sqlite
     volumes:
       - ./backend/database:/var/www/html/database
@@ -26,8 +25,6 @@ services:
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
-      - APP_URL=https://elearning.socket-clenicapp.my.id
-      - FRONTEND_URL=https://elearning.socket-clenicapp.my.id
       - DB_CONNECTION=sqlite
     volumes:
       - ./backend/database:/var/www/html/database
