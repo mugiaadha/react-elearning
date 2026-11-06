@@ -111,7 +111,7 @@ jobs:
 
             # 1. Update apt & install dependencies dasar
             echo "[1/8] Memperbarui package repository OS & install git, curl..."
-            $SUDO apt-get update -y
+            $SUDO apt-get update -y || true
             $SUDO apt-get install -y git curl ca-certificates gnupg openssl
 
             # 2. Matikan Nginx host jika ada agar port 80 & 443 bebas untuk Docker
