@@ -253,9 +253,11 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 1. **Docker Orchestration**:
    - `docker-compose.yml` (Development) & `docker-compose.prod.yml` (Production Nginx SPA).
    - Container Services:
-     - `nac-backend`: PHP 8.2 CLI SQLite port `8000`.
-     - `nac-queue-worker`: Background queue worker (`queue:listen`).
-     - `nac-frontend`: Vite development server / Nginx production port `5173`.
+     - `nac-mariadb` / `nac-mariadb-prod`: MariaDB 11.4 database (`nac_elearning`) port `3306`.
+     - `nac-backend` / `nac-backend-prod`: PHP 8.2 CLI port `8000` (sinkron dengan `backend/.env` via `env_file` & volume mount).
+     - `nac-queue-worker` / `nac-queue-prod`: Background queue worker (`queue:listen` / `queue:work`).
+     - `nac-frontend` / `nac-frontend-prod`: Vite development server (`5173`) / Nginx production (`80` & `443`).
+     - `nac-certbot-prod`: Container Certbot resmi untuk auto-renewal SSL setiap 12 jam.
    - Script Shortcuts di `package.json`: `npm run docker:up`, `npm run docker:down`, `npm run docker:build`, `npm run docker:logs`, `npm run docker:restart`, `npm run docker:seed`.
 
 2. **Hardening Anti-php2shell / Webshell Execution Prevention**:
@@ -278,7 +280,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - Pola kompilasi diubah dari *"build di VPS"* menjadi *"build & push ke GHCR via GitHub Actions Runner, lalu pull di VPS"*.
    - **Backend Image**: `ghcr.io/mugiaadha/react-elearning/backend:latest` (menggunakan `mlocati/docker-php-extension-installer` agar kompilasi ekstensi PHP di GitHub runner instan & hemat resource).
    - **Frontend Image**: `ghcr.io/mugiaadha/react-elearning/frontend:latest` (multi-stage Nginx production container dengan konfigurasi SPA routing & reverse proxy di `nginx/default.conf`).
-   - **Production Compose (`docker-compose.prod.yml`)**: Menggunakan directive `image: ghcr.io/...` tanpa directive `build:`, mencegah server VPS mengalami memory exhausted atau CPU timeout.
+   - **Production Compose (`docker-compose.prod.yml`)**: Menggunakan directive `image: ghcr.io/...` tanpa directive `build:`, mencegah server VPS mengalami memory exhausted atau CPU timeout. Service `backend` dan `queue` memuat `env_file: ./backend/.env` dan mem-bind mount `./backend/.env:/var/www/html/.env` agar sinkron dengan konfigurasi host.
 
 2. **Unified Sequential CI/CD Workflow (`.github/workflows/ci.yml`)**:
    - **Single Trigger Architecture**: Hanya 1 trigger pipeline saat push ke branch `main` (atau `workflow_dispatch`). Seluruh tahapan berjalan secara strictly sequential: `[frontend, backend]` -> `docker (build & push GHCR)` -> `deploy (SSH pull & restart)`.
