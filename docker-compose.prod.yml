@@ -1,6 +1,8 @@
 services:
   backend:
-    image: ghcr.io/mugiaadha/react-elearning/backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: nac-backend-prod
     restart: always
     ports:
@@ -11,14 +13,13 @@ services:
       - APP_URL=http://localhost:8000
       - FRONTEND_URL=http://localhost
       - DB_CONNECTION=sqlite
-    volumes:
-      - ./backend/database:/var/www/html/database
-      - ./backend/storage/app/public:/var/www/html/storage/app/public
     networks:
       - nac-network
 
   queue:
-    image: ghcr.io/mugiaadha/react-elearning/backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: nac-queue-prod
     restart: always
     command: ["php", "artisan", "queue:work", "--tries=3"]
@@ -26,16 +27,16 @@ services:
       - APP_ENV=production
       - APP_DEBUG=false
       - DB_CONNECTION=sqlite
-    volumes:
-      - ./backend/database:/var/www/html/database
-      - ./backend/storage/app/public:/var/www/html/storage/app/public
     depends_on:
       - backend
     networks:
       - nac-network
 
   frontend:
-    image: ghcr.io/mugiaadha/react-elearning/frontend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
     container_name: nac-frontend-prod
     restart: always
     ports:
@@ -48,3 +49,4 @@ services:
 networks:
   nac-network:
     driver: bridge
+

@@ -1,13 +1,11 @@
 name: Production Deployment (CD)
 
+# Workflow ini akan berjalan otomatis saat ada push tag baru (misal: v1.0.0)
+# atau dapat dijalankan secara manual melalui menu Actions -> Run workflow.
 on:
   push:
     tags:
       - 'v*.*.*'
-  workflow_run:
-    workflows: ["CI/CD Pipeline"]
-    types: [completed]
-    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
@@ -23,10 +21,6 @@ jobs:
   deploy:
     name: Deploy to Server via SSH
     runs-on: ubuntu-latest
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'push' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
 
     steps:
       - name: Checkout Code
@@ -37,46 +31,32 @@ jobs:
         if: env.DEPLOY_HOST != ''
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
-          GHCR_USER: ${{ secrets.GHCR_USER || github.actor }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
-          command_timeout: 30m
-          envs: GHCR_TOKEN,GHCR_USER
           script: |
             set -e
             echo "🚀 Starting Deployment on $(hostname)..."
             cd ${{ secrets.DEPLOY_PATH || '/var/www/elearning' }}
             
-            # 1. Tarik file konfigurasi terbaru dari git (docker-compose.prod.yml, config, dll)
-            echo "📥 Fetching latest configuration files..."
+            # Tarik kode terbaru
             git fetch --all
             git checkout main
             git pull origin main
             
-            # 2. Login ke GitHub Container Registry di VPS jika image bersifat privat
-            if [ -n "$GHCR_TOKEN" ]; then
-              echo "🔑 Logging in to GitHub Container Registry..."
-              echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            fi
+            # Restart container stack menggunakan Docker Compose Production
+            echo "🐳 Rebuilding and restarting containers..."
+            docker compose -f docker-compose.prod.yml down
+            docker compose -f docker-compose.prod.yml up -d --build
             
-            # 3. Tarik pre-built image dari GHCR (tidak ada proses compile di VPS)
-            echo "🐳 Pulling pre-built images from GHCR..."
-            docker compose -f docker-compose.prod.yml pull
-            
-            # 4. Restart container stack secara instan dengan image baru
-            echo "🚀 Launching containers with new images..."
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            
-            # 5. Jalankan maintenance rutin Laravel backend
-            echo "🧹 Clearing and optimizing Laravel cache & running migrations..."
+            # Bersihkan cache Laravel di container backend
             docker compose -f docker-compose.prod.yml exec -T backend php artisan optimize:clear
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache
             docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
             
-            echo "✅ Deployment successful and live without high CPU / memory overhead!"
+            echo "✅ Deployment successful and live!"
+
