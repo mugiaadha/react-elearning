@@ -4,24 +4,21 @@ FROM php:8.2-cli-alpine
 WORKDIR /var/www/html
 
 # Install system dependencies and PHP extensions
-RUN apk add --no-cache \
-    curl \
-    git \
-    unzip \
-    sqlite \
-    sqlite-dev \
-    libzip-dev \
-    oniguruma-dev \
-    icu-dev \
-    linux-headers \
-    && docker-php-ext-install \
-        pdo \
-        pdo_sqlite \
-        bcmath \
-        mbstring \
-        zip \
-        pcntl \
-        intl
+# 1. Download installer resmi ekstensi PHP
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+# 2. Package pendukung standar (opsional/sesuai kebutuhan tools CLI)
+RUN apk add --no-cache curl git unzip sqlite
+
+# 3. Install semua ekstensi langsung tanpa compile manual
+RUN install-php-extensions \
+    pdo \
+    pdo_sqlite \
+    bcmath \
+    mbstring \
+    zip \
+    pcntl \
+    intl
 
 # Install Composer from official image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
