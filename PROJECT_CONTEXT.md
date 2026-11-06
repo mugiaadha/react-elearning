@@ -268,3 +268,19 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
      - File di-rename acak (`jawaban_{id}_{randomToken}.{ext}`).
      - Storage publik dilindungi [.htaccess](file:///c:/workspace/belajar-react/elearning-react/backend/storage/app/public/.htaccess) (`php_flag engine off`) dan rule block Nginx untuk mencegah eksekusi langsung.
    - **Automated Security Tests**: [SecurityWebshellTest.php](file:///c:/workspace/belajar-react/elearning-react/backend/tests/Feature/SecurityWebshellTest.php) menguji pencegahan unggahan file `.php`, file double-extension, file PDF bersignature PHP, serta kelolosan file PDF yang valid.
+
+
+---
+
+## 7. CI/CD & Container Registry Pipeline (GHCR & Pull-Based Deploy)
+
+1. **Docker Container Registry Architecture (GitHub Container Registry - GHCR)**:
+   - Pola kompilasi diubah dari *"build di VPS"* menjadi *"build & push ke GHCR via GitHub Actions Runner, lalu pull di VPS"*.
+   - **Backend Image**: `ghcr.io/mugiaadha/react-elearning/backend:latest` (menggunakan `mlocati/docker-php-extension-installer` agar kompilasi ekstensi PHP di GitHub runner instan & hemat resource).
+   - **Frontend Image**: `ghcr.io/mugiaadha/react-elearning/frontend:latest` (multi-stage Nginx production container dengan konfigurasi SPA routing & reverse proxy di `nginx/default.conf`).
+   - **Production Compose (`docker-compose.prod.yml`)**: Menggunakan directive `image: ghcr.io/...` tanpa directive `build:`, mencegah server VPS mengalami memory exhausted atau CPU timeout.
+
+2. **Automated CI/CD Workflow (`.github/workflows/ci.yml` & `deploy.yml`)**:
+   - **Permissions**: `packages: write` & `contents: read` dengan login otomatis ke `ghcr.io` via `${{ secrets.GITHUB_TOKEN }}`.
+   - **Build & Push Layer Cache**: Memanfaatkan GitHub Actions cache (`type=gha`) sehingga build berulang hanya memakan waktu hitungan detik.
+   - **Zero-Compile SSH Deployment**: Workflow `deploy.yml` melakukan `docker login ghcr.io`, `docker compose pull`, dan `docker compose up -d` langsung di VPS dengan safety timeout 30 menit (`command_timeout: 30m`), dilanjutkan migrasi database `migrate --force` dan caching Laravel yang aman tanpa error `no such table: cache`.
