@@ -285,3 +285,16 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Permissions**: `packages: write` & `contents: read` dengan login otomatis ke `ghcr.io` via `${{ secrets.GITHUB_TOKEN }}`.
    - **Build & Push Layer Cache**: Memanfaatkan GitHub Actions cache (`type=gha`) sehingga build berulang hanya memakan waktu hitungan detik.
    - **Zero-Compile SSH Deployment**: Workflow `deploy.yml` melakukan inisialisasi otomatis file `.env` dari `.env.example` (smooth first deployment tanpa sentuhan manual), `docker login ghcr.io`, `docker compose pull`, `docker compose up -d` langsung di VPS dengan safety timeout 30 menit (`command_timeout: 30m`), dilanjutkan migrasi database `migrate --force` dan caching Laravel yang aman tanpa error `no such table: cache`.
+
+---
+
+## 8. Domain & SSL/TLS Architecture (`elearning.socket-clenicapp.my.id`)
+
+1. **Production Domain & DNS**:
+   - Domain: `elearning.socket-clenicapp.my.id` (A record -> `202.10.34.198`).
+   - Port 80 & 443 SSL: Diarahkan ke Host Nginx reverse proxy dengan terminasi SSL Let's Encrypt.
+   - Frontend container port dipetakan dinamis via `${FRONTEND_PORT:-80}:80` (pada mode Host Nginx diatur ke `127.0.0.1:8080`).
+
+2. **Automated SSL Setup Script (`scripts/setup-ssl.sh`)**:
+   - Menyediakan automasi 1-command untuk instalasi `nginx`, `certbot`, dan `python3-certbot-nginx` di VPS.
+   - Mengalihkan port frontend docker ke `127.0.0.1:8080`, mengonfigurasi host reverse proxy di `/etc/nginx/sites-available/elearning.socket-clenicapp.my.id`, menerbitkan sertifikat Let's Encrypt secara otomatis dengan redirect HTTP->HTTPS 301, serta memastikan auto-renewal (`certbot.timer`) aktif.
