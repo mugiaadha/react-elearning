@@ -188,8 +188,8 @@ jobs:
             # 1. Tarik file konfigurasi terbaru dari git (docker-compose.prod.yml, nginx, dll)
             echo "📥 Fetching latest configuration files..."
             git fetch --all
-            git checkout main
-            git pull origin main
+            git checkout -f main
+            git reset --hard origin/main
             
             # 2. Otomatisasi inisialisasi .env dari .env.example jika belum ada
             if [ ! -f .env ]; then

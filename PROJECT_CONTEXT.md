@@ -284,7 +284,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Single Trigger Architecture**: Hanya 1 trigger pipeline saat push ke branch `main` (atau `workflow_dispatch`). Seluruh tahapan berjalan secara strictly sequential: `[frontend, backend]` -> `docker (build & push GHCR)` -> `deploy (SSH pull & restart)`.
    - **Permissions**: `packages: write` & `contents: read` dengan login otomatis ke `ghcr.io` via `${{ secrets.GITHUB_TOKEN }}`.
    - **Build & Push Layer Cache**: Memanfaatkan GitHub Actions cache (`type=gha`) sehingga build berulang hanya memakan waktu hitungan detik.
-   - **Zero-Compile SSH Deployment**: Workflow `deploy.yml` melakukan inisialisasi otomatis file `.env` dari `.env.example` (smooth first deployment tanpa sentuhan manual), `docker login ghcr.io`, `docker compose pull`, `docker compose up -d` langsung di VPS dengan safety timeout 30 menit (`command_timeout: 30m`), dilanjutkan migrasi database `migrate --force` dan caching Laravel yang aman tanpa error `no such table: cache`.
+   - **Zero-Compile SSH Deployment**: Workflow deploy melakukan inisialisasi otomatis file `.env` dari `.env.example` (smooth first deployment tanpa sentuhan manual), `git reset --hard origin/main` (mencegah conflict file lokal server), `docker login ghcr.io`, `docker compose pull`, `docker compose up -d` langsung di VPS dengan safety timeout 30 menit (`command_timeout: 30m`), dilanjutkan migrasi database `migrate --force` dan caching Laravel yang aman tanpa error `no such table: cache`.
 
 3. **First-Time VPS Provisioning Workflow (`.github/workflows/first-time-vps-setup.yml`)**:
    - Workflow khusus via `workflow_dispatch` untuk setup VPS baru dari nol secara 100% otomatis tanpa sentuh terminal VPS.

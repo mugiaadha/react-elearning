@@ -143,8 +143,8 @@ jobs:
             else
               echo "  -> Repository sudah ada, mengambil pembaruan terbaru..."
               git fetch --all
-              git checkout main
-              git pull origin main
+              git checkout -f main
+              git reset --hard origin/main
             fi
 
             # 5. Inisialisasi file .env dengan setting production
