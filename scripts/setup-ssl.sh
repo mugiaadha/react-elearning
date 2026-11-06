@@ -4,8 +4,8 @@
 # ==============================================================================
 set -e
 
-DOMAIN="elearning.socket-clenicapp.my.id"
 EMAIL="$1"
+DOMAIN="${2:-elearning.socket-clenicapp.my.id}"
 
 echo "=========================================================="
 echo "  Let's Encrypt SSL Setup for: https://$DOMAIN"
@@ -44,6 +44,7 @@ CONF_DEST="/etc/nginx/sites-available/$DOMAIN"
 
 if [ -f "$CONF_SRC" ]; then
     cp "$CONF_SRC" "$CONF_DEST"
+    sed -i "s/server_name .*/server_name $DOMAIN;/" "$CONF_DEST"
 else
     cat <<EOF > "$CONF_DEST"
 server {
@@ -88,3 +89,4 @@ echo "  SELAMAT! SSL Let's Encrypt Berhasil Dipasang!"
 echo "  Akses sekarang: https://$DOMAIN"
 echo "  Semua trafik HTTP (port 80) otomatis di-redirect ke HTTPS (port 443)."
 echo "=========================================================="
+

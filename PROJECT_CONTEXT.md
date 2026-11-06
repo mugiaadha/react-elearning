@@ -286,6 +286,10 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Build & Push Layer Cache**: Memanfaatkan GitHub Actions cache (`type=gha`) sehingga build berulang hanya memakan waktu hitungan detik.
    - **Zero-Compile SSH Deployment**: Workflow `deploy.yml` melakukan inisialisasi otomatis file `.env` dari `.env.example` (smooth first deployment tanpa sentuhan manual), `docker login ghcr.io`, `docker compose pull`, `docker compose up -d` langsung di VPS dengan safety timeout 30 menit (`command_timeout: 30m`), dilanjutkan migrasi database `migrate --force` dan caching Laravel yang aman tanpa error `no such table: cache`.
 
+3. **First-Time VPS Provisioning Workflow (`.github/workflows/first-time-vps-setup.yml`)**:
+   - Workflow khusus via `workflow_dispatch` untuk setup VPS baru dari nol secara 100% otomatis tanpa sentuh terminal VPS.
+   - Menginstal Docker Engine & Compose plugin, git, curl, clone repo ke target directory, inisialisasi `.env`, pull GHCR images, menjalankan database migrations, hingga instalasi Host Nginx & penerbitan SSL Let's Encrypt resmi secara otomatis.
+
 ---
 
 ## 8. Domain & SSL/TLS Architecture (`elearning.socket-clenicapp.my.id`)
