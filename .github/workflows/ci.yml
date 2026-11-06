@@ -16,7 +16,7 @@ jobs:
   # 1. FRONTEND JOB: Linting, Typecheck & Production Build
   # ========================================================
   frontend:
-    name: Frontend (React 19 & Vite)
+    name: Frontend (React 19 & Vites)
     runs-on: ubuntu-latest
 
     steps:
