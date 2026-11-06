@@ -7,7 +7,7 @@
 Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet AB, Brevet C, dan Mastery Simulasi Coretax) dengan sistem RBAC, onboarding multi-tahap, verifikasi email SMTP, payment gateway otomatis Midtrans Snap (QRIS Dinamis, Virtual Account BCA/Mandiri/BNI/BRI/Permata, Kartu Kredit 3DS, & Gerai Retail), serta portal pembelajaran modular.
 
 - **Frontend**: React 19, Vite 8, React Router v7, Tailwind CSS v3, Axios, Lucide React, Canvas Confetti.
-- **Backend**: Laravel 12, PHP 8.2+, Laravel Sanctum (Token Auth), SQLite (default `database.sqlite`), Blade Email Templates.
+- **Backend**: Laravel 12, PHP 8.2+, Laravel Sanctum (Token Auth), MariaDB 11.4 (default database `nac_elearning`), Blade Email Templates.
 - **Dev Servers**:
   - Frontend: `http://localhost:5173` (`npm run dev:fe`)
   - Backend API: `http://127.0.0.1:8000/api` (`cd backend && php artisan serve --port=8000`)
@@ -16,7 +16,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
   - Docker Compose: `npm run docker:up` / `docker compose up -d` (Backend `8000`, Frontend `5173`, Queue Worker)
 - **Core Environment Keys**:
   - FE (`.env`): `VITE_API_BASE_URL=http://127.0.0.1:8000/api`, `VITE_GOOGLE_CLIENT_ID`, `VITE_DEV_MODE=true`, `VITE_MIDTRANS_CLIENT_KEY`
-  - BE (`backend/.env`): `DB_CONNECTION=sqlite`, `FRONTEND_URL=http://localhost:5173`, `MAIL_MAILER=smtp`, `GOOGLE_CLIENT_ID`, `VITE_MIDTRANS_SERVER_KEY`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
+  - BE (`backend/.env`): `DB_CONNECTION=mariadb`, `DB_HOST=mariadb`, `DB_PORT=3306`, `DB_DATABASE=nac_elearning`, `DB_USERNAME=nac_user`, `DB_PASSWORD=nac_elearning_secret`, `FRONTEND_URL=http://localhost:5173`, `MAIL_MAILER=smtp`, `GOOGLE_CLIENT_ID`, `VITE_MIDTRANS_SERVER_KEY`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION`
 
 ---
 

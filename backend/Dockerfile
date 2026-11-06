@@ -7,9 +7,10 @@ WORKDIR /var/www/html
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
 # Install tools & PHP extensions directly without manual compile overhead
-RUN apk add --no-cache curl git unzip sqlite \
+RUN apk add --no-cache curl git unzip mariadb-client sqlite \
     && install-php-extensions \
         pdo \
+        pdo_mysql \
         pdo_sqlite \
         bcmath \
         mbstring \

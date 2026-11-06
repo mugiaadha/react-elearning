@@ -1,4 +1,24 @@
 services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: nac-mariadb-prod
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-nac_elearning_secret}
+      - MYSQL_DATABASE=${DB_DATABASE:-nac_elearning}
+      - MYSQL_USER=${DB_USERNAME:-nac_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-nac_elearning_secret}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - nac-network
+
   backend:
     image: ghcr.io/mugiaadha/react-elearning/backend:latest
     container_name: nac-backend-prod
@@ -10,10 +30,17 @@ services:
       - APP_DEBUG=false
       - APP_URL=https://elearning.socket-clenicapp.my.id
       - FRONTEND_URL=https://elearning.socket-clenicapp.my.id
-      - DB_CONNECTION=sqlite
+      - DB_CONNECTION=mariadb
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-nac_elearning}
+      - DB_USERNAME=${DB_USERNAME:-nac_user}
+      - DB_PASSWORD=${DB_PASSWORD:-nac_elearning_secret}
     volumes:
-      - ./backend/database:/var/www/html/database
       - ./backend/storage/app/public:/var/www/html/storage/app/public
+    depends_on:
+      mariadb:
+        condition: service_healthy
     networks:
       - nac-network
 
@@ -25,12 +52,19 @@ services:
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
-      - DB_CONNECTION=sqlite
+      - DB_CONNECTION=mariadb
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-nac_elearning}
+      - DB_USERNAME=${DB_USERNAME:-nac_user}
+      - DB_PASSWORD=${DB_PASSWORD:-nac_elearning_secret}
     volumes:
-      - ./backend/database:/var/www/html/database
       - ./backend/storage/app/public:/var/www/html/storage/app/public
     depends_on:
-      - backend
+      backend:
+        condition: service_started
+      mariadb:
+        condition: service_healthy
     networks:
       - nac-network
 
@@ -59,6 +93,9 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;'"
     networks:
       - nac-network
+
+volumes:
+  mariadb-data:
 
 networks:
   nac-network:

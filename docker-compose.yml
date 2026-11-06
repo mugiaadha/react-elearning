@@ -1,5 +1,30 @@
 services:
   # ---------------------------------------------
+  # 0. MariaDB Database
+  # ---------------------------------------------
+  mariadb:
+    image: mariadb:11.4
+    container_name: nac-mariadb
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=nac_elearning_secret
+      - MYSQL_DATABASE=nac_elearning
+      - MYSQL_USER=nac_user
+      - MYSQL_PASSWORD=nac_elearning_secret
+    volumes:
+      - mariadb-data-dev:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - nac-network
+
+  # ---------------------------------------------
   # 1. Laravel 12 Backend API
   # ---------------------------------------------
   backend:
@@ -19,8 +44,16 @@ services:
       - APP_DEBUG=true
       - APP_URL=http://localhost:8000
       - FRONTEND_URL=http://localhost:5173
-      - DB_CONNECTION=sqlite
+      - DB_CONNECTION=mariadb
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_DATABASE=nac_elearning
+      - DB_USERNAME=nac_user
+      - DB_PASSWORD=nac_elearning_secret
       - QUEUE_CONNECTION=database
+    depends_on:
+      mariadb:
+        condition: service_healthy
     networks:
       - nac-network
 
@@ -43,10 +76,18 @@ services:
       - APP_DEBUG=true
       - APP_URL=http://localhost:8000
       - FRONTEND_URL=http://localhost:5173
-      - DB_CONNECTION=sqlite
+      - DB_CONNECTION=mariadb
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_DATABASE=nac_elearning
+      - DB_USERNAME=nac_user
+      - DB_PASSWORD=nac_elearning_secret
       - QUEUE_CONNECTION=database
     depends_on:
-      - backend
+      backend:
+        condition: service_started
+      mariadb:
+        condition: service_healthy
     networks:
       - nac-network
 
@@ -82,10 +123,10 @@ services:
 # Named Volumes & Networks
 # ---------------------------------------------
 volumes:
+  mariadb-data-dev:
   backend-vendor:
   frontend-node-modules:
 
 networks:
   nac-network:
     driver: bridge
-

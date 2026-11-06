@@ -157,11 +157,10 @@ jobs:
               cp backend/.env.example backend/.env
             fi
 
-            # 6. Siapkan database SQLite dan storage permissions
-            echo "[5/8] Menyiapkan database SQLite & folder storage..."
-            mkdir -p backend/database backend/storage/app/public
-            touch backend/database/database.sqlite
-            chmod -R 777 backend/database backend/storage 2>/dev/null || true
+            # 6. Siapkan folder storage permissions
+            echo "[5/8] Menyiapkan folder storage..."
+            mkdir -p backend/storage/app/public
+            chmod -R 777 backend/storage 2>/dev/null || true
 
             # 7. Tarik Docker Images dari GHCR
             echo "[6/8] Menarik Docker Images dari GHCR..."

@@ -56,9 +56,9 @@ else
   echo "[3/6] Sertifikat ditemukan (Status Real Let's Encrypt: $IS_REAL_CERT)."
 fi
 
-# 4. Jalankan stack Docker (Frontend Nginx akan mendengarkan port 80 & 443)
+# 4. Jalankan Frontend Nginx Docker untuk ACME challenge (tanpa tunggu DB)
 echo "[4/6] Menjalankan Frontend Nginx Docker..."
-docker compose -f docker-compose.prod.yml up -d frontend
+docker compose -f docker-compose.prod.yml up -d --no-deps frontend
 sleep 3
 
 # 5. Minta sertifikat asli Let's Encrypt jika belum terpasang

@@ -70,7 +70,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, sqlite3, pdo_sqlite, bcmath, zip, pcntl
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, sqlite3, pdo_sqlite, pdo_mysql, bcmath, zip, pcntl
           coverage: none
 
       - name: Cache Composer Dependencies
@@ -202,10 +202,9 @@ jobs:
               cp backend/.env.example backend/.env
             fi
 
-            # 3. Pastikan direktori database & storage di host siap dengan permission yang benar
-            mkdir -p backend/database backend/storage/app/public certbot/conf/live/elearning.socket-clenicapp.my.id certbot/www
-            touch backend/database/database.sqlite
-            chmod -R 777 backend/database backend/storage 2>/dev/null || true
+            # 3. Pastikan direktori storage & certbot di host siap dengan permission yang benar
+            mkdir -p backend/storage/app/public certbot/conf/live/elearning.socket-clenicapp.my.id certbot/www
+            chmod -R 777 backend/storage 2>/dev/null || true
             if [ ! -f certbot/conf/live/elearning.socket-clenicapp.my.id/fullchain.pem ]; then
               openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
                 -keyout certbot/conf/live/elearning.socket-clenicapp.my.id/privkey.pem \
