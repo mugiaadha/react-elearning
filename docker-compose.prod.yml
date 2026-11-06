@@ -25,6 +25,8 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
@@ -37,6 +39,7 @@ services:
       - DB_USERNAME=${DB_USERNAME:-nac_user}
       - DB_PASSWORD=${DB_PASSWORD:-nac_elearning_secret}
     volumes:
+      - ./backend/.env:/var/www/html/.env
       - ./backend/storage/app/public:/var/www/html/storage/app/public
     depends_on:
       mariadb:
@@ -49,6 +52,8 @@ services:
     container_name: nac-queue-prod
     restart: always
     command: ["php", "artisan", "queue:work", "--tries=3"]
+    env_file:
+      - ./backend/.env
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
@@ -59,6 +64,7 @@ services:
       - DB_USERNAME=${DB_USERNAME:-nac_user}
       - DB_PASSWORD=${DB_PASSWORD:-nac_elearning_secret}
     volumes:
+      - ./backend/.env:/var/www/html/.env
       - ./backend/storage/app/public:/var/www/html/storage/app/public
     depends_on:
       backend:
