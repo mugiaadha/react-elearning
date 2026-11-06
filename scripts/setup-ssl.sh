@@ -56,10 +56,33 @@ else
   echo "[3/6] Sertifikat ditemukan (Status Real Let's Encrypt: $IS_REAL_CERT)."
 fi
 
-# 4. Jalankan Frontend Nginx Docker untuk ACME challenge (tanpa tunggu DB)
+# 4. Jalankan Frontend Nginx Docker untuk ACME challenge
 echo "[4/6] Menjalankan Frontend Nginx Docker..."
-docker compose -f docker-compose.prod.yml up -d --no-deps frontend
+docker compose -f docker-compose.prod.yml up -d frontend
 sleep 3
+
+# Verifikasi container Nginx hidup & port 80 merespons
+if ! docker ps --format '{{.Names}}' | grep -q "nac-frontend-prod"; then
+  echo "[-] ERROR: Container nac-frontend-prod gagal berjalan! Log output:"
+  docker compose -f docker-compose.prod.yml logs frontend
+  exit 1
+fi
+
+echo "  -> Memverifikasi port 80 siap melayani koneksi..."
+PORT80_READY=false
+for i in $(seq 1 15); do
+  if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1 2>/dev/null | grep -qE "200|301|404"; then
+    PORT80_READY=true
+    echo "  -> Port 80 Nginx terkonfirmasi AKTIF dan merespons!"
+    break
+  fi
+  sleep 1
+done
+
+if [ "$PORT80_READY" != true ]; then
+  echo "[-] Peringatan: Port 80 belum merespons curl lokal. Log container frontend:"
+  docker compose -f docker-compose.prod.yml logs frontend --tail 20
+fi
 
 # 5. Minta sertifikat asli Let's Encrypt jika belum terpasang
 if [ "$IS_REAL_CERT" = true ]; then
