@@ -107,4 +107,4 @@ jobs:
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache
             
-            echo "✅ Deployment successful and live without manual .env creation!"
+            echo "✅ Deployment successful"
