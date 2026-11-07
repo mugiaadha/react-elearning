@@ -256,7 +256,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
      - `nac-mariadb` / `nac-mariadb-prod`: MariaDB 11.4 database (`nac_elearning`) port `3306`.
      - `nac-backend` / `nac-backend-prod`: PHP 8.2 CLI port `8000` (sinkron dengan `backend/.env` via `env_file` & volume mount).
      - `nac-queue-worker` / `nac-queue-prod`: Background queue worker (`queue:listen` / `queue:work`).
-     - `nac-frontend` / `nac-frontend-prod`: Vite development server (`5173`) / Nginx production (`80` & `443`).
+     - `nac-frontend` / `nac-frontend-prod`: Vite development server (`5173`) / Nginx production (`80` & `443`). `nginx/default.conf` di-bind mount ke container dan menggunakan Docker internal DNS resolver (`resolver 127.0.0.11 valid=5s ipv6=off;`) dengan dynamic upstream variable (`set $backend_upstream http://backend:8000;`) agar Nginx tidak mengalami `502 Bad Gateway` saat container `backend` di-recreate dan berganti IP internal Docker.
      - `nac-certbot-prod`: Container Certbot resmi untuk auto-renewal SSL setiap 12 jam.
    - Script Shortcuts di `package.json`: `npm run docker:up`, `npm run docker:down`, `npm run docker:build`, `npm run docker:logs`, `npm run docker:restart`, `npm run docker:seed`.
 

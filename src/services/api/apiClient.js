@@ -3,9 +3,22 @@ import axios from 'axios';
 /**
  * NAC Tax Center - HTTP REST API Client
  * 
- * Connected directly to Laravel REST API Backend (http://127.0.0.1:8000/api)
+ * Connected directly to Laravel REST API Backend
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+const resolveApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+        return `${window.location.origin}/api`;
+      }
+    }
+  }
+  return envUrl || 'http://127.0.0.1:8000/api';
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

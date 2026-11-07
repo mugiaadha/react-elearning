@@ -1076,12 +1076,59 @@ class AuthController extends Controller
     }
 
     /**
+     * Resolve dynamic Google OAuth redirect URI (safe against config:cache, ${APP_URL}, and localhost fallbacks)
+     */
+    private function resolveGoogleRedirectUri(Request $request): string
+    {
+        $appUrl = rtrim(config('app.url') ?: env('APP_URL') ?: $request->getSchemeAndHttpHost(), '/');
+        $rawUri = config('services.google.redirect_uri') ?: env('GOOGLE_REDIRECT_URI');
+
+        if (!empty($rawUri)) {
+            $rawUri = str_replace('${APP_URL}', $appUrl, trim($rawUri, '"\''));
+        } else {
+            $rawUri = $appUrl . '/api/auth/google/callback';
+        }
+
+        // Ensure /api/auth/google/callback path is used
+        if (str_ends_with($rawUri, '/auth/google/callback') && !str_ends_with($rawUri, '/api/auth/google/callback')) {
+            $rawUri = preg_replace('#/auth/google/callback$#', '/api/auth/google/callback', $rawUri);
+        }
+
+        // If request comes from a non-localhost domain, never return localhost/127.0.0.1 redirect URI
+        $host = $request->getHost();
+        if (!in_array($host, ['localhost', '127.0.0.1'], true) && preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?#i', $rawUri)) {
+            $scheme = ($request->isSecure() || $request->header('X-Forwarded-Proto') === 'https') ? 'https' : 'http';
+            $rawUri = $scheme . '://' . $request->getHttpHost() . '/api/auth/google/callback';
+        }
+
+        return $rawUri;
+    }
+
+    /**
+     * Resolve Frontend URL dynamically
+     */
+    private function resolveFrontendUrl(Request $request): string
+    {
+        $appUrl = rtrim(config('app.url') ?: env('APP_URL') ?: $request->getSchemeAndHttpHost(), '/');
+        $frontendUrl = config('services.frontend_url') ?: env('FRONTEND_URL') ?: $appUrl;
+        $frontendUrl = rtrim(str_replace('${APP_URL}', $appUrl, trim($frontendUrl, '"\'')), '/');
+
+        $host = $request->getHost();
+        if (!in_array($host, ['localhost', '127.0.0.1'], true) && preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?#i', $frontendUrl)) {
+            $scheme = ($request->isSecure() || $request->header('X-Forwarded-Proto') === 'https') ? 'https' : 'http';
+            $frontendUrl = $scheme . '://' . $request->getHttpHost();
+        }
+
+        return $frontendUrl;
+    }
+
+    /**
      * Get Google OAuth Redirect URL
      */
     public function googleAuthUrl(Request $request)
     {
-        $clientId = env('GOOGLE_CLIENT_ID');
-        $redirectUri = env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://127.0.0.1:8000') . '/auth/google/callback');
+        $clientId = config('services.google.client_id') ?: env('GOOGLE_CLIENT_ID');
+        $redirectUri = $this->resolveGoogleRedirectUri($request);
         $brevetId = $request->query('brevet_id') ?: $request->query('brevetId') ?: $request->query('slug') ?: 'brevet-ab';
 
         $url = null;
@@ -1114,12 +1161,12 @@ class AuthController extends Controller
      */
     public function googleRedirect(Request $request)
     {
-        $clientId = env('GOOGLE_CLIENT_ID');
-        $redirectUri = env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://127.0.0.1:8000') . '/auth/google/callback');
+        $clientId = config('services.google.client_id') ?: env('GOOGLE_CLIENT_ID');
+        $redirectUri = $this->resolveGoogleRedirectUri($request);
         $brevetId = $request->query('brevet_id') ?: $request->query('brevetId') ?: $request->query('slug');
 
         if (empty($clientId)) {
-            $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+            $frontendUrl = $this->resolveFrontendUrl($request);
             return redirect($frontendUrl . '/login?error=' . urlencode('Google Client ID belum dikonfigurasi di file .env backend.'));
         }
 
@@ -1172,7 +1219,7 @@ class AuthController extends Controller
             file_put_contents($envPath, $envContent);
         }
 
-        $redirectUri = env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://127.0.0.1:8000') . '/auth/google/callback');
+        $redirectUri = $this->resolveGoogleRedirectUri($request);
         $authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query([
             'client_id' => $clientId,
             'redirect_uri' => $redirectUri,
@@ -1222,9 +1269,9 @@ class AuthController extends Controller
 
         // 2. Exchange OAuth Authorization Code if provided
         if (empty($googleEmail) && $request->filled('code')) {
-            $clientId = env('GOOGLE_CLIENT_ID');
-            $clientSecret = env('GOOGLE_CLIENT_SECRET');
-            $redirectUri = env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://127.0.0.1:8000') . '/api/auth/google/callback');
+            $clientId = config('services.google.client_id') ?: env('GOOGLE_CLIENT_ID');
+            $clientSecret = config('services.google.client_secret') ?: env('GOOGLE_CLIENT_SECRET');
+            $redirectUri = $this->resolveGoogleRedirectUri($request);
 
             try {
                 $tokenRes = Http::asForm()->post('https://oauth2.googleapis.com/token', [
@@ -1439,7 +1486,7 @@ class AuthController extends Controller
     {
         $code = $request->query('code');
         $state = $request->query('state');
-        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+        $frontendUrl = $this->resolveFrontendUrl($request);
 
         if (!$code) {
             return redirect($frontendUrl . '/login?error=' . urlencode('Otorisasi Google dibatalkan.'));

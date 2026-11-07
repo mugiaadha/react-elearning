@@ -57,6 +57,16 @@ export const GoogleAuthButton = ({
   const [savingConfig, setSavingConfig] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const getDefaultRedirectUri = () => {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      const host = window.location.hostname;
+      if (host !== 'localhost' && host !== '127.0.0.1') {
+        return `${window.location.origin}/api/auth/google/callback`;
+      }
+    }
+    return 'http://localhost:8000/api/auth/google/callback';
+  };
+
   // Check backend Google OAuth config on mount or when brevetId changes
   useEffect(() => {
     apiClient
@@ -75,9 +85,23 @@ export const GoogleAuthButton = ({
       } catch (e) {}
     }
 
+    const fallbackRedirectUri = getDefaultRedirectUri();
+
     // 1. If backend has valid Google Client ID, immediately redirect to accounts.google.com!
     if (oauthConfig?.is_configured && oauthConfig?.auth_url) {
       let targetUrl = oauthConfig.auth_url;
+      // Ensure production domain never sends a localhost redirect_uri
+      if (
+        typeof window !== 'undefined' &&
+        window.location?.hostname !== 'localhost' &&
+        window.location?.hostname !== '127.0.0.1' &&
+        /redirect_uri=https?%3A%2F%2F(localhost|127\.0\.0\.1)/i.test(targetUrl)
+      ) {
+        targetUrl = targetUrl.replace(
+          /redirect_uri=[^&]*/,
+          `redirect_uri=${encodeURIComponent(fallbackRedirectUri)}`
+        );
+      }
       const stateObj = JSON.stringify({ brevet_id: brevetId });
       if (targetUrl.includes('state=')) {
         targetUrl = targetUrl.replace(/state=[^&]*/, `state=${encodeURIComponent(stateObj)}`);
@@ -93,7 +117,7 @@ export const GoogleAuthButton = ({
     // 2. If client ID is present in frontend env
     const viteClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (viteClientId) {
-      const redirectUri = encodeURIComponent(oauthConfig?.redirect_uri || 'http://localhost:8000/api/auth/google/callback');
+      const redirectUri = encodeURIComponent(oauthConfig?.redirect_uri || fallbackRedirectUri);
       const stateObj = encodeURIComponent(JSON.stringify({ brevet_id: brevetId }));
       const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${viteClientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid%20profile%20email&prompt=select_account&state=${stateObj}`;
       showToast('Membuka halaman pemilihan akun Google...', 'loading', 2500);
@@ -178,7 +202,7 @@ export const GoogleAuthButton = ({
   };
 
   const handleCopyUri = () => {
-    navigator.clipboard.writeText(oauthConfig?.redirect_uri || 'http://localhost:8000/api/auth/google/callback');
+    navigator.clipboard.writeText(oauthConfig?.redirect_uri || getDefaultRedirectUri());
     setCopied(true);
     showToast('Redirect URI berhasil disalin!', 'info', 2000);
     setTimeout(() => setCopied(false), 2000);
@@ -264,7 +288,7 @@ export const GoogleAuthButton = ({
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-[10px] space-y-1">
                 <span className="text-slate-500 block font-medium">Authorized Redirect URI (di Google Cloud):</span>
                 <div className="flex items-center justify-between font-mono bg-white p-1.5 rounded-lg border border-slate-200">
-                  <span className="text-slate-800 truncate">http://127.0.0.1:8000/auth/google/callback</span>
+                  <span className="text-slate-800 truncate">{oauthConfig?.redirect_uri || getDefaultRedirectUri()}</span>
                   <button
                     type="button"
                     onClick={handleCopyUri}
