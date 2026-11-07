@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import userService from '../../../services/userService';
 import {
@@ -104,72 +105,142 @@ export const TransactionsPage = () => {
           <p className="text-xs">Memuat riwayat transaksi dari backend...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4">No. Invoice</th>
-                <th className="py-3 px-4">Program Brevet</th>
-                <th className="py-3 px-4">Nominal</th>
-                <th className="py-3 px-4">Metode Bayar</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-center">Kuitansi Resmi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {items.map((inv, idx) => {
-                const approved = inv.payment_status === 'APPROVED' || inv.is_active;
-                return (
-                  <tr key={inv.invoice_id || idx} className="hover:bg-slate-50/60 transition">
-                    <td className="py-4 px-4 font-mono font-bold text-slate-800">
-                      {inv.invoice_id || `INV-NAC-2026-${String(idx + 1).padStart(4, '0')}`}
-                    </td>
-                    <td className="py-4 px-4 font-semibold text-slate-900">
-                      {inv.title || inv.brevet?.title || 'Brevet Pajak A & B Terpadu'}
-                    </td>
-                    <td className="py-4 px-4 font-bold text-nac-primary">
-                      Rp {Number(inv.amount || 2750000).toLocaleString('id-ID')}
-                    </td>
-                    <td className="py-4 px-4 text-slate-600">
-                      {inv.payment_method || 'QRIS Dinamis'}
-                    </td>
-                    <td className="py-4 px-4">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-                          approved
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}
-                      >
-                        {approved ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                        {approved ? 'LUNAS (APPROVED)' : 'MENUNGGU VERIFIKASI'}
+        <>
+          {/* Mobile Card List View */}
+          <div className="md:hidden space-y-3.5">
+            {items.map((inv, idx) => {
+              const approved = inv.payment_status === 'APPROVED' || inv.is_active;
+              const invNo = inv.invoice_id || `INV-NAC-2026-${String(idx + 1).padStart(4, '0')}`;
+              const courseTitle = inv.title || inv.brevet?.title || 'Brevet Pajak A & B Terpadu';
+              const amountVal = Number(inv.amount || 2750000).toLocaleString('id-ID');
+
+              return (
+                <div
+                  key={invNo}
+                  className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-100">
+                    <div>
+                      <span className="font-mono font-bold text-xs text-slate-800 block">
+                        {invNo}
                       </span>
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      {approved ? (
-                        <button
-                          onClick={() => setSelectedReceipt(inv)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-50 hover:bg-sky-100 text-nac-primary border border-sky-200 transition"
+                      <span className="text-[11px] text-slate-400">
+                        Metode: {inv.payment_method || 'QRIS Dinamis'}
+                      </span>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                        approved
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}
+                    >
+                      {approved ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                      {approved ? 'LUNAS' : 'PENDING'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm leading-snug">
+                      {courseTitle}
+                    </h3>
+                    <div className="text-base font-black text-nac-primary font-mono mt-1">
+                      Rp {amountVal}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex justify-end">
+                    {approved ? (
+                      <button
+                        onClick={() => setSelectedReceipt(inv)}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-sky-50 hover:bg-sky-100 text-nac-primary border border-sky-200 transition"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-sky-600" />
+                        Lihat Kuitansi Resmi
+                      </button>
+                    ) : (
+                      <Link
+                        to={`/onboarding/payment-pending?invoice_id=${inv.invoice_id}`}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition shadow-sm"
+                      >
+                        <CreditCard className="w-3.5 h-3.5" />
+                        Bayar Sekarang
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4">No. Invoice</th>
+                  <th className="py-3 px-4">Program Brevet</th>
+                  <th className="py-3 px-4">Nominal</th>
+                  <th className="py-3 px-4">Metode Bayar</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-center">Kuitansi Resmi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {items.map((inv, idx) => {
+                  const approved = inv.payment_status === 'APPROVED' || inv.is_active;
+                  return (
+                    <tr key={inv.invoice_id || idx} className="hover:bg-slate-50/60 transition">
+                      <td className="py-4 px-4 font-mono font-bold text-slate-800">
+                        {inv.invoice_id || `INV-NAC-2026-${String(idx + 1).padStart(4, '0')}`}
+                      </td>
+                      <td className="py-4 px-4 font-semibold text-slate-900">
+                        {inv.title || inv.brevet?.title || 'Brevet Pajak A & B Terpadu'}
+                      </td>
+                      <td className="py-4 px-4 font-bold text-nac-primary">
+                        Rp {Number(inv.amount || 2750000).toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-4 px-4 text-slate-600">
+                        {inv.payment_method || 'QRIS Dinamis'}
+                      </td>
+                      <td className="py-4 px-4">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                            approved
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}
                         >
-                          <FileText className="w-3.5 h-3.5 text-sky-600" />
-                          Kuitansi Resmi
-                        </button>
-                      ) : (
-                        <Link
-                          to={`/onboarding/payment-pending?invoice_id=${inv.invoice_id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white transition shadow-sm"
-                        >
-                          <CreditCard className="w-3.5 h-3.5" />
-                          Bayar Sekarang
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                          {approved ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                          {approved ? 'LUNAS (APPROVED)' : 'MENUNGGU VERIFIKASI'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        {approved ? (
+                          <button
+                            onClick={() => setSelectedReceipt(inv)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-50 hover:bg-sky-100 text-nac-primary border border-sky-200 transition"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-sky-600" />
+                            Kuitansi Resmi
+                          </button>
+                        ) : (
+                          <Link
+                            to={`/onboarding/payment-pending?invoice_id=${inv.invoice_id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white transition shadow-sm"
+                          >
+                            <CreditCard className="w-3.5 h-3.5" />
+                            Bayar Sekarang
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Official Receipt Modal */}

@@ -79,7 +79,7 @@ export const LessonContentView = ({
 }
 
 {/* 2. DI BAWAH LAYAR BESAR: INFO MATERI & DOKUMEN GOOGLE DRIVE */ }
-<div className="p-5 sm:p-6 space-y-6">
+<div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
     <div>
       <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
@@ -88,7 +88,7 @@ export const LessonContentView = ({
         <span>•</span>
         <span className="capitalize">{activeLesson?.type || 'Video Kuliah'}</span>
       </div>
-      <h3 className="text-lg font-bold text-slate-900">
+      <h3 className="text-base sm:text-lg font-bold text-slate-900">
         Bab {activeLessonIndex + 1}: {activeLesson?.title}
       </h3>
     </div>
@@ -97,17 +97,19 @@ export const LessonContentView = ({
     {activeLesson && (
       <button
         onClick={() => onCompleteAndNext(activeLesson.id, nextChapterId)}
-        className="shrink-0 btn-emerald text-xs inline-flex items-center gap-2 py-2 px-4 shadow-sm"
+        className="w-full sm:w-auto shrink-0 btn-emerald text-xs inline-flex items-center justify-center gap-2 py-2.5 sm:py-2 px-4 shadow-sm"
       >
-        <CheckCircle2 className="w-4 h-4" />
-        {completedLessonIds.includes(activeLesson.id)
-          ? activeLessonIndex === regularLessons.length - 1
-            ? 'Sudah Selesai (Lanjut ke Bab Akhir / Ulangan)'
-            : 'Sudah Selesai (Lanjut ke Bab Berikutnya)'
-          : activeLessonIndex === regularLessons.length - 1
-            ? 'Tandai Selesai & Buka Bab Akhir (Ulangan)'
-            : 'Tandai Selesai & Buka Bab Berikutnya'}
-        <ArrowRight className="w-3.5 h-3.5" />
+        <CheckCircle2 className="w-4 h-4 shrink-0" />
+        <span>
+          {completedLessonIds.includes(activeLesson.id)
+            ? activeLessonIndex === regularLessons.length - 1
+              ? 'Sudah Selesai (Lanjut ke Ulangan)'
+              : 'Sudah Selesai (Bab Berikutnya)'
+            : activeLessonIndex === regularLessons.length - 1
+              ? 'Tandai Selesai & Buka Ulangan'
+              : 'Tandai Selesai & Bab Berikutnya'}
+        </span>
+        <ArrowRight className="w-3.5 h-3.5 shrink-0" />
       </button>
     )}
   </div>

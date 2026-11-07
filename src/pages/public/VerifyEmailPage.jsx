@@ -177,25 +177,25 @@ export const VerifyEmailPage = () => {
 
         {/* 3-Step Visual Progress Breadcrumb */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-1.5 text-emerald-600">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-emerald-600 shrink-0">
             <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center justify-center">
               ✓
             </div>
-            <span className="text-[11px] font-semibold text-emerald-700">1. Terdaftar</span>
+            <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-700">1. Terdaftar</span>
           </div>
-          <div className="flex-1 h-0.5 bg-emerald-200 mx-2"></div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex-1 h-0.5 bg-emerald-200 mx-1.5 sm:mx-2"></div>
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <div className="w-5 h-5 rounded-full bg-nac-primary text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
               2
             </div>
-            <span className="text-[11px] font-bold text-slate-900">2. Verifikasi OTP</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-900">2. Verifikasi OTP</span>
           </div>
-          <div className="flex-1 h-0.5 bg-slate-200 mx-2"></div>
-          <div className="flex items-center gap-1.5 opacity-50">
+          <div className="flex-1 h-0.5 bg-slate-200 mx-1.5 sm:mx-2"></div>
+          <div className="flex items-center gap-1 sm:gap-1.5 opacity-50 shrink-0">
             <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">
               3
             </div>
-            <span className="text-[11px] font-medium text-slate-500">3. Pembayaran</span>
+            <span className="text-[10px] sm:text-[11px] font-medium text-slate-500">3. Pembayaran</span>
           </div>
         </div>
 

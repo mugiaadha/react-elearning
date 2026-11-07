@@ -32,34 +32,34 @@ export const ExamContentView = ({
   fileInputRef,
 }) => {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden space-y-6 p-6 sm:p-7">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden space-y-5 sm:space-y-6 p-4 sm:p-7">
       {/* Header Bab Akhir: Latihan & Ulangan */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold text-base shadow-md">
-            <Award className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 sm:pb-5 border-b border-slate-100">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold text-base shadow-md shrink-0">
+            <Award className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-0.5">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
                 Bab Akhir • Ulangan Modul {activeModuleIndex + 1}
               </span>
-              <span className="text-xs text-slate-400 font-semibold">• Syarat Buka Modul Berikutnya</span>
+              <span className="text-[11px] sm:text-xs text-slate-400 font-semibold">• Syarat Buka Modul Berikutnya</span>
             </div>
-            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
+            <h3 className="text-base sm:text-xl font-extrabold text-slate-900">
               {activeModuleExam.title}
             </h3>
           </div>
         </div>
 
         {/* Action Buttons: Download Soal & Sudah Selesai / Lanjut ke Modul Berikutnya */}
-        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-auto">
           {activeModuleExam.question_url && (
             <a
               href={activeModuleExam.question_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl font-bold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 shadow transition"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl font-bold text-xs bg-amber-400 hover:bg-amber-300 text-slate-950 shadow transition"
             >
               <Download className="w-3.5 h-3.5" />
               Download Soal
@@ -69,7 +69,7 @@ export const ExamContentView = ({
             <button
               type="button"
               onClick={onNextModule}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Lanjut ke Modul {activeModuleIndex + 2}</span>
@@ -79,7 +79,7 @@ export const ExamContentView = ({
             <button
               type="button"
               onClick={onClaimCertificate}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md transition"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md transition"
             >
               <Award className="w-4 h-4 text-slate-950" />
               <span>Lihat Kelulusan & Buka Sertifikat</span>

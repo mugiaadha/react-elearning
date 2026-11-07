@@ -49,12 +49,12 @@ export const ContactPage = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-14 space-y-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-10 sm:space-y-12">
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <span className="text-xs font-bold text-nac-primary uppercase tracking-widest bg-sky-50 px-3 py-1 rounded-full border border-sky-100">
           Layanan Mahasiswa & Korporasi
         </span>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
           Hubungi Sekretariat NAC Tax Center
         </h1>
         <p className="text-xs sm:text-sm text-slate-600">
@@ -62,9 +62,9 @@ export const ContactPage = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        <div className="md:col-span-5 bg-slate-950 text-white p-8 rounded-3xl space-y-6">
-          <h2 className="text-xl font-bold text-white">Informasi Kontak Pusat</h2>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8">
+        <div className="md:col-span-5 bg-slate-950 text-white p-6 sm:p-8 rounded-3xl space-y-6">
+          <h2 className="text-lg sm:text-xl font-bold text-white">Informasi Kontak Pusat</h2>
           <div className="space-y-4 text-xs">
             <div className="flex items-start gap-3">
               <MapPin className="w-4 h-4 text-amber-400 mt-1 shrink-0" />
@@ -92,7 +92,7 @@ export const ContactPage = () => {
           </div>
         </div>
 
-        <div className="md:col-span-7 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+        <div className="md:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
           <h3 className="font-bold text-slate-900 text-base mb-4">Kirim Pesan atau Pertanyaan</h3>
 
           {success && (

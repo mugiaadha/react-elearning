@@ -203,16 +203,16 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-12">
         {/* Left Side: Summary info */}
-        <div className="md:col-span-5 bg-gradient-to-br from-slate-950 via-nac-navy to-nac-primary text-white p-8 flex flex-col justify-between space-y-6">
+        <div className="md:col-span-5 bg-gradient-to-br from-slate-950 via-nac-navy to-nac-primary text-white p-6 sm:p-8 flex flex-col justify-between space-y-6">
           <div className="space-y-4">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-300 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
               Pendaftaran Angkatan Baru
             </span>
-            <h2 className="text-2xl font-bold">Gabung dengan Komunitas Pajak Terbesar</h2>
+            <h2 className="text-xl sm:text-2xl font-bold">Gabung dengan Komunitas Pajak Terbesar</h2>
             <p className="text-xs text-slate-300 leading-relaxed">
               Dapatkan sertifikasi resmi Brevet Pajak AB & C berskala nasional dengan materi Coretax DJP & UU HPP.
             </p>
@@ -235,28 +235,28 @@ export const RegisterPage = () => {
         </div>
 
         {/* Right Side: Registration Form */}
-        <div className="md:col-span-7 p-8 space-y-5">
+        <div className="md:col-span-7 p-5 sm:p-8 space-y-5">
           {/* 3-Step Visual Progress Breadcrumb */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               <div className="w-5 h-5 rounded-full bg-nac-primary text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
                 1
               </div>
-              <span className="text-[11px] font-bold text-slate-900">1. Pendaftaran</span>
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900">1. Pendaftaran</span>
             </div>
-            <div className="flex-1 h-0.5 bg-slate-200 mx-2"></div>
-            <div className="flex items-center gap-1.5 opacity-50">
+            <div className="flex-1 h-0.5 bg-slate-200 mx-1.5 sm:mx-2"></div>
+            <div className="flex items-center gap-1 sm:gap-1.5 opacity-50 shrink-0">
               <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">
                 2
               </div>
-              <span className="text-[11px] font-medium text-slate-500">2. Verifikasi OTP</span>
+              <span className="text-[10px] sm:text-[11px] font-medium text-slate-500">2. Verifikasi OTP</span>
             </div>
-            <div className="flex-1 h-0.5 bg-slate-200 mx-2"></div>
-            <div className="flex items-center gap-1.5 opacity-50">
+            <div className="flex-1 h-0.5 bg-slate-200 mx-1.5 sm:mx-2"></div>
+            <div className="flex items-center gap-1 sm:gap-1.5 opacity-50 shrink-0">
               <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">
                 3
               </div>
-              <span className="text-[11px] font-medium text-slate-500">3. Pembayaran</span>
+              <span className="text-[10px] sm:text-[11px] font-medium text-slate-500">3. Pembayaran</span>
             </div>
           </div>
 

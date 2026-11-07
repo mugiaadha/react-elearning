@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom';
 
 export const AboutPage = () => {
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-14 space-y-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-10 sm:space-y-12">
       <div className="text-center max-w-3xl mx-auto space-y-3">
         <span className="text-xs font-bold text-nac-primary uppercase tracking-widest bg-sky-50 px-3 py-1 rounded-full border border-sky-100">
           Tentang Lembaga
         </span>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
           Pusat Unggulan Pelatihan & Sertifikasi Brevet Perpajakan
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
@@ -17,9 +17,9 @@ export const AboutPage = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center bg-white p-5 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
         <div className="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
-          <h2 className="text-xl font-bold text-slate-900">Misi & Standar Kualitas NAC</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">Misi & Standar Kualitas NAC</h2>
           <p>
             Dengan disahkannya UU Harmonisasi Peraturan Perpajakan (UU HPP) serta peluncuran sistem Coretax DJP terintegrasi, lanskap administrasi pajak Indonesia mengalami revolusi digital terbesar dalam sejarah.
           </p>
@@ -28,21 +28,21 @@ export const AboutPage = () => {
           </p>
           <div className="pt-2 flex flex-col gap-2 font-medium text-slate-800">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Instruktur berizin resmi Konsultan Pajak (BKP) Tingkat A, B, & C</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Simulasi studi kasus nyata sengketa & pemeriksaan pajak DJP</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Sertifikat kelulusan digital dilengkapi sistem verifikasi QR online</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-950 text-white p-8 rounded-2xl space-y-5">
+        <div className="bg-slate-950 text-white p-6 sm:p-8 rounded-2xl space-y-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-black text-lg flex items-center justify-center">
               BKP

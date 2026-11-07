@@ -245,6 +245,17 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
     - **Validasi Media & Seeder Kurikulum**: Master kurikulum di `backend/database/data/brevets_data.json` memuat video materi YouTube riil untuk seluruh bab dan dokumen Google Drive (Excel, Word, PDF); helper `learningHelpers.js` menangani sanitasi URL (embed, shorts, channel mapping @DDTCIndonesia & @DitjenPajakRI) dengan strict-origin policy. Seluruh soal latihan & ujian modul diarahkan ke dokumen studi kasus terstandar Google Docs.
     - **Scoping 1 Bab 1 Dokumen Pendamping (Contextual Handout)**: Pada tampilan pembelajaran siswa (`CourseLearningPage.jsx` & `LessonContentView.jsx`), dokumen Google Drive yang ditampilkan di bawah video kini di-scope secara ketat 1-to-1 dengan bab materi yang sedang aktif (`activeLesson.gdrive_url`). Siswa hanya melihat dan mengunduh bahan ajar yang relevan dengan video yang sedang ditonton, sehingga tidak membingungkan atau tercampur dengan dokumen bab lain dalam modul.
 
+9. **Mobile-First UI/UX & Ergonomi Responsif**:
+   - **Mobile Bottom Navigation Bar (`md:hidden`)**:
+     * Portal Student & Teacher ([FrontofficePortalLayout.jsx](file:///c:/workspace/belajar-react/elearning-react/src/layouts/FrontofficePortalLayout.jsx)) serta Admin Backoffice ([BackofficeLayout.jsx](file:///c:/workspace/belajar-react/elearning-react/src/layouts/BackofficeLayout.jsx)) menggunakan `h-[100dvh]`, padding bawah `pb-24 md:pb-8`, dan navigasi tab bawah tetap (`fixed bottom-0`) yang ramah ibu jari lengkap dengan `pb-safe` (`env(safe-area-inset-bottom)`).
+   - **Dual-View Data Tables (Mobile Card List + Desktop Table)**:
+     * Seluruh halaman berbasis tabel data ([TransactionsPage.jsx](file:///c:/workspace/belajar-react/elearning-react/src/pages/student/pages/TransactionsPage.jsx), [TeacherStudentsPage.jsx](file:///c:/workspace/belajar-react/elearning-react/src/pages/teacher/TeacherStudentsPage.jsx), [AdminPaymentsPage.jsx](file:///c:/workspace/belajar-react/elearning-react/src/pages/admin/AdminPaymentsPage.jsx), [AdminStudentsPage.jsx](file:///c:/workspace/belajar-react/elearning-react/src/pages/admin/AdminStudentsPage.jsx), [AdminTeachersPage.jsx](file:///c:/workspace/belajar-react/elearning-react/src/pages/admin/AdminTeachersPage.jsx), dan [AdminCertificatesPage.jsx](file:///c:/workspace/belajar-react/elearning-react/src/pages/admin/AdminCertificatesPage.jsx)) menyediakan tampilan **Mobile Card List (`md:hidden`)** untuk layar ponsel dan **Desktop Table (`hidden md:block`)** untuk layar lebar.
+   - **Mobile Quick Syllabus Switcher & Sticky CTA Bars**:
+     * [CourseLearningPage.jsx](file:///c:/workspace/belajar-react/elearning-react/src/pages/student/pages/course/CourseLearningPage.jsx) memiliki bar pemilih bab/modul cepat (`lg:hidden`) tepat di atas pemutar video/ujian agar siswa di ponsel dapat berpindah bab tanpa menggulir ke bawah.
+     * [BrevetDetailPage.jsx](file:///c:/workspace/belajar-react/elearning-react/src/pages/public/BrevetDetailPage.jsx) dan [PaymentPendingPage.jsx](file:///c:/workspace/belajar-react/elearning-react/src/pages/onboarding/PaymentPendingPage.jsx) dilengkapi sticky bottom action bar (`lg:hidden`) untuk pendaftaran dan pembayaran Midtrans 1-tap.
+   - **Modal Viewport Safety**: Seluruh modal dialog dilengkapi `max-h-[92dvh] overflow-y-auto` dan `p-5 sm:p-8` agar tidak pernah terpotong saat keyboard virtual ponsel terbuka.
+
+
 
 ---
 

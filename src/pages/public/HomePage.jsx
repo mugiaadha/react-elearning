@@ -90,23 +90,23 @@ export const HomePage = () => {
       </section>
 
       {/* 2. Key Stats Strip */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-14 relative z-20">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-200/80">
-          <div className="text-center p-2 border-r border-slate-100 last:border-0">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 sm:-mt-14 relative z-20">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 bg-white rounded-2xl p-4 sm:p-8 shadow-xl border border-slate-200/80">
+          <div className="text-center p-2 border-r border-b md:border-b-0 border-slate-100">
             <div className="text-2xl sm:text-4xl font-extrabold text-nac-primary font-mono">5.400+</div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Alumni Praktisi Tersebar di Indonesia</div>
+            <div className="text-[11px] sm:text-xs text-slate-500 mt-1 font-medium">Alumni Praktisi Tersebar di Indonesia</div>
           </div>
-          <div className="text-center p-2 border-r border-slate-100 last:border-0">
+          <div className="text-center p-2 border-b md:border-b-0 md:border-r border-slate-100">
             <div className="text-2xl sm:text-4xl font-extrabold text-emerald-600 font-mono">98.4%</div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Tingkat Kelulusan Ujian Komprehensif</div>
+            <div className="text-[11px] sm:text-xs text-slate-500 mt-1 font-medium">Tingkat Kelulusan Ujian Komprehensif</div>
           </div>
-          <div className="text-center p-2 border-r border-slate-100 last:border-0">
+          <div className="text-center p-2 border-r border-slate-100">
             <div className="text-2xl sm:text-4xl font-extrabold text-amber-500 font-mono">100%</div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Instruktur BKP & Praktisi Berpengalaman</div>
+            <div className="text-[11px] sm:text-xs text-slate-500 mt-1 font-medium">Instruktur BKP & Praktisi Berpengalaman</div>
           </div>
           <div className="text-center p-2">
             <div className="text-2xl sm:text-4xl font-extrabold text-indigo-600 font-mono">4.95/5</div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Rating Kepuasan Pelatihan</div>
+            <div className="text-[11px] sm:text-xs text-slate-500 mt-1 font-medium">Rating Kepuasan Pelatihan</div>
           </div>
         </div>
       </section>

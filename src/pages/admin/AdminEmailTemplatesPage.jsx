@@ -129,7 +129,7 @@ export const AdminEmailTemplatesPage = () => {
             Master Template Email & Layanan SMTP
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Template email transaksional resmi tersimpan di database SQLite & dikirim via transport SMTP.
+            Template email transaksional resmi tersimpan di database MariaDB & dikirim via transport SMTP.
           </p>
         </div>
 
@@ -314,7 +314,7 @@ export const AdminEmailTemplatesPage = () => {
                       <iframe
                         title="Live Email Preview"
                         srcDoc={getPreviewHtml(selectedTemplate)}
-                        className="w-full h-[580px] border-0 bg-white block"
+                        className="w-full h-[420px] sm:h-[580px] border-0 bg-white block"
                       />
                     </div>
                   ) : (

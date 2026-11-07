@@ -175,19 +175,19 @@ export const StudentDashboard = () => {
       {/* Grid: Active Course Card + Next Live Schedule */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Active Brevet Card */}
-        <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-5">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-50 text-nac-primary flex items-center justify-center">
+        <div className="lg:col-span-8 bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-sky-50 text-nac-primary flex items-center justify-center shrink-0">
                 <BookOpen className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base">
+              <div className="min-w-0">
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base">
                   Program Brevet Aktif Anda
                 </h3>
-                <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                <p className="text-xs text-slate-500 flex flex-wrap items-center gap-1.5 mt-0.5">
                   <span className="font-semibold text-nac-primary flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5" />
+                    <Users className="w-3.5 h-3.5 shrink-0" />
                     {activeBrevet.batch?.batch_name || activeBrevet.batch_name || 'Batch 42 - Reguler'}
                   </span>
                   <span>•</span>
@@ -195,7 +195,7 @@ export const StudentDashboard = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {isStudentGraduated ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -207,7 +207,7 @@ export const StudentDashboard = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-stretch sm:items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
             <div className="space-y-1">
               <h4 className="font-bold text-slate-900 text-sm">
                 {activeBrevet.title}
@@ -218,7 +218,7 @@ export const StudentDashboard = () => {
             </div>
             <Link
               to={`/dashboard/student/course/${activeBrevet.slug || 'brevet-ab-terpadu'}`}
-              className="btn-primary text-xs shrink-0"
+              className="btn-primary text-xs shrink-0 w-full sm:w-auto justify-center"
             >
               Masuk Ruang Kelas &rarr;
             </Link>

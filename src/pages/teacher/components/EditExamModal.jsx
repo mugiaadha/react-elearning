@@ -13,8 +13,8 @@ export const EditExamModal = ({
   if (!isOpen || !activeModule) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-3xl p-5 sm:p-7 max-w-md w-full max-h-[92dvh] overflow-y-auto shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200 my-auto">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">

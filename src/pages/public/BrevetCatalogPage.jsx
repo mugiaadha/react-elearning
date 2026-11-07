@@ -54,12 +54,12 @@ export const BrevetCatalogPage = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3.5 sm:gap-4 items-center justify-between">
         {/* Level Filters */}
-        <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto pb-0.5 sm:pb-0">
           <button
             onClick={() => setSelectedLevel('ALL')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition ${
               selectedLevel === 'ALL'
                 ? 'bg-nac-primary text-white shadow'
                 : 'text-slate-600 hover:bg-slate-100'
@@ -69,7 +69,7 @@ export const BrevetCatalogPage = () => {
           </button>
           <button
             onClick={() => setSelectedLevel('AB')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition ${
               selectedLevel === 'AB'
                 ? 'bg-nac-primary text-white shadow'
                 : 'text-slate-600 hover:bg-slate-100'
@@ -79,7 +79,7 @@ export const BrevetCatalogPage = () => {
           </button>
           <button
             onClick={() => setSelectedLevel('C')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition ${
               selectedLevel === 'C'
                 ? 'bg-nac-primary text-white shadow'
                 : 'text-slate-600 hover:bg-slate-100'
@@ -89,7 +89,7 @@ export const BrevetCatalogPage = () => {
           </button>
           <button
             onClick={() => setSelectedLevel('CORETAX')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition ${
               selectedLevel === 'CORETAX'
                 ? 'bg-nac-primary text-white shadow'
                 : 'text-slate-600 hover:bg-slate-100'
@@ -107,7 +107,7 @@ export const BrevetCatalogPage = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari materi, silabus..."
-            className="w-full text-xs rounded-xl border border-slate-300 pl-9 pr-3 py-2 focus:ring-2 focus:ring-nac-primary focus:outline-none"
+            className="w-full text-xs rounded-xl border border-slate-300 pl-9 pr-3 py-2.5 sm:py-2 focus:ring-2 focus:ring-nac-primary focus:outline-none"
           />
         </div>
       </div>

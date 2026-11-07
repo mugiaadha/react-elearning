@@ -13,6 +13,9 @@ import {
   Sparkles,
   BookOpen,
   Users,
+  ChevronDown,
+  ChevronUp,
+  ListChecks,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { LearningHeaderBanners } from '../../components/LearningHeaderBanners';
@@ -29,6 +32,7 @@ export const CourseLearningPage = () => {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeModuleIndex, setActiveModuleIndex] = useState(0);
+  const [mobileSyllabusOpen, setMobileSyllabusOpen] = useState(false);
 
   // Active chapter in the module: lesson.id (for Bab 1, 2, ...) OR 'EXAM' (strictly for Bab Akhir)
   const [activeLessonId, setActiveLessonId] = useState(null);
@@ -698,6 +702,60 @@ export const CourseLearningPage = () => {
           showToast(`Membuka form revisi ulangan Modul ${modIdx + 1}`, 'info', 3000);
         }}
       />
+
+      {/* Mobile Quick Syllabus Switcher Bar (lg:hidden) */}
+      <div className="lg:hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setMobileSyllabusOpen(!mobileSyllabusOpen)}
+          className="w-full p-3.5 flex items-center justify-between gap-3 text-left bg-slate-50/70 hover:bg-slate-50 transition"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-nac-primary text-white flex items-center justify-center shrink-0 shadow-sm">
+              <ListChecks className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-nac-primary block">
+                Modul {activeModuleIndex + 1} dari {course.curriculum?.length || 1} • Pilih Bab
+              </span>
+              <span className="text-xs font-bold text-slate-900 truncate block">
+                {isExamSelected
+                  ? `Bab Akhir: Ulangan Modul ${activeModuleIndex + 1}`
+                  : `Bab ${activeLessonIndex + 1}: ${activeLesson?.title || activeModule?.title}`}
+              </span>
+            </div>
+          </div>
+          <div className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-slate-700 shadow-2xs">
+            <span>{mobileSyllabusOpen ? 'Tutup Silabus' : 'Daftar Bab'}</span>
+            {mobileSyllabusOpen ? (
+              <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+            )}
+          </div>
+        </button>
+
+        {mobileSyllabusOpen && (
+          <div className="p-3 border-t border-slate-100 bg-slate-50/40 max-h-[65vh] overflow-y-auto">
+            <CourseSyllabusSidebar
+              curriculum={course.curriculum}
+              batchName={batchName}
+              activeModuleIndex={activeModuleIndex}
+              setActiveModuleIndex={setActiveModuleIndex}
+              activeLessonId={activeLessonId}
+              setActiveLessonId={(id) => {
+                setActiveLessonId(id);
+                setMobileSyllabusOpen(false);
+              }}
+              completedLessonIds={completedLessonIds}
+              userSubmissions={userSubmissions}
+              isModuleUnlocked={isModuleUnlocked}
+              isChapterUnlocked={isChapterUnlocked}
+              showToast={showToast}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Main Grid: Learning Area (lg:col-span-8) & Modules Syllabus (lg:col-span-4) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

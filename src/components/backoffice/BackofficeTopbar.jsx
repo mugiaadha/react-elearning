@@ -68,7 +68,7 @@ export const BackofficeTopbar = ({ title = 'Panel Kontrol Admin', onToggleMobile
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <div className="hidden sm:flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700 text-xs text-slate-300">
             <Database className="w-3.5 h-3.5 text-sky-400" />
-            <span>SQLite Database</span>
+            <span>MariaDB 11.4</span>
           </div>
 
           <button

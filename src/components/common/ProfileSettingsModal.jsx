@@ -70,10 +70,10 @@ export const ProfileSettingsModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 relative border border-slate-200">
+      <div className="bg-white rounded-3xl p-5 sm:p-8 max-w-lg w-full max-h-[92dvh] overflow-y-auto shadow-2xl space-y-6 relative border border-slate-200">
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 p-1 rounded-xl hover:bg-slate-100 transition"
+          className="absolute top-5 right-5 sm:top-6 sm:right-6 text-slate-400 hover:text-slate-700 p-1 rounded-xl hover:bg-slate-100 transition"
           aria-label="Tutup"
         >
           <X className="w-5 h-5" />

@@ -242,39 +242,29 @@ export const AdminPaymentsPage = () => {
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
-              <tr>
-                <th className="py-3.5 px-4">No. Invoice & Waktu</th>
-                <th className="py-3.5 px-4">Mahasiswa</th>
-                <th className="py-3.5 px-4">Program Brevet</th>
-                <th className="py-3.5 px-4">Nominal (IDR)</th>
-                <th className="py-3.5 px-4">Saluran Bayar Midtrans</th>
-                <th className="py-3.5 px-4">Status Transaksi</th>
-                <th className="py-3.5 px-4 text-center">Aksi & Detail</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {loading ? (
-                <tr>
-                  <td colSpan="7" className="py-12 text-center text-slate-500">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-sky-400 mb-2" />
-                    Memuat data transaksi dari sistem...
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="py-12 text-center text-slate-500">
-                    Tidak ada transaksi yang cocok dengan kriteria filter.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-800/40 transition">
-                    <td className="py-3.5 px-4">
+      {/* Transactions List (Mobile Cards + Desktop Table) */}
+      {loading ? (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center text-slate-500">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto text-sky-400 mb-2" />
+          <span className="text-xs">Memuat data transaksi dari sistem...</span>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center text-slate-500 text-xs">
+          Tidak ada transaksi yang cocok dengan kriteria filter.
+        </div>
+      ) : (
+        <>
+          {/* Mobile Card List View */}
+          <div className="md:hidden space-y-3.5">
+            {filtered.map((item) => {
+              const orderId = item.invoice_number || item.id;
+              return (
+                <div
+                  key={item.id}
+                  className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3 text-xs"
+                >
+                  <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
+                    <div>
                       <div className="font-mono font-bold text-white">{item.invoice_number}</div>
                       <div className="text-[11px] text-slate-500">
                         {new Date(item.transaction_time || item.created_at || Date.now()).toLocaleDateString('id-ID', {
@@ -285,69 +275,156 @@ export const AdminPaymentsPage = () => {
                           minute: '2-digit',
                         })}
                       </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-200">{item.student_name}</div>
-                      <div className="text-[11px] text-slate-400">{item.student_email}</div>
-                    </td>
-                    <td className="py-3.5 px-4 font-medium text-slate-300">
-                      {item.brevet_title}
-                    </td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-amber-400">
-                      Rp {Number(item.amount).toLocaleString('id-ID')}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-300">
-                      <div className="font-medium text-white">{item.payment_method || 'Midtrans Gateway'}</div>
-                      {item.payment_type && (
-                        <div className="text-[10px] text-slate-500 font-mono uppercase">
-                          Type: {item.payment_type}
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-                          item.status === 'APPROVED'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : item.status === 'REJECTED'
-                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
-                        }`}
-                      >
-                        {item.status === 'APPROVED' ? 'LUNAS (SETTLEMENT)' : item.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => setSelectedPayment(item)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl font-semibold bg-slate-800 text-sky-400 hover:bg-sky-600 hover:text-white transition shadow-sm text-xs"
-                          title="Lihat Detail Transaksi"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Detail</span>
-                        </button>
-                        <button
-                          onClick={() => handleSyncStatus(item)}
-                          disabled={syncingId === (item.invoice_number || item.id)}
-                          className="p-1.5 rounded-xl font-semibold bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition shadow-sm disabled:opacity-50"
-                          title="Sinkronkan status dengan Midtrans API"
-                        >
-                          <RefreshCw
-                            className={`w-3.5 h-3.5 ${
-                              syncingId === (item.invoice_number || item.id) ? 'animate-spin text-sky-400' : ''
-                            }`}
-                          />
-                        </button>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
+                        item.status === 'APPROVED'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : item.status === 'REJECTED'
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
+                      }`}
+                    >
+                      {item.status === 'APPROVED' ? 'LUNAS' : item.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="font-bold text-white text-sm">{item.student_name}</div>
+                    <div className="text-[11px] text-slate-400 font-mono truncate">{item.student_email}</div>
+                    <div className="text-slate-300 font-medium pt-1">{item.brevet_title}</div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
+                    <div>
+                      <div className="font-mono font-black text-amber-400 text-sm">
+                        Rp {Number(item.amount).toLocaleString('id-ID')}
                       </div>
-                    </td>
+                      <div className="text-[10px] text-slate-500">
+                        {item.payment_method || 'Midtrans Gateway'}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setSelectedPayment(item)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl font-semibold bg-slate-800 text-sky-400 hover:bg-sky-600 hover:text-white transition shadow-sm text-xs"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Detail</span>
+                      </button>
+                      <button
+                        onClick={() => handleSyncStatus(item)}
+                        disabled={syncingId === orderId}
+                        className="p-2 rounded-xl font-semibold bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition shadow-sm disabled:opacity-50"
+                        title="Sinkronkan status dengan Midtrans API"
+                      >
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 ${
+                            syncingId === orderId ? 'animate-spin text-sky-400' : ''
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
+                  <tr>
+                    <th className="py-3.5 px-4">No. Invoice & Waktu</th>
+                    <th className="py-3.5 px-4">Mahasiswa</th>
+                    <th className="py-3.5 px-4">Program Brevet</th>
+                    <th className="py-3.5 px-4">Nominal (IDR)</th>
+                    <th className="py-3.5 px-4">Saluran Bayar Midtrans</th>
+                    <th className="py-3.5 px-4">Status Transaksi</th>
+                    <th className="py-3.5 px-4 text-center">Aksi & Detail</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                  {filtered.map((item) => (
+                    <tr key={item.id} className="hover:bg-slate-800/40 transition">
+                      <td className="py-3.5 px-4">
+                        <div className="font-mono font-bold text-white">{item.invoice_number}</div>
+                        <div className="text-[11px] text-slate-500">
+                          {new Date(item.transaction_time || item.created_at || Date.now()).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-slate-200">{item.student_name}</div>
+                        <div className="text-[11px] text-slate-400">{item.student_email}</div>
+                      </td>
+                      <td className="py-3.5 px-4 font-medium text-slate-300">
+                        {item.brevet_title}
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-amber-400">
+                        Rp {Number(item.amount).toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-300">
+                        <div className="font-medium text-white">{item.payment_method || 'Midtrans Gateway'}</div>
+                        {item.payment_type && (
+                          <div className="text-[10px] text-slate-500 font-mono uppercase">
+                            Type: {item.payment_type}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                            item.status === 'APPROVED'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : item.status === 'REJECTED'
+                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
+                          }`}
+                        >
+                          {item.status === 'APPROVED' ? 'LUNAS (SETTLEMENT)' : item.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => setSelectedPayment(item)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl font-semibold bg-slate-800 text-sky-400 hover:bg-sky-600 hover:text-white transition shadow-sm text-xs"
+                            title="Lihat Detail Transaksi"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Detail</span>
+                          </button>
+                          <button
+                            onClick={() => handleSyncStatus(item)}
+                            disabled={syncingId === (item.invoice_number || item.id)}
+                            className="p-1.5 rounded-xl font-semibold bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition shadow-sm disabled:opacity-50"
+                            title="Sinkronkan status dengan Midtrans API"
+                          >
+                            <RefreshCw
+                              className={`w-3.5 h-3.5 ${
+                                syncingId === (item.invoice_number || item.id) ? 'animate-spin text-sky-400' : ''
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Transaction Detail Modal */}
       {selectedPayment && (

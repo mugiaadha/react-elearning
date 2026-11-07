@@ -96,54 +96,101 @@ export const AdminStudentsPage = () => {
           <p className="text-xs">Memuat pangkalan data siswa...</p>
         </div>
       ) : (
-        <div className="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
-              <tr>
-                <th className="py-3 px-4">Nama Mahasiswa</th>
-                <th className="py-3 px-4">Kontak</th>
-                <th className="py-3 px-4">Program Brevet</th>
-                <th className="py-3 px-4">Tgl Registrasi</th>
-                <th className="py-3 px-4">Status Akun</th>
-                <th className="py-3 px-4">Progres</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {filtered.length === 0 ? (
+        <>
+          {/* Mobile Card List View */}
+          <div className="md:hidden space-y-3.5">
+            {filtered.length === 0 ? (
+              <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-8 text-center text-slate-500 text-xs">
+                Tidak ditemukan mahasiswa yang sesuai.
+              </div>
+            ) : (
+              filtered.map((s) => (
+                <div
+                  key={s.id}
+                  className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 shadow-md space-y-3 text-xs"
+                >
+                  <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
+                    <div className="min-w-0">
+                      <div className="font-bold text-white text-sm truncate">{s.name}</div>
+                      <div className="text-[11px] text-slate-400 truncate">{s.email}</div>
+                      {s.phone && (
+                        <div className="text-[10px] text-slate-500 font-mono">{s.phone}</div>
+                      )}
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
+                        s.status === 'ACTIVE'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      }`}
+                    >
+                      {s.status === 'ACTIVE' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                      {s.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="font-semibold text-slate-200">{s.brevet}</div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                      <span>Tgl Registrasi: {s.registered}</span>
+                      <span className="font-mono font-bold text-sky-400">Progres: {s.progress}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-slate-950/70 border border-slate-800 rounded-2xl overflow-x-auto shadow-xl">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-900 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-slate-500">
-                    Tidak ditemukan mahasiswa yang sesuai.
-                  </td>
+                  <th className="py-3 px-4">Nama Mahasiswa</th>
+                  <th className="py-3 px-4">Kontak</th>
+                  <th className="py-3 px-4">Program Brevet</th>
+                  <th className="py-3 px-4">Tgl Registrasi</th>
+                  <th className="py-3 px-4">Status Akun</th>
+                  <th className="py-3 px-4">Progres</th>
                 </tr>
-              ) : (
-                filtered.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-900/50 transition">
-                    <td className="py-3.5 px-4 font-semibold text-white">{s.name}</td>
-                    <td className="py-3.5 px-4 text-slate-400">
-                      <div>{s.email}</div>
-                      <div className="text-[11px] text-slate-500">{s.phone}</div>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-8 text-center text-slate-500">
+                      Tidak ditemukan mahasiswa yang sesuai.
                     </td>
-                    <td className="py-3.5 px-4 font-medium text-slate-300">{s.brevet}</td>
-                    <td className="py-3.5 px-4 text-slate-400">{s.registered}</td>
-                    <td className="py-3.5 px-4">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-                          s.status === 'ACTIVE'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        }`}
-                      >
-                        {s.status === 'ACTIVE' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                        {s.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-sky-400">{s.progress}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  filtered.map((s) => (
+                    <tr key={s.id} className="hover:bg-slate-900/50 transition">
+                      <td className="py-3.5 px-4 font-semibold text-white">{s.name}</td>
+                      <td className="py-3.5 px-4 text-slate-400">
+                        <div>{s.email}</div>
+                        <div className="text-[11px] text-slate-500">{s.phone}</div>
+                      </td>
+                      <td className="py-3.5 px-4 font-medium text-slate-300">{s.brevet}</td>
+                      <td className="py-3.5 px-4 text-slate-400">{s.registered}</td>
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                            s.status === 'ACTIVE'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          }`}
+                        >
+                          {s.status === 'ACTIVE' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                          {s.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-sky-400">{s.progress}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

@@ -258,39 +258,39 @@ export const PaymentPendingPage = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 pb-24 sm:pb-10 space-y-6">
       {/* 3-Step Visual Progress Breadcrumb */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 sm:gap-4 flex-1">
-          <div className="flex items-center gap-1.5 text-emerald-600">
-            <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-4 flex-1 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-emerald-600 shrink-0">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-100 text-emerald-700 text-[10px] sm:text-xs font-bold flex items-center justify-center">
               ✓
             </div>
-            <span className="text-xs font-semibold text-emerald-700">1. Pendaftaran</span>
+            <span className="text-[11px] sm:text-xs font-semibold text-emerald-700">1. Terdaftar</span>
           </div>
-          <div className="flex-1 h-0.5 bg-emerald-200 max-w-[60px]"></div>
-          <div className="flex items-center gap-1.5 text-emerald-600">
-            <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">
+          <div className="flex-1 h-0.5 bg-emerald-200 min-w-[16px] max-w-[60px]"></div>
+          <div className="flex items-center gap-1 sm:gap-1.5 text-emerald-600 shrink-0">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-100 text-emerald-700 text-[10px] sm:text-xs font-bold flex items-center justify-center">
               ✓
             </div>
-            <span className="text-xs font-semibold text-emerald-700">2. Email Terverifikasi</span>
+            <span className="text-[11px] sm:text-xs font-semibold text-emerald-700">2. Terverifikasi</span>
           </div>
-          <div className="flex-1 h-0.5 bg-emerald-200 max-w-[60px]"></div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-6 h-6 rounded-full bg-nac-primary text-white text-xs font-bold flex items-center justify-center shadow-sm">
+          <div className="flex-1 h-0.5 bg-emerald-200 min-w-[16px] max-w-[60px]"></div>
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-nac-primary text-white text-[10px] sm:text-xs font-bold flex items-center justify-center shadow-sm">
               3
             </div>
-            <span className="text-xs font-bold text-slate-900">3. Pembayaran</span>
+            <span className="text-[11px] sm:text-xs font-bold text-slate-900">3. Pembayaran</span>
           </div>
         </div>
 
         {user && (
-          <div className="flex items-center gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 text-xs text-slate-500 shrink-0">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 text-xs text-slate-500">
             {user.role === 'student' && user.email_verified_at && (
               invoiceIdParam ? (
                 <Link
                   to="/dashboard/student/my-courses"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-[11px]"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Kembali ke Kursus Saya
@@ -298,34 +298,36 @@ export const PaymentPendingPage = () => {
               ) : (
                 <Link
                   to="/dashboard/student"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-[11px]"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Dashboard Mahasiswa
                 </Link>
               )
             )}
-            <span>Akun: <strong>{user.email}</strong></span>
-            <button
-              type="button"
-              onClick={async () => {
-                await logout();
-                navigate('/login');
-              }}
-              className="text-slate-500 hover:text-rose-600 font-medium ml-1 transition"
-            >
-              (Ganti Akun)
-            </button>
+            <div className="flex items-center gap-1 text-[11px] min-w-0">
+              <span className="truncate max-w-[170px] sm:max-w-none">Akun: <strong>{user.email}</strong></span>
+              <button
+                type="button"
+                onClick={async () => {
+                  await logout();
+                  navigate('/login');
+                }}
+                className="text-slate-500 hover:text-rose-600 font-medium shrink-0 transition"
+              >
+                (Ganti)
+              </button>
+            </div>
           </div>
         )}
       </div>
 
       {/* Top Banner Notice */}
-      <div className="bg-gradient-to-r from-sky-500/10 via-sky-500/5 to-transparent border-l-4 border-sky-500 p-5 rounded-r-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-sky-500/10 via-sky-500/5 to-transparent border-l-4 border-sky-500 p-4 sm:p-5 rounded-r-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-ping"></span>
-            <h2 className="text-base font-bold text-slate-900">
+            <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-ping shrink-0"></span>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900">
               Gerbang Pembayaran Midtrans (Otomatis & Real-time)
             </h2>
           </div>
@@ -338,13 +340,13 @@ export const PaymentPendingPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
         {/* Left Column: Invoice Summary */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+            <div className="bg-slate-900 text-white p-4 sm:p-5 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-nac-primary flex items-center justify-center text-white">
+                <div className="w-9 h-9 rounded-xl bg-nac-primary flex items-center justify-center text-white shrink-0">
                   <FileText className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
@@ -354,32 +356,32 @@ export const PaymentPendingPage = () => {
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="text-[10px] sm:text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                 MENUNGGU PEMBAYARAN
               </span>
             </div>
 
-            <div className="p-6 space-y-4 text-sm">
-              <div className="flex justify-between items-center py-2 border-b border-slate-100">
+            <div className="p-4 sm:p-6 space-y-3.5 sm:space-y-4 text-xs sm:text-sm">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-slate-100">
                 <span className="text-slate-500">Program Terpilih</span>
-                <span className="font-bold text-slate-900">{invoice.title}</span>
+                <span className="font-bold text-slate-900 sm:text-right">{invoice.title}</span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-slate-100">
                 <span className="text-slate-500">Payment Gateway</span>
                 <span className="font-medium text-slate-800 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                   Midtrans Snap (Multi-Channel)
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 py-2 border-b border-slate-100">
                 <span className="text-slate-500">Waktu Kedaluwarsa</span>
                 <span className="font-medium text-slate-700 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-amber-500" /> 24 Jam sejak sesi dibuka
+                  <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" /> 24 Jam sejak sesi dibuka
                 </span>
               </div>
-              <div className="flex justify-between items-center pt-3 text-base">
+              <div className="flex justify-between items-center pt-3 text-sm sm:text-base">
                 <span className="font-bold text-slate-800">Total Tagihan (Nett)</span>
-                <span className="text-2xl font-black text-nac-primary">
+                <span className="text-xl sm:text-2xl font-black text-nac-primary font-mono">
                   Rp {amount.toLocaleString('id-ID')}
                 </span>
               </div>
@@ -539,6 +541,36 @@ export const PaymentPendingPage = () => {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Mobile Sticky Bottom Pay Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 pb-safe shadow-[0_-4px_20px_rgba(15,23,42,0.08)] flex items-center justify-between gap-3">
+        <div>
+          <span className="text-[10px] text-slate-400 block leading-none font-mono">
+            {invoiceNumber}
+          </span>
+          <span className="text-base font-black text-nac-primary font-mono">
+            Rp {amount.toLocaleString('id-ID')}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handlePayWithMidtrans}
+          disabled={paying}
+          className="btn-primary text-xs py-2.5 px-4 font-bold shadow-md shrink-0 disabled:opacity-60"
+        >
+          {paying ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Membuka...</span>
+            </>
+          ) : (
+            <>
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Bayar Sekarang</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

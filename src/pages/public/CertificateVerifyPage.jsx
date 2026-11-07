@@ -88,7 +88,7 @@ export const CertificateVerifyPage = () => {
       </div>
 
       {/* Search Bar */}
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2.5 sm:gap-2">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
           <input
@@ -102,7 +102,7 @@ export const CertificateVerifyPage = () => {
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary text-xs px-6 py-3 flex items-center justify-center gap-2 font-bold disabled:opacity-60"
+          className="btn-primary text-xs px-6 py-3 flex items-center justify-center gap-2 font-bold disabled:opacity-60 w-full sm:w-auto shrink-0"
         >
           {loading ? (
             <>
@@ -121,7 +121,7 @@ export const CertificateVerifyPage = () => {
           Memeriksa pangkalan data pendaftaran sertifikat...
         </div>
       ) : result?.isValid ? (
-        <div className="bg-white rounded-3xl border border-emerald-200 p-8 shadow-xl space-y-6 relative overflow-hidden">
+        <div className="bg-white rounded-3xl border border-emerald-200 p-5 sm:p-8 shadow-xl space-y-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
           <div className="flex items-center gap-3 pb-5 border-b border-slate-100">

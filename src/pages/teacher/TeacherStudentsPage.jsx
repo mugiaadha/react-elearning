@@ -202,80 +202,146 @@ export const TeacherStudentsPage = () => {
           <p className="text-xs">Memuat data mahasiswa dari backend...</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
-          <table className="w-full text-left text-xs min-w-[700px]">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider border-b border-slate-200 text-[11px]">
-              <tr>
-                <th className="py-3.5 px-4 font-bold">Nama Siswa</th>
-                <th className="py-3.5 px-4 font-bold">Program Brevet</th>
-                <th className="py-3.5 px-4 font-bold">Angkatan / Batch</th>
-                <th className="py-3.5 px-4 font-bold">Progres Modul</th>
-                <th className="py-3.5 px-4 font-bold">Aktivitas Terakhir</th>
-                <th className="py-3.5 px-4 font-bold">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredStudents.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-12 text-center text-slate-400 space-y-2">
-                    <Users className="w-8 h-8 text-slate-300 mx-auto mb-1" />
-                    <p className="text-sm font-semibold text-slate-600">Tidak ada mahasiswa yang cocok.</p>
-                    <p className="text-xs text-slate-400">Coba ubah kata kunci pencarian atau filter angkatan Anda.</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredStudents.map((s) => {
-                  const isGraduated = s.status?.toLowerCase().includes('lulus');
-                  const isPendingExam = s.status?.toLowerCase().includes('menjelang');
+        <>
+          {/* Mobile Card List View */}
+          <div className="md:hidden space-y-3.5">
+            {filteredStudents.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 space-y-2">
+                <Users className="w-8 h-8 text-slate-300 mx-auto mb-1" />
+                <p className="text-sm font-semibold text-slate-600">Tidak ada mahasiswa yang cocok.</p>
+                <p className="text-xs text-slate-400">Coba ubah kata kunci pencarian atau filter angkatan Anda.</p>
+              </div>
+            ) : (
+              filteredStudents.map((s) => {
+                const isGraduated = s.status?.toLowerCase().includes('lulus');
+                const isPendingExam = s.status?.toLowerCase().includes('menjelang');
 
-                  const statusClass = isGraduated
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                    : isPendingExam
-                    ? 'bg-amber-50 text-amber-800 border-amber-200'
-                    : 'bg-sky-50 text-sky-800 border-sky-200';
+                const statusClass = isGraduated
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : isPendingExam
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : 'bg-sky-50 text-sky-800 border-sky-200';
 
-                  return (
-                    <tr key={s.id} className="hover:bg-slate-50/80 transition">
-                      <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-900">{s.name}</div>
-                        <div className="text-[11px] text-slate-400 font-mono">{s.email}</div>
-                      </td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-700">
-                        {s.enrolled}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-amber-900 flex items-center gap-1">
+                return (
+                  <div
+                    key={s.id}
+                    className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-100">
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 text-sm truncate">{s.name}</div>
+                        <div className="text-[11px] text-slate-400 font-mono truncate">{s.email}</div>
+                      </div>
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${statusClass}`}>
+                        {s.status}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs">
+                      <div className="font-semibold text-slate-800">{s.enrolled}</div>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-semibold text-amber-900 flex items-center gap-1">
                           <Users className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>{s.batch_name || 'Batch 42 - Reguler'}</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 font-mono font-semibold">
-                          {s.batch_code || 'BAT-AB-42'}
+                          {s.batch_name || 'Batch 42 - Reguler'}
                         </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 bg-slate-100 h-2 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${isGraduated ? 'bg-emerald-500' : 'bg-teal-600'}`}
-                              style={{ width: s.progress }}
-                            ></div>
+                        <span className="font-mono text-slate-400">{s.batch_code || 'BAT-AB-42'}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${isGraduated ? 'bg-emerald-500' : 'bg-teal-600'}`}
+                            style={{ width: s.progress }}
+                          ></div>
+                        </div>
+                        <span className="font-bold text-slate-700 font-mono text-[11px] shrink-0">{s.progress}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 shrink-0">Aktif: {s.lastActive}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
+            <table className="w-full text-left text-xs min-w-[700px]">
+              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider border-b border-slate-200 text-[11px]">
+                <tr>
+                  <th className="py-3.5 px-4 font-bold">Nama Siswa</th>
+                  <th className="py-3.5 px-4 font-bold">Program Brevet</th>
+                  <th className="py-3.5 px-4 font-bold">Angkatan / Batch</th>
+                  <th className="py-3.5 px-4 font-bold">Progres Modul</th>
+                  <th className="py-3.5 px-4 font-bold">Aktivitas Terakhir</th>
+                  <th className="py-3.5 px-4 font-bold">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-12 text-center text-slate-400 space-y-2">
+                      <Users className="w-8 h-8 text-slate-300 mx-auto mb-1" />
+                      <p className="text-sm font-semibold text-slate-600">Tidak ada mahasiswa yang cocok.</p>
+                      <p className="text-xs text-slate-400">Coba ubah kata kunci pencarian atau filter angkatan Anda.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredStudents.map((s) => {
+                    const isGraduated = s.status?.toLowerCase().includes('lulus');
+                    const isPendingExam = s.status?.toLowerCase().includes('menjelang');
+
+                    const statusClass = isGraduated
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : isPendingExam
+                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                      : 'bg-sky-50 text-sky-800 border-sky-200';
+
+                    return (
+                      <tr key={s.id} className="hover:bg-slate-50/80 transition">
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold text-slate-900">{s.name}</div>
+                          <div className="text-[11px] text-slate-400 font-mono">{s.email}</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold text-slate-700">
+                          {s.enrolled}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-amber-900 flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span>{s.batch_name || 'Batch 42 - Reguler'}</span>
                           </div>
-                          <span className="font-bold text-slate-700 font-mono text-[11px]">{s.progress}</span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-500 font-medium">{s.lastActive}</td>
-                      <td className="py-3.5 px-4">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusClass}`}>
-                          {s.status}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                          <span className="text-[10px] text-slate-400 font-mono font-semibold">
+                            {s.batch_code || 'BAT-AB-42'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-slate-100 h-2 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${isGraduated ? 'bg-emerald-500' : 'bg-teal-600'}`}
+                                style={{ width: s.progress }}
+                              ></div>
+                            </div>
+                            <span className="font-bold text-slate-700 font-mono text-[11px]">{s.progress}</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-500 font-medium">{s.lastActive}</td>
+                        <td className="py-3.5 px-4">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusClass}`}>
+                            {s.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

@@ -127,7 +127,7 @@ export const BrevetDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 space-y-8">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
                 Silabus & Struktur Kurikulum Modul
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -142,15 +142,15 @@ export const BrevetDetailPage = () => {
                   <div key={mod.id} className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">
                     <button
                       onClick={() => setOpenModuleIndex(isOpen ? -1 : idx)}
-                      className="w-full p-5 text-left flex items-center justify-between gap-4 bg-slate-50/50 hover:bg-slate-50 transition"
+                      className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-3 sm:gap-4 bg-slate-50/50 hover:bg-slate-50 transition"
                     >
                       <div className="flex items-start gap-3">
                         <span className="w-7 h-7 rounded-lg bg-nac-primary/10 text-nac-primary font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                           {idx + 1}
                         </span>
                         <div>
-                          <h3 className="font-bold text-slate-900 text-sm">{mod.title}</h3>
-                          <p className="text-xs text-slate-500 mt-0.5">{mod.description}</p>
+                          <h3 className="font-bold text-slate-900 text-xs sm:text-sm">{mod.title}</h3>
+                          <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">{mod.description}</p>
                         </div>
                       </div>
                       <div className="shrink-0">
@@ -159,18 +159,18 @@ export const BrevetDetailPage = () => {
                     </button>
 
                     {isOpen && (
-                      <div className="p-5 border-t border-slate-100 space-y-2.5 bg-white">
+                      <div className="p-4 sm:p-5 border-t border-slate-100 space-y-2 bg-white">
                         {mod.lessons?.map((les) => (
-                          <div key={les.id} className="flex items-center justify-between text-xs py-2 px-3 rounded-xl bg-slate-50">
-                            <div className="flex items-center gap-2.5">
+                          <div key={les.id} className="flex items-center justify-between gap-2 text-xs py-2.5 px-3 rounded-xl bg-slate-50">
+                            <div className="flex items-center gap-2.5 min-w-0">
                               {les.type === 'video' ? (
-                                <PlayCircle className="w-4 h-4 text-nac-primary" />
+                                <PlayCircle className="w-4 h-4 text-nac-primary shrink-0" />
                               ) : (
-                                <FileText className="w-4 h-4 text-emerald-600" />
+                                <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
                               )}
-                              <span className="font-medium text-slate-800">{les.title}</span>
+                              <span className="font-medium text-slate-800 truncate">{les.title}</span>
                             </div>
-                            <span className="text-[11px] text-slate-400 font-mono">{les.duration}</span>
+                            <span className="text-[11px] text-slate-400 font-mono shrink-0">{les.duration}</span>
                           </div>
                         ))}
                       </div>
@@ -182,11 +182,11 @@ export const BrevetDetailPage = () => {
 
             {/* Instructor Box */}
             {brevet.instructor && (
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-6">
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-5 sm:gap-6">
                 <img
                   src={brevet.instructor.avatar}
                   alt={brevet.instructor.name}
-                  className="w-24 h-24 rounded-2xl object-cover border-2 border-slate-100 shadow"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-slate-100 shadow shrink-0"
                 />
                 <div className="space-y-1.5 text-center sm:text-left">
                   <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
@@ -201,6 +201,24 @@ export const BrevetDetailPage = () => {
           </div>
         </div>
       </section>
+
+      {/* Mobile Sticky Bottom Enrollment CTA */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 pb-safe shadow-[0_-4px_20px_rgba(15,23,42,0.08)] flex items-center justify-between gap-3">
+        <div>
+          <span className="text-[10px] text-slate-400 block line-through leading-none">
+            Rp {brevet.original_price?.toLocaleString('id-ID')}
+          </span>
+          <span className="text-base font-black text-nac-primary font-mono">
+            Rp {brevet.price?.toLocaleString('id-ID')}
+          </span>
+        </div>
+        <Link
+          to={`/register?brevet_id=${brevet.id}`}
+          className="btn-primary text-xs py-2.5 px-5 font-bold shadow-md shrink-0"
+        >
+          Daftar Sekarang &rarr;
+        </Link>
+      </div>
     </div>
   );
 };
