@@ -282,12 +282,12 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - **Frontend Image**: `ghcr.io/mugiaadha/react-elearning/frontend:latest` (multi-stage Nginx production container dengan konfigurasi SPA routing & reverse proxy di `nginx/default.conf`).
    - **Production Compose (`docker-compose.prod.yml`)**: Menggunakan directive `image: ghcr.io/...` tanpa directive `build:`, mencegah server VPS mengalami memory exhausted atau CPU timeout. Service `backend` dan `queue` memuat `env_file: ./backend/.env` dan mem-bind mount `./backend/.env:/var/www/html/.env` agar sinkron dengan konfigurasi host.
 
-2. **Daily CI/CD Workflow (`.github/workflows/ci.yml`) — Khusus Deploy Harian**:
+2. **Daily CI/CD Workflow (`.github/workflows/deploy.yml`) — Khusus Deploy Harian**:
    - **Peran**: Khusus untuk integrasi dan deploy harian saat ada perubahan kode (`push` ke `main`). Tidak mencampuradukkan urusan provisioning VPS dari nol atau setup SSL.
    - **GitHub Actions Secrets Sync**: Menginjeksi `GOOGLE_CLIENT_ID` dan `MIDTRANS_CLIENT_KEY` saat build Vite frontend, serta menyinkronkan ke `backend/.env` di VPS (`APP_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`).
    - **Tahapan**: `[frontend, backend]` (lint, build, PHPUnit) -> `docker` (build & push image ke GHCR dengan layer cache) -> `deploy` (SSH ke VPS, `git reset --hard origin/main`, sync secrets ke `.env`, `docker compose pull`, `docker compose up -d`, tunggu readiness container backend, `php artisan migrate --force`, dan refresh cache Laravel).
 
-3. **First-Time VPS Provisioning Workflow (`.github/workflows/first-time-vps-setup.yml`) — Khusus Setup VPS dari Nol**:
+3. **First-Time VPS Provisioning Workflow (`.github/workflows/vps-setup.yml`) — Khusus Setup VPS dari Nol**:
    - **Peran**: Khusus dijalankan manual (`workflow_dispatch`) saat menyiapkan VPS baru dari nol atau mengganti domain/SSL.
    - **Tahapan**: Mengaktifkan Swap Memory 2GB otomatis (mencegah OOM Killer `exit 137`), menginstal Docker Engine & Compose plugin, git, curl, clone repo ke target directory, inisialisasi `.env` & `backend/.env` sesuai `APP_DOMAIN` beserta seluruh GitHub Actions Secrets, pull GHCR images, penerbitan SSL Let's Encrypt resmi murni via [scripts/setup-ssl.sh](file:///c:/workspace/belajar-react/elearning-react/scripts/setup-ssl.sh), menunggu [docker-entrypoint.sh](file:///c:/workspace/belajar-react/elearning-react/backend/docker-entrypoint.sh) menyelesaikan migrasi & seeding tunggal di container `backend` (dieksklusifkan dari `queue` worker agar tidak race condition), lalu membuat cache Laravel.
 
@@ -297,7 +297,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 
 1. **Centralized Domain Resolution (3-Tier Priority)**:
    - **Sumber Tunggal (`APP_DOMAIN`)**:
-     1. Manual Override: `inputs.domain` pada `workflow_dispatch` ([ci.yml](file:///c:/workspace/belajar-react/elearning-react/.github/workflows/ci.yml) & [first-time-vps-setup.yml](file:///c:/workspace/belajar-react/elearning-react/.github/workflows/first-time-vps-setup.yml)).
+     1. Manual Override: `inputs.domain` pada `workflow_dispatch` ([deploy.yml](file:///c:/workspace/belajar-react/elearning-react/.github/workflows/deploy.yml) & [vps-setup.yml](file:///c:/workspace/belajar-react/elearning-react/.github/workflows/vps-setup.yml)).
      2. GitHub Repository Variable: `vars.APP_DOMAIN` (Settings -> Secrets and variables -> Actions -> Variables).
      3. Default Fallback: `nac.socket-clenicapp.my.id`.
    - **Auto-Propagation ke Seluruh Stack**:
