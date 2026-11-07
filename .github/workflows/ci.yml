@@ -226,7 +226,7 @@ jobs:
 
             # 3. Pastikan direktori storage & certbot di host siap (restore dari /var/backups jika ada)
             BACKUP_SSL_DIR="/var/backups/letsencrypt"
-            mkdir -p backend/storage/app/public "certbot/conf/live/${TARGET_DOMAIN}" certbot/www
+            mkdir -p backend/storage/app/public "certbot/conf/live/${TARGET_DOMAIN}" certbot/ssl certbot/www
             chmod -R 777 backend/storage 2>/dev/null || true
             if [ ! -f "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" ] && [ -f "$BACKUP_SSL_DIR/live/${TARGET_DOMAIN}/fullchain.pem" ]; then
               cp -a "$BACKUP_SSL_DIR/." certbot/conf/ 2>/dev/null || true
@@ -237,6 +237,8 @@ jobs:
                 -out "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" \
                 -subj "/CN=${TARGET_DOMAIN}" 2>/dev/null || true
             fi
+            cp -L "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" certbot/ssl/fullchain.pem
+            cp -L "certbot/conf/live/${TARGET_DOMAIN}/privkey.pem" certbot/ssl/privkey.pem
 
             # 4. Login ke GitHub Container Registry di VPS jika image bersifat privat
             if [ -n "$GHCR_TOKEN" ]; then

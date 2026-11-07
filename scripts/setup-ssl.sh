@@ -138,10 +138,13 @@ if [ "$NEED_ISSUE" = true ]; then
   fi
 fi
 
-# 5. Simpan salinan sertifikat ke backup persisten (/var/backups/letsencrypt-elearning & /etc/letsencrypt)
-#    agar jika folder /var/www/elearning dihapus, sertifikat tidak hilang dan tidak kena rate limit lagi!
+# 5. Simpan salinan sertifikat ke backup persisten (/var/backups/letsencrypt & /etc/letsencrypt)
+#    dan dereference symlink ke ./certbot/ssl agar Nginx container selalu punya file riil!
 if [ -f "./certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
-  echo "[4/5] Menyimpan backup sertifikat ke $BACKUP_SSL_DIR agar aman saat reset folder project..."
+  echo "[4/5] Menyimpan backup sertifikat & menyiapkan aktif SSL di ./certbot/ssl..."
+  mkdir -p "./certbot/ssl"
+  cp -L "./certbot/conf/live/$DOMAIN/fullchain.pem" "./certbot/ssl/fullchain.pem"
+  cp -L "./certbot/conf/live/$DOMAIN/privkey.pem" "./certbot/ssl/privkey.pem"
   mkdir -p "$BACKUP_SSL_DIR" 2>/dev/null || true
   cp -a ./certbot/conf/. "$BACKUP_SSL_DIR/" 2>/dev/null || true
   mkdir -p /etc/letsencrypt 2>/dev/null || true

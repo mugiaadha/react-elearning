@@ -303,7 +303,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
      3. Default Fallback: `nac.socket-clenicapp.my.id`.
    - **Auto-Propagation ke Seluruh Stack**:
      - Saat CI/CD berjalan, `APP_DOMAIN` otomatis disuntikkan ke build Vite (`VITE_API_BASE_URL`), `.env` root (`APP_DOMAIN`), `backend/.env` (`APP_URL`, `FRONTEND_URL`, `GOOGLE_REDIRECT_URI`, `MAIL_FROM_ADDRESS`), dan [docker-compose.prod.yml](file:///c:/workspace/belajar-react/elearning-react/docker-compose.prod.yml) (menggunakan `${APP_DOMAIN}` murni).
-     - [nginx/default.conf](file:///c:/workspace/belajar-react/elearning-react/nginx/default.conf) bersifat **100% domain-agnostic** (`server_name _;`, membaca sertifikat dari `/etc/nginx/ssl/fullchain.pem` & `privkey.pem` yang di-mount dinamis dari `./certbot/conf/live/${APP_DOMAIN}:/etc/nginx/ssl:ro`).
+     - [nginx/default.conf](file:///c:/workspace/belajar-react/elearning-react/nginx/default.conf) bersifat **100% domain-agnostic** (`server_name _;`, membaca sertifikat dari `/etc/nginx/ssl/fullchain.pem` & `privkey.pem` yang di-mount dari `./certbot/ssl:/etc/nginx/ssl:ro` berisi hasil `cp -L` dereference sertifikat aktif agar tidak gagal akibat relative symlink Certbot `../../archive/`).
 
 2. **Pure Docker SSL Architecture**:
    - Host VPS **tidak memerlukan** instalasi Nginx maupun Certbot di level OS host.
