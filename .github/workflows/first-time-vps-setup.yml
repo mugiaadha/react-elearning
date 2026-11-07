@@ -73,7 +73,7 @@ jobs:
             VITE_API_BASE_URL=https://${{ env.APP_DOMAIN }}/api
             VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
             VITE_MIDTRANS_CLIENT_KEY=${{ secrets.MIDTRANS_CLIENT_KEY }}
-            VITE_DEV_MODE=false
+            VITE_DEV_MODE=true
           push: true
           tags: |
             ${{ env.IMAGE_FRONTEND }}:latest
