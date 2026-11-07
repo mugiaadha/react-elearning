@@ -9,7 +9,7 @@
     "dev:be": "cd backend && php artisan serve",
     "dev:queue": "cd backend && php artisan queue:listen --tries=2 --backoff=1800",
     "build": "vite build",
-    "lint": "oxlint",
+    "lint": "oxlint --quiet",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,28 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { X, User, Phone, Lock, CheckCircle2, Shield, Mail, Loader2 } from 'lucide-react';
+import { X, User, Phone, Lock, CheckCircle2, Loader2 } from 'lucide-react';
 
 export const ProfileSettingsModal = ({ isOpen, onClose }) => {
   const { user, updateProfile } = useAuth();
   const { showToast } = useToast();
 
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [name, setName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [prevOpenKey, setPrevOpenKey] = useState(null);
 
-  useEffect(() => {
-    if (user) {
+  const currentOpenKey = isOpen && user ? `${user.id}-${user.name}-${user.phone}` : null;
+  if (currentOpenKey !== prevOpenKey) {
+    setPrevOpenKey(currentOpenKey);
+    if (isOpen && user) {
       setName(user.name || '');
       setPhone(user.phone || '');
       setPassword('');
       setPasswordConfirm('');
       setError('');
     }
-  }, [user, isOpen]);
+  }
 
   if (!isOpen || !user) return null;
 

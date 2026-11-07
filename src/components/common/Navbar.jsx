@@ -4,19 +4,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import ProfileSettingsModal from './ProfileSettingsModal';
 import {
-  FileText,
-  Shield,
-  BookOpen,
   Menu,
   X,
   ArrowRight,
-  User,
-  GraduationCap,
   LayoutDashboard,
   LogOut,
   ChevronDown,
   Settings,
-  Sparkles,
   CreditCard
 } from 'lucide-react';
 
@@ -55,7 +49,7 @@ export const Navbar = () => {
       await logout();
       showToast('Anda telah berhasil keluar dari sistem.', 'info');
       navigate('/login');
-    } catch (err) {
+    } catch {
       navigate('/login');
     }
   };

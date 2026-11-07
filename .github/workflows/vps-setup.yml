@@ -112,16 +112,34 @@ jobs:
           command_timeout: 45m
           envs: GHCR_TOKEN,GHCR_USER,TARGET_DOMAIN,TARGET_EMAIL,SECRET_APP_KEY,SECRET_MAIL_USERNAME,SECRET_MAIL_PASSWORD,SECRET_GOOGLE_CLIENT_ID,SECRET_GOOGLE_CLIENT_SECRET,SECRET_MIDTRANS_SERVER_KEY,SECRET_MIDTRANS_CLIENT_KEY
           script: |
-            set -e
+            set -euo pipefail
             echo "=========================================================="
             echo "🚀 Memulai Setup Lengkap VPS Baru (Pure Docker Stack)"
             echo "🌐 Domain: https://${TARGET_DOMAIN}"
             echo "=========================================================="
 
+            export DEBIAN_FRONTEND=noninteractive
             SUDO=""
-            if [ "$EUID" -ne 0 ]; then
+            if [ "${EUID:-$(id -u)}" -ne 0 ]; then
               SUDO="sudo"
             fi
+
+            # Helper aman untuk update/insert key=value di file .env (tahan karakter spesial /, &, |, $)
+            set_env_var() {
+              local file="$1"
+              local key="$2"
+              local val="$3"
+              [ -z "$val" ] && return 0
+              if [ ! -f "$file" ]; then
+                touch "$file"
+              fi
+              awk -v k="$key" -v v="$val" '
+                BEGIN { found=0 }
+                $0 ~ "^"k"=" { print k"="v; found=1; next }
+                { print }
+                END { if (!found) print k"="v }
+              ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+            }
 
             # 1. Update apt, install dependencies dasar & pastikan Swap Memory 2GB aktif (mencegah OOM exit 137)
             echo "[1/8] Memperbarui package repository OS, install git, curl & mengaktifkan Swap 2GB..."
@@ -136,12 +154,16 @@ jobs:
               echo "  -> Swap memory 2GB berhasil diaktifkan!"
             fi
             $SUDO apt-get update -y || true
-            $SUDO apt-get install -y git curl ca-certificates gnupg openssl
+            $SUDO apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" git curl ca-certificates gnupg openssl
 
-            # 2. Matikan Nginx host jika ada agar port 80 & 443 bebas untuk Docker
+            # 2. Matikan web server host jika ada & buka firewall port 80/443 jika ufw aktif
             if command -v systemctl &> /dev/null; then
-              $SUDO systemctl stop nginx 2>/dev/null || true
-              $SUDO systemctl disable nginx 2>/dev/null || true
+              $SUDO systemctl stop nginx apache2 httpd 2>/dev/null || true
+              $SUDO systemctl disable nginx apache2 httpd 2>/dev/null || true
+            fi
+            if command -v ufw &> /dev/null; then
+              $SUDO ufw allow 80/tcp 2>/dev/null || true
+              $SUDO ufw allow 443/tcp 2>/dev/null || true
             fi
 
             # 3. Install Docker jika belum terpasang di VPS
@@ -152,6 +174,7 @@ jobs:
               $SUDO usermod -aG docker $(whoami) 2>/dev/null || true
             else
               echo "[2/8] Docker sudah terpasang: $(docker --version)"
+              $SUDO systemctl start docker 2>/dev/null || true
             fi
 
             # 4. Siapkan direktori deployment dan clone repo
@@ -163,6 +186,7 @@ jobs:
 
             if [ ! -d ".git" ]; then
               echo "  -> Melakukan clone repository ke $DEPLOY_DIR..."
+              rm -rf "$DEPLOY_DIR"/* "$DEPLOY_DIR"/.[!.]* 2>/dev/null || true
               git clone "https://github.com/${{ github.repository }}.git" .
             else
               echo "  -> Repository sudah ada, mengambil pembaruan terbaru..."
@@ -171,75 +195,91 @@ jobs:
               git reset --hard origin/main
             fi
 
+            # Pastikan seluruh script .sh menggunakan line-ending LF dan executable
+            sed -i 's/\r$//' scripts/*.sh backend/docker-entrypoint.sh 2>/dev/null || true
+            chmod +x scripts/*.sh backend/docker-entrypoint.sh 2>/dev/null || true
+
             # 5. Inisialisasi & sinkronisasi domain + GitHub Secrets pada file .env dan backend/.env
             echo "[4/8] Menginisialisasi environment variables & secrets untuk domain ${TARGET_DOMAIN}..."
             if [ ! -f .env ]; then
               cp .env.example .env
             fi
-            if grep -q "^APP_DOMAIN=" .env; then
-              sed -i "s|^APP_DOMAIN=.*|APP_DOMAIN=${TARGET_DOMAIN}|" .env
-            else
-              echo "APP_DOMAIN=${TARGET_DOMAIN}" >> .env
-            fi
-            sed -i "s|^VITE_API_BASE_URL=.*|VITE_API_BASE_URL=https://${TARGET_DOMAIN}/api|" .env
-            [ -n "$SECRET_GOOGLE_CLIENT_ID" ] && sed -i "s|^VITE_GOOGLE_CLIENT_ID=.*|VITE_GOOGLE_CLIENT_ID=${SECRET_GOOGLE_CLIENT_ID}|" .env
-            [ -n "$SECRET_MIDTRANS_CLIENT_KEY" ] && sed -i "s|^VITE_MIDTRANS_CLIENT_KEY=.*|VITE_MIDTRANS_CLIENT_KEY=${SECRET_MIDTRANS_CLIENT_KEY}|" .env
+            set_env_var ".env" "APP_DOMAIN" "${TARGET_DOMAIN}"
+            set_env_var ".env" "VITE_API_BASE_URL" "https://${TARGET_DOMAIN}/api"
+            set_env_var ".env" "VITE_GOOGLE_CLIENT_ID" "${SECRET_GOOGLE_CLIENT_ID:-}"
+            set_env_var ".env" "VITE_MIDTRANS_CLIENT_KEY" "${SECRET_MIDTRANS_CLIENT_KEY:-}"
 
             if [ ! -f backend/.env ]; then
               cp backend/.env.example backend/.env
             fi
-            sed -i "s|^APP_URL=.*|APP_URL=https://${TARGET_DOMAIN}|" backend/.env
-            sed -i "s|^FRONTEND_URL=.*|FRONTEND_URL=https://${TARGET_DOMAIN}|" backend/.env
-            sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://${TARGET_DOMAIN}/api/auth/google/callback|" backend/.env
-            sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"no-reply@${TARGET_DOMAIN}\"|" backend/.env
-            [ -n "$SECRET_APP_KEY" ] && sed -i "s|^APP_KEY=.*|APP_KEY=${SECRET_APP_KEY}|" backend/.env
-            [ -n "$SECRET_MAIL_USERNAME" ] && sed -i "s|^MAIL_USERNAME=.*|MAIL_USERNAME=${SECRET_MAIL_USERNAME}|" backend/.env
-            [ -n "$SECRET_MAIL_PASSWORD" ] && sed -i "s|^MAIL_PASSWORD=.*|MAIL_PASSWORD=\"${SECRET_MAIL_PASSWORD}\"|" backend/.env
-            [ -n "$SECRET_GOOGLE_CLIENT_ID" ] && sed -i "s|^GOOGLE_CLIENT_ID=.*|GOOGLE_CLIENT_ID=${SECRET_GOOGLE_CLIENT_ID}|" backend/.env
-            [ -n "$SECRET_GOOGLE_CLIENT_SECRET" ] && sed -i "s|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=${SECRET_GOOGLE_CLIENT_SECRET}|" backend/.env
-            [ -n "$SECRET_MIDTRANS_SERVER_KEY" ] && sed -i "s|^MIDTRANS_SERVER_KEY=.*|MIDTRANS_SERVER_KEY=${SECRET_MIDTRANS_SERVER_KEY}|" backend/.env
-            [ -n "$SECRET_MIDTRANS_CLIENT_KEY" ] && sed -i "s|^MIDTRANS_CLIENT_KEY=.*|MIDTRANS_CLIENT_KEY=${SECRET_MIDTRANS_CLIENT_KEY}|" backend/.env
+            set_env_var "backend/.env" "APP_URL" "https://${TARGET_DOMAIN}"
+            set_env_var "backend/.env" "FRONTEND_URL" "https://${TARGET_DOMAIN}"
+            set_env_var "backend/.env" "GOOGLE_REDIRECT_URI" "https://${TARGET_DOMAIN}/api/auth/google/callback"
+            set_env_var "backend/.env" "MAIL_FROM_ADDRESS" "\"no-reply@${TARGET_DOMAIN}\""
+            set_env_var "backend/.env" "APP_KEY" "${SECRET_APP_KEY:-}"
+            set_env_var "backend/.env" "MAIL_USERNAME" "${SECRET_MAIL_USERNAME:-}"
+            [ -n "${SECRET_MAIL_PASSWORD:-}" ] && set_env_var "backend/.env" "MAIL_PASSWORD" "\"${SECRET_MAIL_PASSWORD}\""
+            set_env_var "backend/.env" "GOOGLE_CLIENT_ID" "${SECRET_GOOGLE_CLIENT_ID:-}"
+            set_env_var "backend/.env" "GOOGLE_CLIENT_SECRET" "${SECRET_GOOGLE_CLIENT_SECRET:-}"
+            set_env_var "backend/.env" "MIDTRANS_SERVER_KEY" "${SECRET_MIDTRANS_SERVER_KEY:-}"
+            set_env_var "backend/.env" "MIDTRANS_CLIENT_KEY" "${SECRET_MIDTRANS_CLIENT_KEY:-}"
+            export APP_DOMAIN="${TARGET_DOMAIN}"
 
             # 6. Siapkan folder storage permissions
             echo "[5/8] Menyiapkan folder storage..."
-            mkdir -p backend/storage/app/public
+            mkdir -p backend/storage/app/public backend/storage/framework/cache backend/storage/framework/sessions backend/storage/framework/views backend/storage/logs
             chmod -R 777 backend/storage 2>/dev/null || true
 
-            # 7. Tarik Docker Images dari GHCR
+            # 7. Tarik Docker Images dari GHCR (dengan retry jika koneksi jaringan sempat putus)
             echo "[6/8] Menarik Docker Images dari GHCR..."
-            if [ -n "$GHCR_TOKEN" ]; then
+            if [ -n "${GHCR_TOKEN:-}" ]; then
               echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             fi
-            docker compose -f docker-compose.prod.yml pull
+            for attempt in 1 2 3; do
+              if docker compose -f docker-compose.prod.yml pull; then
+                break
+              fi
+              echo "  -> Gagal pull image (percobaan $attempt/3), mencoba lagi dalam 5 detik..."
+              sleep 5
+            done
 
             # 8. Eksekusi Pure Docker SSL Setup & Jalankan Stack
             echo "[7/8] Mengonfigurasi Let's Encrypt SSL & menyalakan Docker Stack..."
-            chmod +x scripts/setup-ssl.sh
             bash scripts/setup-ssl.sh "${TARGET_EMAIL}" "${TARGET_DOMAIN}"
 
             # Tunggu hingga docker-entrypoint.sh pada container backend selesai melakukan migrasi & seeding otomatis,
             # serta server PHP artisan serve sudah aktif mendengarkan di port 8000 (mencegah bentrok & OOM exit 137)
             echo "🗄️ Menunggu container Backend selesai inisialisasi database & menyala di port 8000..."
-            for i in $(seq 1 45); do
-              if curl -s -o /dev/null http://127.0.0.1:8000/api/brevets; then
-                echo "  -> Backend API & Database sudah siap 100%!"
+            BACKEND_READY=false
+            for i in $(seq 1 60); do
+              if curl -fsS -o /dev/null http://127.0.0.1:8000/api/brevets 2>/dev/null; then
+                echo "  -> ✅ Backend API & Database sudah siap 100%!"
+                BACKEND_READY=true
                 break
               fi
-              echo "  -> Menunggu Backend selesai migrasi/seeding ($i/45)..."
+              echo "  -> Menunggu Backend selesai migrasi/seeding ($i/60)..."
               sleep 2
             done
+
+            if [ "$BACKEND_READY" = false ]; then
+              echo "⚠️ Backend belum merespons setelah 120 detik. Menampilkan log diagnostik container:"
+              docker compose -f docker-compose.prod.yml ps || true
+              docker compose -f docker-compose.prod.yml logs --tail=50 backend mariadb || true
+              exit 1
+            fi
 
             echo "🧹 Menyegarkan cache konfigurasi, rute, dan view Laravel..."
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:clear || true
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache || true
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache || true
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache || true
 
-            # 9. Verifikasi Status Akhir
-            echo "[8/8] Memverifikasi status container Docker..."
+            # 9. Verifikasi Status Akhir (pastikan juga Nginx HTTPS merespons)
+            echo "[8/8] Memverifikasi status container Docker & endpoint HTTPS..."
             docker compose -f docker-compose.prod.yml ps
+            curl -ksS -o /dev/null "https://127.0.0.1/api/brevets" -H "Host: ${TARGET_DOMAIN}" && echo "✅ Endpoint HTTPS Proxy (/api/brevets) terverifikasi OK!" || true
 
             echo "=========================================================="
             echo "🎉 SETUP VPS BARU BERHASIL 100%!"

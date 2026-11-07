@@ -184,6 +184,7 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ secrets.GHCR_USER || github.actor }}
+          TARGET_DOMAIN: ${{ env.APP_DOMAIN }}
           SECRET_APP_KEY: ${{ secrets.APP_KEY }}
           SECRET_MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
           SECRET_MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
@@ -197,65 +198,119 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
           command_timeout: 30m
-          envs: GHCR_TOKEN,GHCR_USER,SECRET_APP_KEY,SECRET_MAIL_USERNAME,SECRET_MAIL_PASSWORD,SECRET_GOOGLE_CLIENT_ID,SECRET_GOOGLE_CLIENT_SECRET,SECRET_MIDTRANS_SERVER_KEY,SECRET_MIDTRANS_CLIENT_KEY
+          envs: GHCR_TOKEN,GHCR_USER,TARGET_DOMAIN,SECRET_APP_KEY,SECRET_MAIL_USERNAME,SECRET_MAIL_PASSWORD,SECRET_GOOGLE_CLIENT_ID,SECRET_GOOGLE_CLIENT_SECRET,SECRET_MIDTRANS_SERVER_KEY,SECRET_MIDTRANS_CLIENT_KEY
           script: |
-            set -e
+            set -euo pipefail
             echo "🚀 Starting Daily Deployment on $(hostname)..."
             cd ${{ secrets.DEPLOY_PATH || '/var/www/elearning' }}
-            
+
+            # Helper aman untuk update/insert key=value di file .env (tahan karakter spesial /, &, |, $)
+            set_env_var() {
+              local file="$1"
+              local key="$2"
+              local val="$3"
+              [ -z "$val" ] && return 0
+              if [ ! -f "$file" ]; then
+                touch "$file"
+              fi
+              awk -v k="$key" -v v="$val" '
+                BEGIN { found=0 }
+                $0 ~ "^"k"=" { print k"="v; found=1; next }
+                { print }
+                END { if (!found) print k"="v }
+              ' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+            }
+
             # 1. Tarik kode dan file konfigurasi terbaru dari git
             echo "📥 Fetching latest repository updates..."
             git fetch --all
             git checkout -f main
             git reset --hard origin/main
-            
-            # 2. Sinkronisasi kredensial dari GitHub Actions Secrets ke .env dan backend/.env
+            sed -i 's/\r$//' scripts/*.sh backend/docker-entrypoint.sh 2>/dev/null || true
+            chmod +x scripts/*.sh backend/docker-entrypoint.sh 2>/dev/null || true
+
+            # 2. Pastikan .env & backend/.env ada dan sinkron dengan GitHub Actions Secrets
             echo "🔐 Syncing secrets from GitHub Actions into .env..."
-            if [ -f .env ]; then
-              [ -n "$SECRET_GOOGLE_CLIENT_ID" ] && sed -i "s|^VITE_GOOGLE_CLIENT_ID=.*|VITE_GOOGLE_CLIENT_ID=${SECRET_GOOGLE_CLIENT_ID}|" .env
-              [ -n "$SECRET_MIDTRANS_CLIENT_KEY" ] && sed -i "s|^VITE_MIDTRANS_CLIENT_KEY=.*|VITE_MIDTRANS_CLIENT_KEY=${SECRET_MIDTRANS_CLIENT_KEY}|" .env
+            [ ! -f .env ] && [ -f .env.example ] && cp .env.example .env
+            [ ! -f backend/.env ] && [ -f backend/.env.example ] && cp backend/.env.example backend/.env
+
+            set_env_var ".env" "APP_DOMAIN" "${TARGET_DOMAIN}"
+            set_env_var ".env" "VITE_API_BASE_URL" "https://${TARGET_DOMAIN}/api"
+            set_env_var ".env" "VITE_GOOGLE_CLIENT_ID" "${SECRET_GOOGLE_CLIENT_ID:-}"
+            set_env_var ".env" "VITE_MIDTRANS_CLIENT_KEY" "${SECRET_MIDTRANS_CLIENT_KEY:-}"
+
+            set_env_var "backend/.env" "APP_URL" "https://${TARGET_DOMAIN}"
+            set_env_var "backend/.env" "FRONTEND_URL" "https://${TARGET_DOMAIN}"
+            set_env_var "backend/.env" "GOOGLE_REDIRECT_URI" "https://${TARGET_DOMAIN}/api/auth/google/callback"
+            set_env_var "backend/.env" "MAIL_FROM_ADDRESS" "\"no-reply@${TARGET_DOMAIN}\""
+            set_env_var "backend/.env" "APP_KEY" "${SECRET_APP_KEY:-}"
+            set_env_var "backend/.env" "MAIL_USERNAME" "${SECRET_MAIL_USERNAME:-}"
+            [ -n "${SECRET_MAIL_PASSWORD:-}" ] && set_env_var "backend/.env" "MAIL_PASSWORD" "\"${SECRET_MAIL_PASSWORD}\""
+            set_env_var "backend/.env" "GOOGLE_CLIENT_ID" "${SECRET_GOOGLE_CLIENT_ID:-}"
+            set_env_var "backend/.env" "GOOGLE_CLIENT_SECRET" "${SECRET_GOOGLE_CLIENT_SECRET:-}"
+            set_env_var "backend/.env" "MIDTRANS_SERVER_KEY" "${SECRET_MIDTRANS_SERVER_KEY:-}"
+            set_env_var "backend/.env" "MIDTRANS_CLIENT_KEY" "${SECRET_MIDTRANS_CLIENT_KEY:-}"
+            export APP_DOMAIN="${TARGET_DOMAIN}"
+
+            # 3. Pastikan ./certbot/ssl memiliki file sertifikat agar container frontend (Nginx) tidak pernah crash saat restart
+            mkdir -p certbot/ssl certbot/conf certbot/www backend/storage/app/public
+            chmod -R 777 backend/storage 2>/dev/null || true
+            if [ -f "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" ]; then
+              cp -fL "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" certbot/ssl/fullchain.pem
+              cp -fL "certbot/conf/live/${TARGET_DOMAIN}/privkey.pem" certbot/ssl/privkey.pem
+            elif [ ! -s "certbot/ssl/fullchain.pem" ] || [ ! -s "certbot/ssl/privkey.pem" ]; then
+              openssl req -x509 -nodes -newkey rsa:2048 -days 90 \
+                -keyout certbot/ssl/privkey.pem \
+                -out certbot/ssl/fullchain.pem \
+                -subj "/CN=${TARGET_DOMAIN}" 2>/dev/null || true
             fi
-            if [ -f backend/.env ]; then
-              [ -n "$SECRET_APP_KEY" ] && sed -i "s|^APP_KEY=.*|APP_KEY=${SECRET_APP_KEY}|" backend/.env
-              [ -n "$SECRET_MAIL_USERNAME" ] && sed -i "s|^MAIL_USERNAME=.*|MAIL_USERNAME=${SECRET_MAIL_USERNAME}|" backend/.env
-              [ -n "$SECRET_MAIL_PASSWORD" ] && sed -i "s|^MAIL_PASSWORD=.*|MAIL_PASSWORD=\"${SECRET_MAIL_PASSWORD}\"|" backend/.env
-              [ -n "$SECRET_GOOGLE_CLIENT_ID" ] && sed -i "s|^GOOGLE_CLIENT_ID=.*|GOOGLE_CLIENT_ID=${SECRET_GOOGLE_CLIENT_ID}|" backend/.env
-              [ -n "$SECRET_GOOGLE_CLIENT_SECRET" ] && sed -i "s|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=${SECRET_GOOGLE_CLIENT_SECRET}|" backend/.env
-              [ -n "$SECRET_MIDTRANS_SERVER_KEY" ] && sed -i "s|^MIDTRANS_SERVER_KEY=.*|MIDTRANS_SERVER_KEY=${SECRET_MIDTRANS_SERVER_KEY}|" backend/.env
-              [ -n "$SECRET_MIDTRANS_CLIENT_KEY" ] && sed -i "s|^MIDTRANS_CLIENT_KEY=.*|MIDTRANS_CLIENT_KEY=${SECRET_MIDTRANS_CLIENT_KEY}|" backend/.env
-            fi
-            
-            # 3. Login ke GitHub Container Registry di VPS
-            if [ -n "$GHCR_TOKEN" ]; then
+
+            # 4. Login ke GitHub Container Registry di VPS
+            if [ -n "${GHCR_TOKEN:-}" ]; then
               echo "🔑 Logging in to GitHub Container Registry..."
               echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             fi
-            
-            # 4. Tarik pre-built image terbaru dari GHCR
+
+            # 5. Tarik pre-built image terbaru dari GHCR (dengan retry resilience)
             echo "🐳 Pulling pre-built images from GHCR..."
-            docker compose -f docker-compose.prod.yml pull
-            
-            # 5. Jalankan/update container stack dengan image baru
+            for attempt in 1 2 3; do
+              if docker compose -f docker-compose.prod.yml pull; then
+                break
+              fi
+              echo "  -> Pull image gagal (percobaan $attempt/3), mencoba ulang dalam 5 detik..."
+              sleep 5
+            done
+
+            # 6. Jalankan/update container stack dengan image baru
             echo "🚀 Updating running containers..."
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            
-            # 6. Tunggu container backend selesai menjalankan entrypoint & aktif di port 8000 (mencegah bentrok exec)
+
+            # 7. Tunggu container backend selesai menjalankan entrypoint & aktif di port 8000 (mencegah bentrok exec)
             echo "⏳ Waiting for backend server to be ready on port 8000..."
-            for i in $(seq 1 30); do
-              if curl -s -o /dev/null http://127.0.0.1:8000/api/brevets; then
+            BACKEND_READY=false
+            for i in $(seq 1 45); do
+              if curl -fsS -o /dev/null http://127.0.0.1:8000/api/brevets 2>/dev/null; then
+                BACKEND_READY=true
                 break
               fi
               sleep 2
             done
 
-            # 7. Jalankan migrasi database baru (jika ada) & refresh cache Laravel
-            echo "🗄️ Running database migrations & refreshing Laravel caches..."
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
+            if [ "$BACKEND_READY" = false ]; then
+              echo "⚠️ Backend belum merespons setelah 90 detik. Menampilkan log diagnostik container:"
+              docker compose -f docker-compose.prod.yml ps || true
+              docker compose -f docker-compose.prod.yml logs --tail=50 backend mariadb || true
+              exit 1
+            fi
+
+            # 8. Refresh cache Laravel & bersihkan image Docker usang agar disk VPS tidak penuh
+            echo "🧹 Refreshing Laravel caches & pruning dangling Docker images..."
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:clear || true
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache
-            
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan config:cache || true
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache || true
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache || true
+            docker image prune -f >/dev/null 2>&1 || true
+
             echo "✅ Daily deployment successful!"

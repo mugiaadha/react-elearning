@@ -40,7 +40,7 @@ export const BackofficeTopbar = ({ title = 'Panel Kontrol Admin', onToggleMobile
       await logout();
       showToast('Anda telah keluar dari backoffice admin.', 'info');
       navigate('/login');
-    } catch (err) {
+    } catch {
       navigate('/login');
     }
   };
