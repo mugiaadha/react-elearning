@@ -294,17 +294,26 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 
 ---
 
-## 8. Domain & SSL/TLS Architecture (`elearning.socket-clenicapp.my.id` - Pure Docker Stack)
+## 8. Centralized Domain & SSL/TLS Architecture (`APP_DOMAIN` - Pure Docker Stack)
 
-1. **Pure Docker SSL Architecture**:
+1. **Centralized Domain Resolution (3-Tier Priority)**:
+   - **Sumber Tunggal (`APP_DOMAIN`)**:
+     1. Manual Override: `inputs.domain` pada `workflow_dispatch` ([ci.yml](file:///c:/workspace/belajar-react/elearning-react/.github/workflows/ci.yml) & [first-time-vps-setup.yml](file:///c:/workspace/belajar-react/elearning-react/.github/workflows/first-time-vps-setup.yml)).
+     2. GitHub Repository Variable: `vars.APP_DOMAIN` (Settings -> Secrets and variables -> Actions -> Variables).
+     3. Default Fallback: `elearning.socket-clenicapp.my.id`.
+   - **Auto-Propagation ke Seluruh Stack**:
+     - Saat CI/CD berjalan, `APP_DOMAIN` otomatis disuntikkan ke build Vite (`VITE_API_BASE_URL`), `.env` root (`APP_DOMAIN`), `backend/.env` (`APP_URL`, `FRONTEND_URL`, `GOOGLE_REDIRECT_URI`, `MAIL_FROM_ADDRESS`), dan [docker-compose.prod.yml](file:///c:/workspace/belajar-react/elearning-react/docker-compose.prod.yml).
+     - [nginx/default.conf](file:///c:/workspace/belajar-react/elearning-react/nginx/default.conf) bersifat **100% domain-agnostic** (`server_name _;`, membaca sertifikat dari `/etc/nginx/ssl/fullchain.pem` & `privkey.pem` yang di-mount dinamis dari `./certbot/conf/live/${APP_DOMAIN}:/etc/nginx/ssl:ro`).
+
+2. **Pure Docker SSL Architecture**:
    - Host VPS **tidak memerlukan** instalasi Nginx maupun Certbot di level OS host.
    - Frontend container (`nac-frontend-prod`) meng-expose langsung port `80:80` dan `443:443`.
    - Nginx di dalam container menangani:
      - Port 80: ACME challenge (`/.well-known/acme-challenge/` dari volume `./certbot/www`) dan auto-redirect HTTP ke HTTPS 301.
-     - Port 443: Terminasi SSL Let's Encrypt (mounted dari volume `./certbot/conf:/etc/letsencrypt:ro`), SPA Vite routing, dan proxy pass API backend.
+     - Port 443: Terminasi SSL Let's Encrypt, SPA Vite routing, dan proxy pass API backend.
    - Container `nac-certbot-prod` (`certbot/certbot`) berjalan di latar belakang untuk melakukan auto-renew sertifikat setiap 12 jam secara berkala.
 
-2. **Automated Docker SSL Script (`scripts/setup-ssl.sh`) & Anti-Rate-Limit Persistence**:
+3. **Automated Docker SSL Script (`scripts/setup-ssl.sh`) & Anti-Rate-Limit Persistence**:
    - **Auto-Restore & Reuse Existing Certificate**: Memeriksa keberadaan sertifikat yang masih berlaku di `./certbot/conf/live/$DOMAIN/`, `/var/backups/letsencrypt-elearning/`, atau `/etc/letsencrypt/`. Jika sertifikat untuk domain sudah pernah terdaftar dan masih valid (>7 hari), script langsung menggunakan sertifikat tersebut **tanpa** memanggil Certbot maupun menghentikan container Nginx.
    - **Persistent Host Backup**: Setiap kali sertifikat berhasil diterbitkan/tersedia, salinannya otomatis disimpan ke `/var/backups/letsencrypt-elearning` dan `/etc/letsencrypt` di luar folder project agar tidak hilang meskipun folder `/var/www/elearning` dihapus.
    - **Rate-Limit Graceful Fallback**: Saat benar-benar perlu menerbitkan sertifikat baru, menggunakan flag `--keep-until-expiring`, dan apabila kuota mingguan Let's Encrypt Production sedang penuh (5 certs / 7 hari), otomatis beralih ke Let's Encrypt `--staging` / self-signed fallback agar provisioning VPS tidak pernah gagal (`exit 1`).

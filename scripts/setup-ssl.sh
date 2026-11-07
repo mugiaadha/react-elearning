@@ -16,9 +16,36 @@ echo "=========================================================="
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
-# Pastikan backend/.env tersedia agar docker compose tidak gagal membaca env_file
+# Baca domain dari argumen, environment, atau root .env jika tersedia
+if [ -z "$2" ] && [ -f .env ]; then
+  ENV_DOMAIN=$(grep -E '^APP_DOMAIN=' .env | cut -d '=' -f2- | tr -d '"\r ')
+  if [ -n "$ENV_DOMAIN" ]; then
+    DOMAIN="$ENV_DOMAIN"
+  fi
+fi
+export APP_DOMAIN="$DOMAIN"
+
+# Pastikan root .env & backend/.env tersedia dan sinkron dengan APP_DOMAIN
+if [ ! -f .env ] && [ -f .env.example ]; then
+  cp .env.example .env
+fi
+if [ -f .env ]; then
+  if grep -q "^APP_DOMAIN=" .env; then
+    sed -i "s|^APP_DOMAIN=.*|APP_DOMAIN=${DOMAIN}|" .env
+  else
+    echo "APP_DOMAIN=${DOMAIN}" >> .env
+  fi
+  sed -i "s|^VITE_API_BASE_URL=.*|VITE_API_BASE_URL=https://${DOMAIN}/api|" .env
+fi
+
 if [ ! -f backend/.env ] && [ -f backend/.env.example ]; then
   cp backend/.env.example backend/.env
+fi
+if [ -f backend/.env ]; then
+  sed -i "s|^APP_URL=.*|APP_URL=https://${DOMAIN}|" backend/.env
+  sed -i "s|^FRONTEND_URL=.*|FRONTEND_URL=https://${DOMAIN}|" backend/.env
+  sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://${DOMAIN}/api/auth/google/callback|" backend/.env
+  sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"no-reply@${DOMAIN}\"|" backend/.env
 fi
 
 # 1. Siapkan volume certbot & direktori backup persisten di luar folder repo (/var/backups/letsencrypt-elearning)

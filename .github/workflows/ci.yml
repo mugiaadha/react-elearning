@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      domain:
+        description: "Production Domain (opsional, default memakai vars.APP_DOMAIN)"
+        required: false
+        default: ""
+
+env:
+  APP_DOMAIN: ${{ inputs.domain || vars.APP_DOMAIN || 'elearning.socket-clenicapp.my.id' }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -42,7 +50,7 @@ jobs:
       - name: Build Frontend Application
         run: npm run build
         env:
-          VITE_API_BASE_URL: https://elearning.socket-clenicapp.my.id/api
+          VITE_API_BASE_URL: https://${{ env.APP_DOMAIN }}/api
           VITE_DEV_MODE: 'false'
 
       - name: Check Build Artifacts
@@ -147,7 +155,7 @@ jobs:
           file: ./Dockerfile
           target: production
           build-args: |
-            VITE_API_BASE_URL=https://elearning.socket-clenicapp.my.id/api
+            VITE_API_BASE_URL=https://${{ env.APP_DOMAIN }}/api
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.IMAGE_FRONTEND }}:latest
@@ -175,16 +183,17 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ secrets.GHCR_USER || github.actor }}
+          TARGET_DOMAIN: ${{ env.APP_DOMAIN }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
           command_timeout: 30m
-          envs: GHCR_TOKEN,GHCR_USER
+          envs: GHCR_TOKEN,GHCR_USER,TARGET_DOMAIN
           script: |
             set -e
-            echo "🚀 Starting Deployment on $(hostname)..."
+            echo "🚀 Starting Deployment on $(hostname) for https://${TARGET_DOMAIN}..."
             cd ${{ secrets.DEPLOY_PATH || '/var/www/elearning' }}
             
             # 1. Tarik file konfigurasi terbaru dari git (docker-compose.prod.yml, nginx, dll)
@@ -193,25 +202,39 @@ jobs:
             git checkout -f main
             git reset --hard origin/main
             
-            # 2. Otomatisasi inisialisasi .env dari .env.example jika belum ada
+            # 2. Otomatisasi inisialisasi & sinkronisasi domain di .env dan backend/.env
             if [ ! -f .env ]; then
               echo "📄 Initializing root .env from .env.example..."
               cp .env.example .env
             fi
+            if grep -q "^APP_DOMAIN=" .env; then
+              sed -i "s|^APP_DOMAIN=.*|APP_DOMAIN=${TARGET_DOMAIN}|" .env
+            else
+              echo "APP_DOMAIN=${TARGET_DOMAIN}" >> .env
+            fi
+            sed -i "s|^VITE_API_BASE_URL=.*|VITE_API_BASE_URL=https://${TARGET_DOMAIN}/api|" .env
 
             if [ ! -f backend/.env ]; then
               echo "📄 Initializing backend/.env from backend/.env.example..."
               cp backend/.env.example backend/.env
             fi
+            sed -i "s|^APP_URL=.*|APP_URL=https://${TARGET_DOMAIN}|" backend/.env
+            sed -i "s|^FRONTEND_URL=.*|FRONTEND_URL=https://${TARGET_DOMAIN}|" backend/.env
+            sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://${TARGET_DOMAIN}/api/auth/google/callback|" backend/.env
+            sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"no-reply@${TARGET_DOMAIN}\"|" backend/.env
 
-            # 3. Pastikan direktori storage & certbot di host siap dengan permission yang benar
-            mkdir -p backend/storage/app/public certbot/conf/live/elearning.socket-clenicapp.my.id certbot/www
+            # 3. Pastikan direktori storage & certbot di host siap (restore dari /var/backups jika ada)
+            BACKUP_SSL_DIR="/var/backups/letsencrypt-elearning"
+            mkdir -p backend/storage/app/public "certbot/conf/live/${TARGET_DOMAIN}" certbot/www
             chmod -R 777 backend/storage 2>/dev/null || true
-            if [ ! -f certbot/conf/live/elearning.socket-clenicapp.my.id/fullchain.pem ]; then
+            if [ ! -f "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" ] && [ -f "$BACKUP_SSL_DIR/live/${TARGET_DOMAIN}/fullchain.pem" ]; then
+              cp -a "$BACKUP_SSL_DIR/." certbot/conf/ 2>/dev/null || true
+            fi
+            if [ ! -f "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" ]; then
               openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-                -keyout certbot/conf/live/elearning.socket-clenicapp.my.id/privkey.pem \
-                -out certbot/conf/live/elearning.socket-clenicapp.my.id/fullchain.pem \
-                -subj "/CN=elearning.socket-clenicapp.my.id" 2>/dev/null || true
+                -keyout "certbot/conf/live/${TARGET_DOMAIN}/privkey.pem" \
+                -out "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" \
+                -subj "/CN=${TARGET_DOMAIN}" 2>/dev/null || true
             fi
 
             # 4. Login ke GitHub Container Registry di VPS jika image bersifat privat

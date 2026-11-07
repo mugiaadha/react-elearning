@@ -4,13 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       domain:
-        description: "Production Domain (sudah dipointing A-Record ke IP VPS)"
-        required: true
-        default: "elearning.socket-clenicapp.my.id"
+        description: "Production Domain (opsional, jika dikosongkan akan memakai vars.APP_DOMAIN)"
+        required: false
+        default: ""
       ssl_email:
         description: "Email untuk notifikasi SSL Let's Encrypt Certbot"
         required: false
-        default: "admin@socket-clenicapp.my.id"
+        default: ""
+
+env:
+  APP_DOMAIN: ${{ inputs.domain || vars.APP_DOMAIN || 'elearning.socket-clenicapp.my.id' }}
+  SSL_EMAIL: ${{ inputs.ssl_email || vars.SSL_EMAIL || 'admin@socket-clenicapp.my.id' }}
 
 concurrency:
   group: deploy-production
@@ -66,7 +70,7 @@ jobs:
           file: ./Dockerfile
           target: production
           build-args: |
-            VITE_API_BASE_URL=https://${{ inputs.domain }}/api
+            VITE_API_BASE_URL=https://${{ env.APP_DOMAIN }}/api
           push: true
           tags: |
             ${{ env.IMAGE_FRONTEND }}:latest
@@ -88,8 +92,8 @@ jobs:
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ secrets.GHCR_USER || github.actor }}
-          TARGET_DOMAIN: ${{ inputs.domain }}
-          TARGET_EMAIL: ${{ inputs.ssl_email }}
+          TARGET_DOMAIN: ${{ env.APP_DOMAIN }}
+          TARGET_EMAIL: ${{ env.SSL_EMAIL }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -147,15 +151,25 @@ jobs:
               git reset --hard origin/main
             fi
 
-            # 5. Inisialisasi file .env dengan setting production
-            echo "[4/8] Menginisialisasi environment variables..."
+            # 5. Inisialisasi & sinkronisasi domain pada file .env dan backend/.env
+            echo "[4/8] Menginisialisasi environment variables untuk domain ${TARGET_DOMAIN}..."
             if [ ! -f .env ]; then
               cp .env.example .env
             fi
+            if grep -q "^APP_DOMAIN=" .env; then
+              sed -i "s|^APP_DOMAIN=.*|APP_DOMAIN=${TARGET_DOMAIN}|" .env
+            else
+              echo "APP_DOMAIN=${TARGET_DOMAIN}" >> .env
+            fi
+            sed -i "s|^VITE_API_BASE_URL=.*|VITE_API_BASE_URL=https://${TARGET_DOMAIN}/api|" .env
 
             if [ ! -f backend/.env ]; then
               cp backend/.env.example backend/.env
             fi
+            sed -i "s|^APP_URL=.*|APP_URL=https://${TARGET_DOMAIN}|" backend/.env
+            sed -i "s|^FRONTEND_URL=.*|FRONTEND_URL=https://${TARGET_DOMAIN}|" backend/.env
+            sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://${TARGET_DOMAIN}/api/auth/google/callback|" backend/.env
+            sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"no-reply@${TARGET_DOMAIN}\"|" backend/.env
 
             # 6. Siapkan folder storage permissions
             echo "[5/8] Menyiapkan folder storage..."
