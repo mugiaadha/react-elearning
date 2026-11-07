@@ -253,7 +253,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 1. **Docker Orchestration**:
    - `docker-compose.yml` (Development) & `docker-compose.prod.yml` (Production Nginx SPA).
    - Container Services:
-     - `nac-mariadb` / `nac-mariadb-prod`: MariaDB 11.4 database (`nac_elearning`) port `3306`.
+     - `nac-mariadb` / `nac-mariadb-prod`: MariaDB 11.4 database (`nac_elearning`) port `3306` (menggunakan TCP healthcheck `127.0.0.1` agar tidak terjadi false-positive `healthy` pada Unix socket saat bootstrap awal).
      - `nac-backend` / `nac-backend-prod`: PHP 8.2 CLI port `8000` (sinkron dengan `backend/.env` via `env_file` & volume mount).
      - `nac-queue-worker` / `nac-queue-prod`: Background queue worker (`queue:listen` / `queue:work`).
      - `nac-frontend` / `nac-frontend-prod`: Vite development server (`5173`) / Nginx production (`80` & `443`). `nginx/default.conf` di-bind mount ke container dan menggunakan Docker internal DNS resolver (`resolver 127.0.0.11 valid=5s ipv6=off;`) dengan dynamic upstream variable (`set $backend_upstream http://backend:8000;`) agar Nginx tidak mengalami `502 Bad Gateway` saat container `backend` di-recreate dan berganti IP internal Docker.

@@ -228,9 +228,16 @@ jobs:
             echo "🚀 Launching containers with new images..."
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
             
-            # 7. Tunggu sejenak agar backend container siap
-            echo "⏳ Waiting for backend container..."
-            sleep 5
+            # 7. Tunggu hingga koneksi TCP MariaDB siap sepenuhnya
+            echo "⏳ Waiting for backend & MariaDB TCP connection..."
+            for i in $(seq 1 30); do
+              if docker compose -f docker-compose.prod.yml exec -T backend php -r "try { new PDO('mysql:host='.getenv('DB_HOST').';port='.(getenv('DB_PORT') ?: 3306).';dbname='.getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD')); exit(0); } catch (Throwable \$e) { exit(1); }" 2>/dev/null; then
+                echo "  -> MariaDB TCP connection ready!"
+                break
+              fi
+              echo "  -> Waiting for MariaDB ($i/30)..."
+              sleep 2
+            done
             
             # 8. Pastikan APP_KEY terisi otomatis jika belum ada di backend/.env
             docker compose -f docker-compose.prod.yml exec -T backend php artisan key:generate --force

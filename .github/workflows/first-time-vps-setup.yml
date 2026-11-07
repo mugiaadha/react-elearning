@@ -179,8 +179,19 @@ jobs:
 
             # Setup Laravel APP_KEY, Migrasi Database, & Cache
             echo "🗄️ Inisialisasi Database Laravel..."
+            echo "⏳ Menunggu koneksi TCP MariaDB di port 3306 siap sepenuhnya..."
+            for i in $(seq 1 30); do
+              if docker compose -f docker-compose.prod.yml exec -T backend php -r "try { new PDO('mysql:host='.getenv('DB_HOST').';port='.(getenv('DB_PORT') ?: 3306).';dbname='.getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD')); exit(0); } catch (Throwable \$e) { exit(1); }" 2>/dev/null; then
+                echo "  -> MariaDB siap menerima koneksi!"
+                break
+              fi
+              echo "  -> Menunggu MariaDB selesai inisialisasi ($i/30)..."
+              sleep 2
+            done
+
             docker compose -f docker-compose.prod.yml exec -T backend php artisan key:generate --force
             docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan db:seed --class=DatabaseSeeder --force || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:clear || true
