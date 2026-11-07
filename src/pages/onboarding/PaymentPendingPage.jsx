@@ -326,7 +326,7 @@ export const PaymentPendingPage = () => {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-ping"></span>
             <h2 className="text-base font-bold text-slate-900">
-              Gerbang Pembayaran Midtrans (Otomatis & Real-time)
+              Gerbang Pembayaran Midtranss (Otomatis & Real-time)
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
