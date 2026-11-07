@@ -289,7 +289,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 
 3. **First-Time VPS Provisioning Workflow (`.github/workflows/first-time-vps-setup.yml`) — Khusus Setup VPS dari Nol**:
    - **Peran**: Khusus dijalankan manual (`workflow_dispatch`) saat menyiapkan VPS baru dari nol atau mengganti domain/SSL.
-   - **Tahapan**: Menginstal Docker Engine & Compose plugin, git, curl, clone repo ke target directory, inisialisasi `.env` & `backend/.env` sesuai `APP_DOMAIN` beserta seluruh GitHub Actions Secrets (`APP_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`), pull GHCR images, penerbitan SSL Let's Encrypt resmi murni via [scripts/setup-ssl.sh](file:///c:/workspace/belajar-react/elearning-react/scripts/setup-ssl.sh), migrasi awal, dan seeding database (`DatabaseSeeder`).
+   - **Tahapan**: Mengaktifkan Swap Memory 2GB otomatis (mencegah OOM Killer `exit 137`), menginstal Docker Engine & Compose plugin, git, curl, clone repo ke target directory, inisialisasi `.env` & `backend/.env` sesuai `APP_DOMAIN` beserta seluruh GitHub Actions Secrets, pull GHCR images, penerbitan SSL Let's Encrypt resmi murni via [scripts/setup-ssl.sh](file:///c:/workspace/belajar-react/elearning-react/scripts/setup-ssl.sh), menunggu [docker-entrypoint.sh](file:///c:/workspace/belajar-react/elearning-react/backend/docker-entrypoint.sh) menyelesaikan migrasi & seeding tunggal di container `backend` (dieksklusifkan dari `queue` worker agar tidak race condition), lalu membuat cache Laravel.
 
 ---
 

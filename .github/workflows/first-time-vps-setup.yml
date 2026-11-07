@@ -123,8 +123,18 @@ jobs:
               SUDO="sudo"
             fi
 
-            # 1. Update apt & install dependencies dasar
-            echo "[1/8] Memperbarui package repository OS & install git, curl..."
+            # 1. Update apt, install dependencies dasar & pastikan Swap Memory 2GB aktif (mencegah OOM exit 137)
+            echo "[1/8] Memperbarui package repository OS, install git, curl & mengaktifkan Swap 2GB..."
+            if [ ! -f /swapfile ] && [ "$(swapon --show | wc -l)" -eq 0 ]; then
+              $SUDO fallocate -l 2G /swapfile 2>/dev/null || $SUDO dd if=/dev/zero of=/swapfile bs=1M count=2048
+              $SUDO chmod 600 /swapfile
+              $SUDO mkswap /swapfile
+              $SUDO swapon /swapfile
+              if ! grep -q "/swapfile" /etc/fstab; then
+                echo "/swapfile none swap sw 0 0" | $SUDO tee -a /etc/fstab >/dev/null
+              fi
+              echo "  -> Swap memory 2GB berhasil diaktifkan!"
+            fi
             $SUDO apt-get update -y || true
             $SUDO apt-get install -y git curl ca-certificates gnupg openssl
 
@@ -203,31 +213,23 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
 
             # 8. Eksekusi Pure Docker SSL Setup & Jalankan Stack
-            echo "[7/8] Mengonfigurasi Let's Encrypt SSL di dalam Docker..."
+            echo "[7/8] Mengonfigurasi Let's Encrypt SSL & menyalakan Docker Stack..."
             chmod +x scripts/setup-ssl.sh
             bash scripts/setup-ssl.sh "${TARGET_EMAIL}" "${TARGET_DOMAIN}"
 
-            # Jalankan backend dan queue
-            docker compose -f docker-compose.prod.yml up -d backend queue
-
-            # Setup Laravel APP_KEY, Migrasi Database, & Cache
-            echo "🗄️ Inisialisasi Database Laravel..."
-            echo "⏳ Menunggu koneksi TCP MariaDB di port 3306 siap sepenuhnya..."
-            for i in $(seq 1 30); do
-              if docker compose -f docker-compose.prod.yml exec -T backend php -r "try { new PDO('mysql:host='.getenv('DB_HOST').';port='.(getenv('DB_PORT') ?: 3306).';dbname='.getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD')); exit(0); } catch (Throwable \$e) { exit(1); }" 2>/dev/null; then
-                echo "  -> MariaDB siap menerima koneksi!"
+            # Tunggu hingga docker-entrypoint.sh pada container backend selesai melakukan migrasi & seeding otomatis,
+            # serta server PHP artisan serve sudah aktif mendengarkan di port 8000 (mencegah bentrok & OOM exit 137)
+            echo "🗄️ Menunggu container Backend selesai inisialisasi database & menyala di port 8000..."
+            for i in $(seq 1 45); do
+              if curl -s -o /dev/null http://127.0.0.1:8000/api/brevets; then
+                echo "  -> Backend API & Database sudah siap 100%!"
                 break
               fi
-              echo "  -> Menunggu MariaDB selesai inisialisasi ($i/30)..."
+              echo "  -> Menunggu Backend selesai migrasi/seeding ($i/45)..."
               sleep 2
             done
 
-            # Generate APP_KEY hanya jika belum terisi dari GitHub Secrets
-            if ! grep -q "^APP_KEY=base64:" backend/.env; then
-              docker compose -f docker-compose.prod.yml exec -T backend php artisan key:generate --force
-            fi
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan db:seed --class=DatabaseSeeder --force || true
+            echo "🧹 Menyegarkan cache konfigurasi, rute, dan view Laravel..."
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:clear || true

@@ -239,9 +239,10 @@ jobs:
             echo "🚀 Updating running containers..."
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
             
-            # 6. Tunggu container backend siap sebelum exec (mencegah error OCI runtime setns)
-            for i in $(seq 1 15); do
-              if docker compose -f docker-compose.prod.yml exec -T backend php -v >/dev/null 2>&1; then
+            # 6. Tunggu container backend selesai menjalankan entrypoint & aktif di port 8000 (mencegah bentrok exec)
+            echo "⏳ Waiting for backend server to be ready on port 8000..."
+            for i in $(seq 1 30); do
+              if curl -s -o /dev/null http://127.0.0.1:8000/api/brevets; then
                 break
               fi
               sleep 2
