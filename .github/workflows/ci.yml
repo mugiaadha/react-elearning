@@ -6,14 +6,9 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
-    inputs:
-      domain:
-        description: "Production Domain (opsional, default memakai vars.APP_DOMAIN)"
-        required: false
-        default: ""
 
 env:
-  APP_DOMAIN: ${{ inputs.domain || vars.APP_DOMAIN || 'nac.socket-clenicapp.my.id' }}
+  APP_DOMAIN: ${{ vars.APP_DOMAIN || 'nac.socket-clenicapp.my.id' }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -184,96 +179,41 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ secrets.GHCR_USER || github.actor }}
-          TARGET_DOMAIN: ${{ env.APP_DOMAIN }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
           command_timeout: 30m
-          envs: GHCR_TOKEN,GHCR_USER,TARGET_DOMAIN
+          envs: GHCR_TOKEN,GHCR_USER
           script: |
             set -e
-            echo "🚀 Starting Deployment on $(hostname) for https://${TARGET_DOMAIN}..."
+            echo "🚀 Starting Daily Deployment on $(hostname)..."
             cd ${{ secrets.DEPLOY_PATH || '/var/www/elearning' }}
             
-            # 1. Tarik file konfigurasi terbaru dari git (docker-compose.prod.yml, nginx, dll)
-            echo "📥 Fetching latest configuration files..."
+            # 1. Tarik kode dan file konfigurasi terbaru dari git
+            echo "📥 Fetching latest repository updates..."
             git fetch --all
             git checkout -f main
             git reset --hard origin/main
             
-            # 2. Otomatisasi inisialisasi & sinkronisasi domain di .env dan backend/.env
-            if [ ! -f .env ]; then
-              echo "📄 Initializing root .env from .env.example..."
-              cp .env.example .env
-            fi
-            if grep -q "^APP_DOMAIN=" .env; then
-              sed -i "s|^APP_DOMAIN=.*|APP_DOMAIN=${TARGET_DOMAIN}|" .env
-            else
-              echo "APP_DOMAIN=${TARGET_DOMAIN}" >> .env
-            fi
-            sed -i "s|^VITE_API_BASE_URL=.*|VITE_API_BASE_URL=https://${TARGET_DOMAIN}/api|" .env
-
-            if [ ! -f backend/.env ]; then
-              echo "📄 Initializing backend/.env from backend/.env.example..."
-              cp backend/.env.example backend/.env
-            fi
-            sed -i "s|^APP_URL=.*|APP_URL=https://${TARGET_DOMAIN}|" backend/.env
-            sed -i "s|^FRONTEND_URL=.*|FRONTEND_URL=https://${TARGET_DOMAIN}|" backend/.env
-            sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://${TARGET_DOMAIN}/api/auth/google/callback|" backend/.env
-            sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"no-reply@${TARGET_DOMAIN}\"|" backend/.env
-
-            # 3. Pastikan direktori storage & certbot di host siap (restore dari /var/backups jika ada)
-            BACKUP_SSL_DIR="/var/backups/letsencrypt"
-            mkdir -p backend/storage/app/public "certbot/conf/live/${TARGET_DOMAIN}" certbot/ssl certbot/www
-            chmod -R 777 backend/storage 2>/dev/null || true
-            if [ ! -f "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" ] && [ -f "$BACKUP_SSL_DIR/live/${TARGET_DOMAIN}/fullchain.pem" ]; then
-              cp -a "$BACKUP_SSL_DIR/." certbot/conf/ 2>/dev/null || true
-            fi
-            if [ ! -f "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" ]; then
-              openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-                -keyout "certbot/conf/live/${TARGET_DOMAIN}/privkey.pem" \
-                -out "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" \
-                -subj "/CN=${TARGET_DOMAIN}" 2>/dev/null || true
-            fi
-            cp -L "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" certbot/ssl/fullchain.pem
-            cp -L "certbot/conf/live/${TARGET_DOMAIN}/privkey.pem" certbot/ssl/privkey.pem
-
-            # 4. Login ke GitHub Container Registry di VPS jika image bersifat privat
+            # 2. Login ke GitHub Container Registry di VPS
             if [ -n "$GHCR_TOKEN" ]; then
               echo "🔑 Logging in to GitHub Container Registry..."
               echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             fi
             
-            # 5. Tarik pre-built image dari GHCR (tidak ada kompilasi di VPS)
+            # 3. Tarik pre-built image terbaru dari GHCR
             echo "🐳 Pulling pre-built images from GHCR..."
             docker compose -f docker-compose.prod.yml pull
             
-            # 6. Restart container stack secara instan dengan image baru
-            echo "🚀 Launching containers with new images..."
+            # 4. Jalankan/update container stack dengan image baru
+            echo "🚀 Updating running containers..."
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
             
-            # 7. Tunggu hingga koneksi TCP MariaDB siap sepenuhnya
-            echo "⏳ Waiting for backend & MariaDB TCP connection..."
-            for i in $(seq 1 30); do
-              if docker compose -f docker-compose.prod.yml exec -T backend php -r "try { new PDO('mysql:host='.getenv('DB_HOST').';port='.(getenv('DB_PORT') ?: 3306).';dbname='.getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD')); exit(0); } catch (Throwable \$e) { exit(1); }" 2>/dev/null; then
-                echo "  -> MariaDB TCP connection ready!"
-                break
-              fi
-              echo "  -> Waiting for MariaDB ($i/30)..."
-              sleep 2
-            done
-            
-            # 8. Pastikan APP_KEY terisi otomatis jika belum ada di backend/.env
-            docker compose -f docker-compose.prod.yml exec -T backend php artisan key:generate --force
-            
-            # 9. Jalankan migrasi database TERLEBIH DAHULU agar seluruh tabel (users, cache, dll) terbuat
-            echo "🗄️ Running database migrations..."
+            # 5. Jalankan migrasi database baru (jika ada) & refresh cache Laravel
+            echo "🗄️ Running database migrations & refreshing Laravel caches..."
             docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
-            
-            # 10. Bersihkan dan buat cache Laravel (aman tanpa error 'no such table: cache')
-            echo "🧹 Optimizing Laravel configuration and routes..."
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:clear || true
@@ -281,4 +221,4 @@ jobs:
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:cache
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:cache
             
-            echo "✅ Deployment successful and live without high CPU / memory overhead!"
+            echo "✅ Daily deployment successful!"
