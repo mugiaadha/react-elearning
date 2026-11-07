@@ -46,6 +46,8 @@ jobs:
         run: npm run build
         env:
           VITE_API_BASE_URL: https://${{ env.APP_DOMAIN }}/api
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          VITE_MIDTRANS_CLIENT_KEY: ${{ secrets.MIDTRANS_CLIENT_KEY }}
           VITE_DEV_MODE: 'false'
 
       - name: Check Build Artifacts
@@ -152,6 +154,9 @@ jobs:
           target: production
           build-args: |
             VITE_API_BASE_URL=https://${{ env.APP_DOMAIN }}/api
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            VITE_MIDTRANS_CLIENT_KEY=${{ secrets.MIDTRANS_CLIENT_KEY }}
+            VITE_DEV_MODE=false
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.IMAGE_FRONTEND }}:latest
@@ -179,13 +184,20 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ secrets.GHCR_USER || github.actor }}
+          SECRET_APP_KEY: ${{ secrets.APP_KEY }}
+          SECRET_MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          SECRET_MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          SECRET_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          SECRET_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          SECRET_MIDTRANS_SERVER_KEY: ${{ secrets.MIDTRANS_SERVER_KEY }}
+          SECRET_MIDTRANS_CLIENT_KEY: ${{ secrets.MIDTRANS_CLIENT_KEY }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
           command_timeout: 30m
-          envs: GHCR_TOKEN,GHCR_USER
+          envs: GHCR_TOKEN,GHCR_USER,SECRET_APP_KEY,SECRET_MAIL_USERNAME,SECRET_MAIL_PASSWORD,SECRET_GOOGLE_CLIENT_ID,SECRET_GOOGLE_CLIENT_SECRET,SECRET_MIDTRANS_SERVER_KEY,SECRET_MIDTRANS_CLIENT_KEY
           script: |
             set -e
             echo "🚀 Starting Daily Deployment on $(hostname)..."
@@ -197,21 +209,45 @@ jobs:
             git checkout -f main
             git reset --hard origin/main
             
-            # 2. Login ke GitHub Container Registry di VPS
+            # 2. Sinkronisasi kredensial dari GitHub Actions Secrets ke .env dan backend/.env
+            echo "🔐 Syncing secrets from GitHub Actions into .env..."
+            if [ -f .env ]; then
+              [ -n "$SECRET_GOOGLE_CLIENT_ID" ] && sed -i "s|^VITE_GOOGLE_CLIENT_ID=.*|VITE_GOOGLE_CLIENT_ID=${SECRET_GOOGLE_CLIENT_ID}|" .env
+              [ -n "$SECRET_MIDTRANS_CLIENT_KEY" ] && sed -i "s|^VITE_MIDTRANS_CLIENT_KEY=.*|VITE_MIDTRANS_CLIENT_KEY=${SECRET_MIDTRANS_CLIENT_KEY}|" .env
+            fi
+            if [ -f backend/.env ]; then
+              [ -n "$SECRET_APP_KEY" ] && sed -i "s|^APP_KEY=.*|APP_KEY=${SECRET_APP_KEY}|" backend/.env
+              [ -n "$SECRET_MAIL_USERNAME" ] && sed -i "s|^MAIL_USERNAME=.*|MAIL_USERNAME=${SECRET_MAIL_USERNAME}|" backend/.env
+              [ -n "$SECRET_MAIL_PASSWORD" ] && sed -i "s|^MAIL_PASSWORD=.*|MAIL_PASSWORD=\"${SECRET_MAIL_PASSWORD}\"|" backend/.env
+              [ -n "$SECRET_GOOGLE_CLIENT_ID" ] && sed -i "s|^GOOGLE_CLIENT_ID=.*|GOOGLE_CLIENT_ID=${SECRET_GOOGLE_CLIENT_ID}|" backend/.env
+              [ -n "$SECRET_GOOGLE_CLIENT_SECRET" ] && sed -i "s|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=${SECRET_GOOGLE_CLIENT_SECRET}|" backend/.env
+              [ -n "$SECRET_MIDTRANS_SERVER_KEY" ] && sed -i "s|^MIDTRANS_SERVER_KEY=.*|MIDTRANS_SERVER_KEY=${SECRET_MIDTRANS_SERVER_KEY}|" backend/.env
+              [ -n "$SECRET_MIDTRANS_CLIENT_KEY" ] && sed -i "s|^MIDTRANS_CLIENT_KEY=.*|MIDTRANS_CLIENT_KEY=${SECRET_MIDTRANS_CLIENT_KEY}|" backend/.env
+            fi
+            
+            # 3. Login ke GitHub Container Registry di VPS
             if [ -n "$GHCR_TOKEN" ]; then
               echo "🔑 Logging in to GitHub Container Registry..."
               echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             fi
             
-            # 3. Tarik pre-built image terbaru dari GHCR
+            # 4. Tarik pre-built image terbaru dari GHCR
             echo "🐳 Pulling pre-built images from GHCR..."
             docker compose -f docker-compose.prod.yml pull
             
-            # 4. Jalankan/update container stack dengan image baru
+            # 5. Jalankan/update container stack dengan image baru
             echo "🚀 Updating running containers..."
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
             
-            # 5. Jalankan migrasi database baru (jika ada) & refresh cache Laravel
+            # 6. Tunggu container backend siap sebelum exec (mencegah error OCI runtime setns)
+            for i in $(seq 1 15); do
+              if docker compose -f docker-compose.prod.yml exec -T backend php -v >/dev/null 2>&1; then
+                break
+              fi
+              sleep 2
+            done
+
+            # 7. Jalankan migrasi database baru (jika ada) & refresh cache Laravel
             echo "🗄️ Running database migrations & refreshing Laravel caches..."
             docker compose -f docker-compose.prod.yml exec -T backend php artisan migrate --force
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:clear || true

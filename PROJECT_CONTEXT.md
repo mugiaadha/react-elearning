@@ -284,11 +284,12 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 
 2. **Daily CI/CD Workflow (`.github/workflows/ci.yml`) — Khusus Deploy Harian**:
    - **Peran**: Khusus untuk integrasi dan deploy harian saat ada perubahan kode (`push` ke `main`). Tidak mencampuradukkan urusan provisioning VPS dari nol atau setup SSL.
-   - **Tahapan**: `[frontend, backend]` (lint, build, PHPUnit) -> `docker` (build & push image ke GHCR dengan layer cache) -> `deploy` (SSH ke VPS, `git reset --hard origin/main`, `docker compose pull`, `docker compose up -d`, `php artisan migrate --force`, dan refresh cache Laravel).
+   - **GitHub Actions Secrets Sync**: Menginjeksi `GOOGLE_CLIENT_ID` dan `MIDTRANS_CLIENT_KEY` saat build Vite frontend, serta menyinkronkan ke `backend/.env` di VPS (`APP_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`).
+   - **Tahapan**: `[frontend, backend]` (lint, build, PHPUnit) -> `docker` (build & push image ke GHCR dengan layer cache) -> `deploy` (SSH ke VPS, `git reset --hard origin/main`, sync secrets ke `.env`, `docker compose pull`, `docker compose up -d`, tunggu readiness container backend, `php artisan migrate --force`, dan refresh cache Laravel).
 
 3. **First-Time VPS Provisioning Workflow (`.github/workflows/first-time-vps-setup.yml`) — Khusus Setup VPS dari Nol**:
    - **Peran**: Khusus dijalankan manual (`workflow_dispatch`) saat menyiapkan VPS baru dari nol atau mengganti domain/SSL.
-   - **Tahapan**: Menginstal Docker Engine & Compose plugin, git, curl, clone repo ke target directory, inisialisasi `.env` & `backend/.env` sesuai `APP_DOMAIN`, pull GHCR images, penerbitan SSL Let's Encrypt resmi murni via [scripts/setup-ssl.sh](file:///c:/workspace/belajar-react/elearning-react/scripts/setup-ssl.sh), pembuatan `APP_KEY`, migrasi awal, dan seeding database (`DatabaseSeeder`).
+   - **Tahapan**: Menginstal Docker Engine & Compose plugin, git, curl, clone repo ke target directory, inisialisasi `.env` & `backend/.env` sesuai `APP_DOMAIN` beserta seluruh GitHub Actions Secrets (`APP_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`), pull GHCR images, penerbitan SSL Let's Encrypt resmi murni via [scripts/setup-ssl.sh](file:///c:/workspace/belajar-react/elearning-react/scripts/setup-ssl.sh), migrasi awal, dan seeding database (`DatabaseSeeder`).
 
 ---
 

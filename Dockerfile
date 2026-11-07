@@ -30,9 +30,15 @@ RUN npm ci
 
 COPY . .
 
-# Set default API URL for build if needed (can be overridden via build arg)
-ARG VITE_API_BASE_URL=http://localhost:8000/api
+# Set default API URL & public client keys for Vite build (can be overridden via build arg)
+ARG VITE_API_BASE_URL=/api
+ARG VITE_GOOGLE_CLIENT_ID=
+ARG VITE_MIDTRANS_CLIENT_KEY=
+ARG VITE_DEV_MODE=false
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+ENV VITE_MIDTRANS_CLIENT_KEY=${VITE_MIDTRANS_CLIENT_KEY}
+ENV VITE_DEV_MODE=${VITE_DEV_MODE}
 
 RUN npm run build
 
