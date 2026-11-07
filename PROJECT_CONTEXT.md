@@ -304,7 +304,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
      - Port 443: Terminasi SSL Let's Encrypt (mounted dari volume `./certbot/conf:/etc/letsencrypt:ro`), SPA Vite routing, dan proxy pass API backend.
    - Container `nac-certbot-prod` (`certbot/certbot`) berjalan di latar belakang untuk melakukan auto-renew sertifikat setiap 12 jam secara berkala.
 
-2. **Automated Docker SSL Script (`scripts/setup-ssl.sh`)**:
-   - Mematikan Nginx host & container frontend lama jika ada agar port 80 bebas murni.
-   - Menggunakan Certbot Standalone (`docker run --rm -p 80:80 certbot/certbot certonly --standalone`) untuk menerbitkan sertifikat Let's Encrypt resmi pertama kali secara instan tanpa ketergantungan web server.
-   - Menjalankan seluruh Docker stack production (`docker compose up -d`) dengan sertifikat valid yang sudah tersedia di disk, lalu container `certbot` aktif di background untuk auto-renew via webroot.
+2. **Automated Docker SSL Script (`scripts/setup-ssl.sh`) & Anti-Rate-Limit Persistence**:
+   - **Auto-Restore & Reuse Existing Certificate**: Memeriksa keberadaan sertifikat yang masih berlaku di `./certbot/conf/live/$DOMAIN/`, `/var/backups/letsencrypt-elearning/`, atau `/etc/letsencrypt/`. Jika sertifikat untuk domain sudah pernah terdaftar dan masih valid (>7 hari), script langsung menggunakan sertifikat tersebut **tanpa** memanggil Certbot maupun menghentikan container Nginx.
+   - **Persistent Host Backup**: Setiap kali sertifikat berhasil diterbitkan/tersedia, salinannya otomatis disimpan ke `/var/backups/letsencrypt-elearning` dan `/etc/letsencrypt` di luar folder project agar tidak hilang meskipun folder `/var/www/elearning` dihapus.
+   - **Rate-Limit Graceful Fallback**: Saat benar-benar perlu menerbitkan sertifikat baru, menggunakan flag `--keep-until-expiring`, dan apabila kuota mingguan Let's Encrypt Production sedang penuh (5 certs / 7 hari), otomatis beralih ke Let's Encrypt `--staging` / self-signed fallback agar provisioning VPS tidak pernah gagal (`exit 1`).
