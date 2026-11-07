@@ -5,7 +5,7 @@
 set -e
 
 EMAIL="${1:-admin@socket-clenicapp.my.id}"
-DOMAIN="${2:-elearning.socket-clenicapp.my.id}"
+DOMAIN="${2:-${APP_DOMAIN:-nac.socket-clenicapp.my.id}}"
 
 echo "=========================================================="
 echo "  Pure Docker Let's Encrypt SSL Setup (Standalone Mode)"
@@ -48,9 +48,9 @@ if [ -f backend/.env ]; then
   sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"no-reply@${DOMAIN}\"|" backend/.env
 fi
 
-# 1. Siapkan volume certbot & direktori backup persisten di luar folder repo (/var/backups/letsencrypt-elearning)
+# 1. Siapkan volume certbot & direktori backup persisten di luar folder repo (/var/backups/letsencrypt)
 echo "[1/5] Menyiapkan direktori volume & backup persisten Certbot..."
-BACKUP_SSL_DIR="/var/backups/letsencrypt-elearning"
+BACKUP_SSL_DIR="/var/backups/letsencrypt"
 mkdir -p "./certbot/conf"
 mkdir -p "./certbot/www"
 mkdir -p "$BACKUP_SSL_DIR" 2>/dev/null || true

@@ -13,7 +13,7 @@ on:
         default: ""
 
 env:
-  APP_DOMAIN: ${{ inputs.domain || vars.APP_DOMAIN || 'elearning.socket-clenicapp.my.id' }}
+  APP_DOMAIN: ${{ inputs.domain || vars.APP_DOMAIN || 'nac.socket-clenicapp.my.id' }}
   SSL_EMAIL: ${{ inputs.ssl_email || vars.SSL_EMAIL || 'admin@socket-clenicapp.my.id' }}
 
 concurrency:

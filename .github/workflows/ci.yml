@@ -13,7 +13,7 @@ on:
         default: ""
 
 env:
-  APP_DOMAIN: ${{ inputs.domain || vars.APP_DOMAIN || 'elearning.socket-clenicapp.my.id' }}
+  APP_DOMAIN: ${{ inputs.domain || vars.APP_DOMAIN || 'nac.socket-clenicapp.my.id' }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -133,6 +133,7 @@ jobs:
 
       - name: Validate Docker Compose Configuration (Production)
         run: |
+          cp .env.example .env
           cp backend/.env.example backend/.env
           docker compose -f docker-compose.prod.yml config
 
@@ -224,7 +225,7 @@ jobs:
             sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"no-reply@${TARGET_DOMAIN}\"|" backend/.env
 
             # 3. Pastikan direktori storage & certbot di host siap (restore dari /var/backups jika ada)
-            BACKUP_SSL_DIR="/var/backups/letsencrypt-elearning"
+            BACKUP_SSL_DIR="/var/backups/letsencrypt"
             mkdir -p backend/storage/app/public "certbot/conf/live/${TARGET_DOMAIN}" certbot/www
             chmod -R 777 backend/storage 2>/dev/null || true
             if [ ! -f "certbot/conf/live/${TARGET_DOMAIN}/fullchain.pem" ] && [ -f "$BACKUP_SSL_DIR/live/${TARGET_DOMAIN}/fullchain.pem" ]; then
