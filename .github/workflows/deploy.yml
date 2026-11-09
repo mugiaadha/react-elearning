@@ -177,6 +177,28 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Pre-flight Wait & Verify SSH Port Reachability
+        if: env.DEPLOY_HOST != ''
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || 22 }}
+        run: |
+          echo "🔍 Checking SSH reachability on ${DEPLOY_HOST}:${DEPLOY_PORT}..."
+          SSH_REACHABLE=false
+          for attempt in $(seq 1 12); do
+            if nc -zv -w 10 "${DEPLOY_HOST}" "${DEPLOY_PORT}" 2>/dev/null; then
+              echo "✅ Port ${DEPLOY_PORT} on ${DEPLOY_HOST} is open and reachable (attempt ${attempt}/12)!"
+              SSH_REACHABLE=true
+              break
+            fi
+            echo "⏳ Attempt ${attempt}/12: Port ${DEPLOY_PORT} not reachable yet (VPS might be rebooting or network busy). Retrying in 10s..."
+            sleep 10
+          done
+          if [ "$SSH_REACHABLE" = false ]; then
+            echo "::error::Tidak dapat menjangkau ${DEPLOY_HOST}:${DEPLOY_PORT} (dial tcp i/o timeout). Pastikan: (1) VPS sedang menyala/selesai reboot, (2) Secret DEPLOY_HOST & DEPLOY_PORT benar, dan (3) Port SSH (${DEPLOY_PORT}) diizinkan di UFW / Cloud Firewall VPS."
+            exit 1
+          fi
+
       - name: Deploy via SSH Remote Command
         uses: appleboy/ssh-action@v1.0.3
         if: env.DEPLOY_HOST != ''
@@ -197,6 +219,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
+          timeout: 90s
           command_timeout: 30m
           envs: GHCR_TOKEN,GHCR_USER,TARGET_DOMAIN,SECRET_APP_KEY,SECRET_MAIL_USERNAME,SECRET_MAIL_PASSWORD,SECRET_GOOGLE_CLIENT_ID,SECRET_GOOGLE_CLIENT_SECRET,SECRET_MIDTRANS_SERVER_KEY,SECRET_MIDTRANS_CLIENT_KEY
           script: |

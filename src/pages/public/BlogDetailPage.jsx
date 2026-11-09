@@ -105,12 +105,12 @@ export const BlogDetailPage = () => {
   // Extract Table of Contents (headings) from article content
   const tableOfContents = useMemo(() => {
     if (!article?.content) return [];
-    const blocks = article.content.split(/\n\n+/);
+    const blocks = article.content.split(/\r?\n\r?\n+/);
     const items = [];
     blocks.forEach((b, idx) => {
-      const trimmed = b.trim();
-      if (trimmed.startsWith('### ') || trimmed.startsWith('## ')) {
-        const text = trimmed.replace(/^#{2,3}\s+/, '');
+      const firstLine = b.trim().split(/\r?\n/)[0].trim();
+      if (firstLine.startsWith('### ') || firstLine.startsWith('## ')) {
+        const text = firstLine.replace(/^#{2,3}\s+/, '').replace(/\*\*/g, '');
         const id = `section-${idx}`;
         items.push({ id, text });
       }
@@ -173,11 +173,28 @@ export const BlogDetailPage = () => {
     }
   };
 
-  const fontSizeClasses = {
-    sm: 'text-sm sm:text-[15px] leading-[1.8]',
-    md: 'text-[15px] sm:text-[17px] leading-[1.9]',
-    lg: 'text-base sm:text-[19px] leading-[1.95]',
+  const fontSizeConfig = {
+    sm: {
+      body: 'text-[13px] sm:text-[14px] leading-[1.8]',
+      h1: 'text-xl sm:text-2xl md:text-[26px]',
+      h2: 'text-base sm:text-lg',
+      lead: 'text-xs sm:text-[13.5px]',
+    },
+    md: {
+      body: 'text-[14.5px] sm:text-[15.5px] leading-[1.85]',
+      h1: 'text-2xl sm:text-[28px] md:text-3xl',
+      h2: 'text-[17px] sm:text-[19px]',
+      lead: 'text-[13.5px] sm:text-[15px]',
+    },
+    lg: {
+      body: 'text-base sm:text-[18px] leading-[1.9]',
+      h1: 'text-2xl sm:text-3xl md:text-4xl',
+      h2: 'text-lg sm:text-[22px]',
+      lead: 'text-sm sm:text-[16.5px]',
+    },
   }[fontSize];
+
+  const fontSizeClasses = fontSizeConfig.body;
 
   const themeClasses = {
     paper: {
@@ -222,103 +239,130 @@ export const BlogDetailPage = () => {
     );
   };
 
+  const renderBodyElement = (text, key, isFirstParagraph = false) => {
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+
+    // Blockquote / Legal Callout (> ...)
+    if (trimmed.startsWith('>')) {
+      const quoteText = trimmed.replace(/^>\s*/, '');
+      return (
+        <blockquote
+          key={key}
+          className={`p-4 sm:p-5 rounded-2xl border-l-4 ${themeClasses.callout} font-medium shadow-sm my-3`}
+        >
+          <div className="flex items-start gap-3">
+            <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-1" />
+            <div className="leading-relaxed">{renderInlineBold(quoteText)}</div>
+          </div>
+        </blockquote>
+      );
+    }
+
+    // Bullet or Numbered List
+    const lines = trimmed
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    if (lines.length > 0 && lines.every((l) => /^(-|\*|\d+\.)\s+/.test(l))) {
+      return (
+        <ul
+          key={key}
+          className={`space-y-2.5 p-4 sm:p-5 rounded-2xl border ${themeClasses.listBox}`}
+        >
+          {lines.map((line, lIdx) => {
+            const isNumbered = /^\d+\.\s+/.test(line);
+            const prefixMatch = line.match(/^(\d+\.)\s+/);
+            const cleanLine = line.replace(/^(-|\*|\d+\.)\s+/, '');
+            return (
+              <li key={lIdx} className="flex items-start gap-3">
+                {isNumbered ? (
+                  <span className="w-5 h-5 rounded-md bg-nac-primary/15 text-nac-primary font-extrabold text-[11px] flex items-center justify-center shrink-0 mt-1">
+                    {prefixMatch?.[1]?.replace('.', '')}
+                  </span>
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-nac-primary shrink-0 mt-2.5" />
+                )}
+                <span className="flex-1">{renderInlineBold(cleanLine)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
+
+    // Check if paragraph contains a leading line + bullet items below it
+    const firstBulletIdx = lines.findIndex((l) => /^(-|\*|\d+\.)\s+/.test(l));
+    if (firstBulletIdx > 0) {
+      const introText = lines.slice(0, firstBulletIdx).join(' ');
+      const listText = lines.slice(firstBulletIdx).join('\n');
+      return (
+        <div key={key} className="space-y-3">
+          <p className="leading-relaxed">{renderInlineBold(introText)}</p>
+          {renderBodyElement(listText, `${key}-list`, false)}
+        </div>
+      );
+    }
+
+    return (
+      <p
+        key={key}
+        className={`leading-[1.85] ${
+          isFirstParagraph
+            ? 'first-letter:text-2xl sm:first-letter:text-3xl first-letter:font-extrabold first-letter:text-nac-primary first-letter:mr-1.5 first-letter:float-left first-letter:leading-none'
+            : ''
+        }`}
+      >
+        {renderInlineBold(trimmed)}
+      </p>
+    );
+  };
+
   const renderFormattedContent = (rawContent) => {
     if (!rawContent) return null;
 
     if (/<(p|h1|h2|h3|h4|ul|ol|li|strong|br|div)\b/i.test(rawContent)) {
       return (
         <div
-          className={`max-w-none space-y-5 ${fontSizeClasses} ${themeClasses.paragraph}`}
+          className={`max-w-none space-y-4 ${fontSizeClasses} ${themeClasses.paragraph}`}
           dangerouslySetInnerHTML={{ __html: rawContent }}
         />
       );
     }
 
-    const blocks = rawContent.split(/\n\n+/);
+    const blocks = rawContent.split(/\r?\n\r?\n+/);
     let firstParagraphRendered = false;
 
     return (
-      <div className={`space-y-6 ${fontSizeClasses} ${themeClasses.paragraph} tracking-[0.01em]`}>
+      <div className={`space-y-5 ${fontSizeClasses} ${themeClasses.paragraph} tracking-[0.005em]`}>
         {blocks.map((block, idx) => {
           const trimmed = block.trim();
           if (!trimmed) return null;
 
-          // Subheading H3 / H2
+          // Subheading H3 / H2 (Separate only the first line as heading, render remaining lines as normal paragraph/list!)
           if (trimmed.startsWith('### ') || trimmed.startsWith('## ')) {
-            const headingText = trimmed.replace(/^#{2,3}\s+/, '');
+            const blockLines = trimmed.split(/\r?\n/);
+            const headingLine = blockLines[0].replace(/^#{2,3}\s+/, '').trim();
+            const restContent = blockLines.slice(1).join('\n').trim();
+
             return (
-              <h2
-                key={idx}
-                id={`section-${idx}`}
-                className={`scroll-mt-24 text-lg sm:text-2xl font-extrabold ${themeClasses.heading} pt-5 pb-1 border-b border-slate-200/40 flex items-center gap-2.5 tracking-tight`}
-              >
-                <span className="w-2 h-6 rounded-full bg-nac-primary shrink-0" />
-                <span>{headingText}</span>
-              </h2>
+              <div key={idx} className="space-y-3 pt-3">
+                <h2
+                  id={`section-${idx}`}
+                  className={`scroll-mt-28 ${fontSizeConfig.h2} font-extrabold ${themeClasses.heading} pb-1.5 border-b border-slate-200/40 flex items-center gap-2.5 tracking-tight`}
+                >
+                  <span className="w-1.5 h-5 rounded-full bg-nac-primary shrink-0" />
+                  <span>{renderInlineBold(headingLine)}</span>
+                </h2>
+                {restContent && renderBodyElement(restContent, `${idx}-body`, false)}
+              </div>
             );
           }
 
-          // Blockquote / Legal Callout (> ...)
-          if (trimmed.startsWith('>')) {
-            const quoteText = trimmed.replace(/^>\s*/, '');
-            return (
-              <blockquote
-                key={idx}
-                className={`p-5 sm:p-6 rounded-2xl border-l-4 ${themeClasses.callout} font-medium shadow-sm my-4`}
-              >
-                <div className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                  <div className="leading-relaxed">{renderInlineBold(quoteText)}</div>
-                </div>
-              </blockquote>
-            );
-          }
-
-          // Bullet or Numbered List
-          const lines = trimmed.split('\n');
-          if (lines.every((l) => /^(-|\*|\d+\.)\s+/.test(l.trim()))) {
-            return (
-              <ul
-                key={idx}
-                className={`space-y-3 p-5 sm:p-6 rounded-2xl border ${themeClasses.listBox}`}
-              >
-                {lines.map((line, lIdx) => {
-                  const isNumbered = /^\d+\.\s+/.test(line.trim());
-                  const prefixMatch = line.trim().match(/^(\d+\.)\s+/);
-                  const cleanLine = line.trim().replace(/^(-|\*|\d+\.)\s+/, '');
-                  return (
-                    <li key={lIdx} className="flex items-start gap-3">
-                      {isNumbered ? (
-                        <span className="w-6 h-6 rounded-lg bg-nac-primary/15 text-nac-primary font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                          {prefixMatch?.[1]?.replace('.', '')}
-                        </span>
-                      ) : (
-                        <span className="w-2 h-2 rounded-full bg-nac-primary shrink-0 mt-2.5" />
-                      )}
-                      <span className="flex-1">{renderInlineBold(cleanLine)}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            );
-          }
-
-          // Standard Paragraph (with subtle drop-cap on the very first paragraph)
           const isFirst = !firstParagraphRendered;
           firstParagraphRendered = true;
-
-          return (
-            <p
-              key={idx}
-              className={`leading-[1.9] ${
-                isFirst
-                  ? 'first-letter:text-3xl sm:first-letter:text-4xl first-letter:font-extrabold first-letter:text-nac-primary first-letter:mr-1.5 first-letter:float-left first-letter:leading-none'
-                  : ''
-              }`}
-            >
-              {renderInlineBold(trimmed)}
-            </p>
-          );
+          return renderBodyElement(trimmed, idx, isFirst);
         })}
       </div>
     );
@@ -536,16 +580,16 @@ export const BlogDetailPage = () => {
               <div className="p-5 sm:p-8 md:p-12">
                 <div className="max-w-[68ch] mx-auto space-y-8">
                   {/* Article Header */}
-                  <div className="space-y-5 border-b border-slate-200/50 pb-6">
+                  <div className="space-y-4 border-b border-slate-200/50 pb-6">
                     <h1
-                      className={`text-2xl sm:text-3xl md:text-4xl font-extrabold leading-tight tracking-tight ${themeClasses.heading}`}
+                      className={`${fontSizeConfig.h1} font-extrabold leading-tight tracking-tight ${themeClasses.heading}`}
                     >
                       {article.title}
                     </h1>
 
                     {article.excerpt && (
                       <p
-                        className={`text-sm sm:text-base font-medium leading-relaxed p-4 sm:p-5 rounded-2xl border-l-4 ${themeClasses.lead}`}
+                        className={`${fontSizeConfig.lead} font-medium leading-relaxed p-4 rounded-2xl border-l-4 ${themeClasses.lead}`}
                       >
                         {article.excerpt}
                       </p>
