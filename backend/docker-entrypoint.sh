@@ -37,7 +37,7 @@ mkdir -p storage/framework/cache/data storage/framework/sessions storage/framewo
 chmod -R 777 storage bootstrap/cache database 2>/dev/null || true
 
 # 5. Ensure public storage symlink
-php artisan storage:link 2>/dev/null || true
+php artisan storage:link --force 2>/dev/null || true
 
 # 6. Coordinate database initialization between 'backend' (web server) and 'queue' (worker)
 if [ "$1" = "php" ] && [ "$2" = "artisan" ] && [ "$3" = "serve" ]; then

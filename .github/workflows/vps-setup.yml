@@ -292,7 +292,8 @@ jobs:
               exit 1
             fi
 
-            echo "🧹 Menyegarkan cache konfigurasi, rute, dan view Laravel..."
+            echo "🧹 Menyegarkan cache konfigurasi, rute, view, dan storage symlink Laravel..."
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan storage:link --force || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:clear || true

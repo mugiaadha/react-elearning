@@ -326,8 +326,9 @@ jobs:
               exit 1
             fi
 
-            # 8. Refresh cache Laravel & bersihkan image Docker usang agar disk VPS tidak penuh
-            echo "🧹 Refreshing Laravel caches & pruning dangling Docker images..."
+            # 8. Refresh cache Laravel, pastikan storage symlink aktif & bersihkan image Docker usang
+            echo "🧹 Refreshing Laravel caches, storage link & pruning dangling Docker images..."
+            docker compose -f docker-compose.prod.yml exec -T backend php artisan storage:link --force || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan config:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan route:clear || true
             docker compose -f docker-compose.prod.yml exec -T backend php artisan view:clear || true
