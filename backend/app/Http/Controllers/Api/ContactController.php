@@ -29,14 +29,12 @@ class ContactController extends Controller
             'captcha_answer' => 'required|string|max:20',
         ]);
 
-        // Verify CAPTCHA from backend cache
-        $cacheKey = 'blog_captcha_' . $validated['captcha_token'];
-        $expectedAnswer = Cache::pull($cacheKey);
-
-        if ($expectedAnswer === null || trim($validated['captcha_answer']) !== trim((string) $expectedAnswer)) {
+        // Verify CAPTCHA (token, distorted image code, and anti-bot timing)
+        $captchaCheck = BlogController::verifyCaptchaChallenge($validated['captcha_token'], $validated['captcha_answer']);
+        if (!$captchaCheck['valid']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Jawaban pertanyaan keamanan belum tepat atau sudah kedaluwarsa. Silakan hitung ulang.',
+                'message' => $captchaCheck['message'],
             ], 422);
         }
 

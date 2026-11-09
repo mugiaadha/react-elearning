@@ -369,26 +369,149 @@ class BlogController extends Controller
     }
 
     /**
-     * Public: Generate anti-spam CAPTCHA challenge for blog question box
+     * Public: Generate anti-spam CAPTCHA challenge (Distorted Image SVG + Timing Check, Non-Copyable by Bots)
      */
     public function generateCaptcha()
     {
-        $a = random_int(3, 14);
-        $b = random_int(2, 9);
-        $operators = ['+', '×'];
-        $op = $operators[random_int(0, 1)];
-        $expected = $op === '+' ? ($a + $b) : ($a * $b);
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $code = '';
+        $maxIdx = strlen($alphabet) - 1;
+        for ($i = 0; $i < 5; $i++) {
+            $code .= $alphabet[random_int(0, $maxIdx)];
+        }
 
-        $token = Str::random(32);
-        \Illuminate\Support\Facades\Cache::put('blog_captcha_' . $token, (string) $expected, 900);
+        $token = Str::random(36);
+        \Illuminate\Support\Facades\Cache::put('blog_captcha_' . $token, [
+            'expected' => strtoupper($code),
+            'issued_at' => microtime(true),
+        ], 900);
+
+        $svgImage = $this->buildDistortedCaptchaSvg($code);
 
         return response()->json([
             'success' => true,
             'data' => [
                 'captcha_token' => $token,
-                'captcha_question' => "Berapa hasil dari {$a} {$op} {$b} ?",
+                'captcha_image' => 'data:image/svg+xml;base64,' . base64_encode($svgImage),
+                'captcha_hint' => 'Ketik 5 karakter yang tampil pada gambar keamanan',
             ],
         ]);
+    }
+
+    /**
+     * Validate anti-spam CAPTCHA token, code, and minimum human interaction timing
+     */
+    public static function verifyCaptchaChallenge(string $token, string $answer): array
+    {
+        $cacheKey = 'blog_captcha_' . $token;
+        $payload = \Illuminate\Support\Facades\Cache::pull($cacheKey);
+
+        if ($payload === null) {
+            return [
+                'valid' => false,
+                'message' => 'Kode keamanan sudah kedaluwarsa. Silakan muat ulang gambar keamanan.',
+            ];
+        }
+
+        // Backwards compatible if old string cache entry exists
+        $expected = is_array($payload) ? ($payload['expected'] ?? '') : (string) $payload;
+        $issuedAt = is_array($payload) ? ($payload['issued_at'] ?? 0) : 0;
+
+        // Bot timing guard: reject instant automated submissions (< 1.2 seconds from challenge creation)
+        if ($issuedAt > 0 && (microtime(true) - $issuedAt) < 1.2) {
+            return [
+                'valid' => false,
+                'message' => 'Pengiriman terlalu cepat. Silakan ketik ulang kode keamanan.',
+            ];
+        }
+
+        $cleanInput = strtoupper(preg_replace('/\s+/', '', $answer));
+        $cleanExpected = strtoupper(preg_replace('/\s+/', '', $expected));
+
+        if ($cleanInput === '' || !hash_equals($cleanExpected, $cleanInput)) {
+            return [
+                'valid' => false,
+                'message' => 'Kode keamanan belum sesuai dengan gambar. Silakan coba lagi.',
+            ];
+        }
+
+        return ['valid' => true];
+    }
+
+    /**
+     * Build a distorted visual SVG CAPTCHA with noise lines, dots, random rotation, and wave offset
+     * so simple DOM scrapers / copy-paste bots cannot read it as plain text.
+     */
+    private function buildDistortedCaptchaSvg(string $code): string
+    {
+        $width = 200;
+        $height = 56;
+        $palette = ['#38bdf8', '#fbbf24', '#34d399', '#f472b6', '#a78bfa', '#f8fafc'];
+
+        $svg = "<svg xmlns='http://www.w3.org/2000/svg' width='{$width}' height='{$height}' viewBox='0 0 {$width} {$height}'>";
+        $svg .= "<defs>";
+        $svg .= "<linearGradient id='bg' x1='0%' y1='0%' x2='100%' y2='100%'>";
+        $svg .= "<stop offset='0%' stop-color='#0f172a'/>";
+        $svg .= "<stop offset='50%' stop-color='#1e293b'/>";
+        $svg .= "<stop offset='100%' stop-color='#0f172a'/>";
+        $svg .= "</linearGradient>";
+        $svg .= "</defs>";
+        $svg .= "<rect width='100%' height='100%' rx='10' fill='url(#bg)'/>";
+
+        // Background interference grid & bezier curves
+        for ($i = 0; $i < 6; $i++) {
+            $x1 = random_int(0, 40);
+            $y1 = random_int(4, $height - 4);
+            $cx = random_int(60, 140);
+            $cy = random_int(0, $height);
+            $x2 = random_int($width - 40, $width);
+            $y2 = random_int(4, $height - 4);
+            $color = $palette[random_int(0, count($palette) - 1)];
+            $svg .= "<path d='M{$x1},{$y1} Q{$cx},{$cy} {$x2},{$y2}' stroke='{$color}' stroke-width='1.3' stroke-opacity='0.38' fill='none'/>";
+        }
+
+        // Random noise dots
+        for ($d = 0; $d < 28; $d++) {
+            $cx = random_int(6, $width - 6);
+            $cy = random_int(6, $height - 6);
+            $r = random_int(1, 2);
+            $color = $palette[random_int(0, count($palette) - 1)];
+            $svg .= "<circle cx='{$cx}' cy='{$cy}' r='{$r}' fill='{$color}' fill-opacity='0.32'/>";
+        }
+
+        // Render characters in shuffled order in DOM (while positioning them visually left-to-right via X coordinate)
+        // so even if a bot parses <text> nodes from base64 SVG, the DOM order is scrambled!
+        $chars = [];
+        $len = strlen($code);
+        for ($idx = 0; $idx < $len; $idx++) {
+            $chars[] = [
+                'char' => $code[$idx],
+                'x' => 24 + ($idx * 34) + random_int(-3, 3),
+                'y' => 36 + random_int(-5, 5),
+                'rot' => random_int(-22, 22),
+                'color' => $palette[$idx % count($palette)],
+                'size' => random_int(22, 26),
+            ];
+        }
+        shuffle($chars);
+
+        foreach ($chars as $item) {
+            $c = htmlspecialchars($item['char'], ENT_QUOTES, 'UTF-8');
+            $x = $item['x'];
+            $y = $item['y'];
+            $rot = $item['rot'];
+            $col = $item['color'];
+            $sz = $item['size'];
+            $svg .= "<text x='{$x}' y='{$y}' fill='{$col}' font-family='monospace, Courier, sans-serif' font-size='{$sz}' font-weight='900' transform='rotate({$rot} {$x} {$y})' style='user-select:none;-webkit-user-select:none;'>{$c}</text>";
+        }
+
+        // Foreground strike-through wave
+        $sy1 = random_int(18, 38);
+        $sy2 = random_int(18, 38);
+        $svg .= "<line x1='12' y1='{$sy1}' x2='" . ($width - 12) . "' y2='{$sy2}' stroke='#fbbf24' stroke-width='1.2' stroke-opacity='0.45' stroke-dasharray='4,3'/>";
+
+        $svg .= "</svg>";
+        return $svg;
     }
 
     /**
@@ -412,14 +535,12 @@ class BlogController extends Controller
             'captcha_answer' => 'required|string|max:20',
         ]);
 
-        // Verify CAPTCHA from backend cache
-        $cacheKey = 'blog_captcha_' . $validated['captcha_token'];
-        $expectedAnswer = \Illuminate\Support\Facades\Cache::pull($cacheKey);
-
-        if ($expectedAnswer === null || trim($validated['captcha_answer']) !== trim((string) $expectedAnswer)) {
+        // Verify CAPTCHA (token, distorted image code, and anti-bot timing)
+        $captchaCheck = self::verifyCaptchaChallenge($validated['captcha_token'], $validated['captcha_answer']);
+        if (!$captchaCheck['valid']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Jawaban verifikasi keamanan (CAPTCHA) belum tepat atau sudah kedaluwarsa. Silakan hitung ulang.',
+                'message' => $captchaCheck['message'],
             ], 422);
         }
 

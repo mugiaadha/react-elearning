@@ -243,19 +243,23 @@ const blogService = {
   },
 
   /**
-   * Public: Fetch a fresh math CAPTCHA challenge for the blog question form
+   * Public: Fetch a fresh distorted image CAPTCHA challenge (non-copyable by bots)
    */
   async getCaptchaChallenge() {
     try {
       const response = await apiClient.get(ENDPOINTS.BLOG_CAPTCHA);
       return response.data;
     } catch {
-      const a = Math.floor(Math.random() * 8) + 3;
-      const b = Math.floor(Math.random() * 7) + 2;
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 5; i++) {
+        code += alphabet[Math.floor(Math.random() * alphabet.length)];
+      }
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='56' viewBox='0 0 200 56'><rect width='100%' height='100%' rx='10' fill='#0f172a'/><path d='M10,20 Q95,5 190,42' stroke='#38bdf8' stroke-width='1.5' stroke-opacity='0.4' fill='none'/><path d='M12,44 Q110,50 185,14' stroke='#fbbf24' stroke-width='1.5' stroke-opacity='0.4' fill='none'/><text x='28' y='36' fill='#38bdf8' font-family='monospace' font-size='24' font-weight='bold' letter-spacing='10'>${code}</text></svg>`;
       return {
-        captcha_token: `local-${a + b}`,
-        captcha_question: `Berapa hasil dari ${a} + ${b} ?`,
-        _expected: String(a + b),
+        captcha_token: `local-${code}`,
+        captcha_image: `data:image/svg+xml;base64,${btoa(svg)}`,
+        captcha_hint: 'Ketik 5 karakter yang tampil pada gambar keamanan',
       };
     }
   },

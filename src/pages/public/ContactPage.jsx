@@ -25,7 +25,8 @@ export const ContactPage = () => {
   const [websiteTrap, setWebsiteTrap] = useState('');
   const [captcha, setCaptcha] = useState({
     captcha_token: '',
-    captcha_question: 'Memuat pertanyaan...',
+    captcha_image: '',
+    captcha_hint: 'Ketik 5 karakter pada gambar keamanan',
   });
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [loadingCaptcha, setLoadingCaptcha] = useState(false);
@@ -215,45 +216,56 @@ export const ContactPage = () => {
               ></textarea>
             </div>
 
-            {/* Security Question (CAPTCHA) */}
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-sky-100 text-nac-primary flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-[11px] font-extrabold text-slate-800 uppercase tracking-wider">
-                    Pertanyaan Keamanan
-                  </div>
-                  <div className="text-xs font-bold text-nac-primary mt-0.5 flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-lg bg-white border border-sky-200 font-mono text-slate-900 shadow-sm">
-                      {captcha.captcha_question}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={loadCaptcha}
-                      disabled={loadingCaptcha}
-                      title="Ganti pertanyaan hitung"
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-nac-primary hover:bg-white transition"
-                    >
-                      <RefreshCw
-                        className={`w-3.5 h-3.5 ${loadingCaptcha ? 'animate-spin' : ''}`}
+            {/* Security Visual CAPTCHA (Non-Copyable Image) */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="relative rounded-xl overflow-hidden border-2 border-slate-300 bg-slate-900 shadow-sm select-none shrink-0">
+                    {captcha.captcha_image ? (
+                      <img
+                        src={captcha.captcha_image}
+                        alt="Kode Keamanan"
+                        draggable={false}
+                        onContextMenu={(e) => e.preventDefault()}
+                        className="h-12 w-[180px] object-cover select-none pointer-events-none"
                       />
-                    </button>
+                    ) : (
+                      <div className="h-12 w-[180px] flex items-center justify-center text-xs text-slate-400">
+                        Memuat kode...
+                      </div>
+                    )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={loadCaptcha}
+                    disabled={loadingCaptcha}
+                    title="Ganti gambar kode keamanan"
+                    className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-nac-primary hover:border-nac-primary transition shadow-sm"
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 ${loadingCaptcha ? 'animate-spin text-nac-primary' : ''}`}
+                    />
+                  </button>
+                </div>
+
+                <div className="w-full sm:w-44">
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={captchaAnswer}
+                    onChange={(e) => setCaptchaAnswer(e.target.value.toUpperCase())}
+                    placeholder="KETIK 5 KARAKTER"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-center font-mono text-xs font-black tracking-[0.22em] uppercase text-slate-900 focus:ring-2 focus:ring-nac-primary focus:outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="w-full sm:w-40">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  required
-                  value={captchaAnswer}
-                  onChange={(e) => setCaptchaAnswer(e.target.value)}
-                  placeholder="Ketik hasil angka..."
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-center font-mono font-bold text-slate-900 focus:ring-2 focus:ring-nac-primary focus:outline-none"
-                />
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                <ShieldCheck className="w-3.5 h-3.5 text-nac-primary shrink-0" />
+                <span>Ketik 5 huruf/angka pada gambar di atas (tidak peka huruf besar/kecil).</span>
               </div>
             </div>
 

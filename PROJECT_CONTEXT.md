@@ -154,7 +154,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 - `POST /certificates` : Terbitkan sertifikat kelulusan (nilai & yudisium dihitung dinamis dari submission).
 - `GET  /certificates/{certId}/verify` : Verifikasi keabsahan sertifikat publik via QR Code.
 - `GET  /blogs` : Katalog artikel blog & wawasan pajak publik (filter kategori & pencarian, 9 kajian pajak).
-- `GET  /blogs/captcha/challenge` : Generate tantangan CAPTCHA matematika anti-spam bot yang disimpan di Cache backend.
+- `GET  /blogs/captcha/challenge` : Generate tantangan CAPTCHA visual (distorted SVG image base64 dengan pengacakan urutan node DOM, garis kurva bezier acak, noise, & validasi timing anti-bot) yang disimpan satu kali pakai (`Cache::pull`) di Cache backend.
 - `GET  /blogs/{slugOrId}` : Detail artikel blog publik + increment `views_count` + 3 artikel terkait.
 - `POST /blogs/{slugOrId}/ask` : Kirim pertanyaan dari bawah artikel blog (divalidasi CAPTCHA & honeypot) ke alamat `email` pada tabel `company_profile` melalui antrean background worker (`SendTemplateEmailJob`).
 - `POST /contact` : Kirim pesan dari halaman Hubungi Kami (divalidasi CAPTCHA & honeypot), simpan ke tabel `contacts`, dan teruskan ke alamat `email` pada tabel `company_profile` melalui antrean background worker (`SendTemplateEmailJob`).
