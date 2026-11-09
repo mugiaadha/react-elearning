@@ -21,6 +21,7 @@ import BrevetCatalogPage from '../pages/public/BrevetCatalogPage';
 import BrevetDetailPage from '../pages/public/BrevetDetailPage';
 import AboutPage from '../pages/public/AboutPage';
 import BlogPage from '../pages/public/BlogPage';
+import BlogDetailPage from '../pages/public/BlogDetailPage';
 import ContactPage from '../pages/public/ContactPage';
 import LoginPage from '../pages/public/LoginPage';
 import RegisterPage from '../pages/public/RegisterPage';
@@ -50,6 +51,7 @@ import AdminTeachersPage from '../pages/admin/AdminTeachersPage';
 import AdminBrevetsPage from '../pages/admin/AdminBrevetsPage';
 import AdminCertificatesPage from '../pages/admin/AdminCertificatesPage';
 import AdminEmailTemplatesPage from '../pages/admin/AdminEmailTemplatesPage';
+import AdminBlogsPage from '../pages/admin/AdminBlogsPage';
 
 export const AppRoutes = () => {
   return (
@@ -63,6 +65,7 @@ export const AppRoutes = () => {
         <Route path="/brevet/:slug" element={<BrevetDetailPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/:slug" element={<BlogDetailPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<RequireGuest><LoginPage /></RequireGuest>} />
         <Route path="/register" element={<RequireGuest><RegisterPage /></RequireGuest>} />
@@ -194,6 +197,7 @@ export const AppRoutes = () => {
         <Route path="students" element={<AdminStudentsPage />} />
         <Route path="teachers" element={<AdminTeachersPage />} />
         <Route path="brevets" element={<AdminBrevetsPage />} />
+        <Route path="blogs" element={<AdminBlogsPage />} />
         <Route path="certificates" element={<AdminCertificatesPage />} />
         <Route path="email-templates" element={<AdminEmailTemplatesPage />} />
       </Route>

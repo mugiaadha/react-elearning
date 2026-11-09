@@ -72,6 +72,12 @@ export const ENDPOINTS = {
 
   // Public Contact
   CONTACT: '/contact',
+
+  // Blog & Tax Insights CMS
+  BLOGS: '/blogs',
+  BLOG_DETAIL: (slugOrId) => `/blogs/${slugOrId}`,
+  ADMIN_BLOGS: '/admin/blogs',
+  ADMIN_BLOG_DETAIL: (id) => `/admin/blogs/${id}`,
 };
 
 export default ENDPOINTS;

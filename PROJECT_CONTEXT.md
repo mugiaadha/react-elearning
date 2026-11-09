@@ -41,6 +41,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 │   │   │   ├── apiClient.js          # Axios instance, Bearer token interceptor, standard response unwrapper
 │   │   │   └── endpoints.js          # Centralized contract URL API backend
 │   │   ├── brevetService.js          # Fetch katalog program & detail kurikulum
+│   │   ├── blogService.js            # Fetch artikel blog publik & CRUD upload konten backoffice
 │   │   ├── userService.js            # Profile, verification email, password, switch active brevet
 │   │   ├── paymentService.js         # Midtrans Snap Token, status sync, instant simulation, approval
 │   │   └── certificateService.js     # Validasi QR code & penerbitan sertifikat digital
@@ -49,7 +50,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 │   │   ├── FrontofficePortalLayout   # Sidebar dashboard untuk Student & Teacher
 │   │   └── BackofficeLayout          # Admin CMS management layout
 │   ├── pages/
-│   │   ├── public/                   # HomePage, BrevetCatalog, BrevetDetail, Login, Register, VerifyEmail
+│   │   ├── public/                   # HomePage, BrevetCatalog, BrevetDetail, BlogPage, BlogDetailPage, Login, Register, VerifyEmail
 │   │   ├── onboarding/               # PaymentPendingPage (Midtrans Snap multi-channel payment gateway)
 │   │   ├── student/                  # Pola Arsitektur Role Student:
 │   │   │   ├── StudentDashboard.jsx  # File halaman utama langsung di root role
@@ -75,7 +76,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 │   │   │       ├── AddLessonModal.jsx         # Modal tambah bab materi video / file / opsional
 │   │   │       ├── EditExamModal.jsx          # Modal konfigurasi ujian studi kasus
 │   │   │       └── TeacherModuleCard.jsx      # Kartu modul, daftar materi, & status ujian
-│   │   └── admin/                    # AdminDashboard, AdminPayments, AdminStudents, AdminTeachers, Brevets, EmailTemplates
+│   │   └── admin/                    # AdminDashboard, AdminPayments, AdminStudents, AdminTeachers, Brevets, Blogs, EmailTemplates
 │   └── components/
 │       ├── auth/GoogleAuthButton.jsx # Google OAuth 2.0 & instant account switcher
 │       └── common/Badge.jsx          # Status pill visual standar (APPROVED, PENDING, REVISION, dll)
@@ -111,6 +112,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 | **`certificates`**| Sertifikat digital resmi kelulusan (`certificate_id`, `user_id`, `recipient_name`, `course_title`, `grade`, `score`, `verification_url`). | `belongsTo(User)` |
 | **`email_templates`** | Template email dinamis SMTP (`template_key`, `subject`, `body_html`, `variables_json`). | Standalone CMS |
 | **`materials`** | Modul materi tambahan unggahan pengajar (`brevet_id`, `title`, `target_module`, `file_type`, `file_url`). | `belongsTo(Brevet)` |
+| **`blog_posts`** | Artikel blog & wawasan pajak (`id`, `title`, `slug`, `excerpt`, `content`, `category`, `image_url`, `attachment_url`, `attachment_name`, `read_time`, `author_name`, `author_role`, `tags`, `status`: `PUBLISHED`/`DRAFT`, `is_featured`, `views_count`). | Standalone CMS |
 
 ---
 
@@ -148,6 +150,10 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 - `GET  /certificates` : Daftar sertifikat (otomatis ter-filter per user jika siswa yang login).
 - `POST /certificates` : Terbitkan sertifikat kelulusan (nilai & yudisium dihitung dinamis dari submission).
 - `GET  /certificates/{certId}/verify` : Verifikasi keabsahan sertifikat publik via QR Code.
+- `GET  /blogs` : Katalog artikel blog & wawasan pajak publik (filter kategori & pencarian).
+- `GET  /blogs/{slugOrId}` : Detail artikel blog publik + increment `views_count` + 3 artikel terkait.
+- `GET/POST /admin/blogs` : Manajemen & upload konten artikel blog baru di backoffice (mendukung upload file gambar sampul & lampiran dokumen PDF/Excel dengan proteksi Anti-Webshell).
+- `PUT/POST/DELETE /admin/blogs/{id}` : Edit konten/status publikasi atau hapus artikel blog.
 
 ### D. Midtrans Payments Gateway & Monitoring
 - `POST /payments/snap-token` : Inisiasi transaksi dan ambil Snap Token Midtrans untuk tagihan siswa.

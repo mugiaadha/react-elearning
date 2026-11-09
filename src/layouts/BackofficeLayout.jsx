@@ -8,7 +8,7 @@ import {
   CreditCard,
   Users,
   GraduationCap,
-  Award,
+  Newspaper,
 } from 'lucide-react';
 
 export const BackofficeLayout = () => {
@@ -37,9 +37,9 @@ export const BackofficeLayout = () => {
       icon: GraduationCap,
     },
     {
-      label: 'Sertifikat',
-      path: '/admin/certificates',
-      icon: Award,
+      label: 'Blog CMS',
+      path: '/admin/blogs',
+      icon: Newspaper,
     },
   ];
 

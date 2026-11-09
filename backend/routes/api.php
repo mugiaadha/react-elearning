@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\BrevetController;
 use App\Http\Controllers\Api\CertificateController;
 use App\Http\Controllers\Api\ContactController;
@@ -94,6 +95,14 @@ $registerRoutes = function () {
 
     // 8. Contact
     Route::post('/contact', [ContactController::class, 'store']);
+
+    // 9. Blog & Tax Insights CMS (Public & Backoffice)
+    Route::get('/blogs', [BlogController::class, 'index']);
+    Route::get('/blogs/{slugOrId}', [BlogController::class, 'show']);
+    Route::get('/admin/blogs', [BlogController::class, 'adminIndex']);
+    Route::post('/admin/blogs', [BlogController::class, 'store']);
+    Route::match(['put', 'post'], '/admin/blogs/{id}', [BlogController::class, 'update']);
+    Route::delete('/admin/blogs/{id}', [BlogController::class, 'destroy']);
 };
 
 // Register directly under /api/...
