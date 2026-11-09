@@ -138,7 +138,9 @@ class BlogController extends Controller
         }
 
         // Handle thumbnail image upload if provided
-        $imageUrl = $validated['image_url'] ?? 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1000&q=80';
+        $imageUrl = !empty($validated['image_url'])
+            ? $validated['image_url']
+            : 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1000&q=80';
         if ($request->hasFile('image_file')) {
             $uploadResult = $this->handleSafeUpload(
                 $request->file('image_file'),
@@ -152,8 +154,8 @@ class BlogController extends Controller
         }
 
         // Handle optional attachment file upload (PDF/Doc/Excel regulasi)
-        $attachmentUrl = $validated['attachment_url'] ?? null;
-        $attachmentName = $validated['attachment_name'] ?? null;
+        $attachmentUrl = !empty($validated['attachment_url']) ? $validated['attachment_url'] : null;
+        $attachmentName = !empty($validated['attachment_name']) ? $validated['attachment_name'] : null;
         if ($request->hasFile('attachment_file')) {
             $uploadResult = $this->handleSafeUpload(
                 $request->file('attachment_file'),
@@ -189,14 +191,14 @@ class BlogController extends Controller
             'slug' => $slug,
             'excerpt' => $excerpt,
             'content' => $content,
-            'category' => $validated['category'] ?: 'Regulasi Pajak',
+            'category' => ($validated['category'] ?? null) ?: 'Regulasi Pajak',
             'image_url' => $imageUrl,
             'attachment_url' => $attachmentUrl,
             'attachment_name' => $attachmentName,
             'read_time' => $readTime,
-            'author_name' => $validated['author_name'] ?: 'Bambang Sudarmono, S.E., Ak., M.Ak., BKP',
-            'author_role' => $validated['author_role'] ?: 'Managing Partner & Konsultan Pajak BKP',
-            'author_avatar' => $validated['author_avatar'] ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+            'author_name' => ($validated['author_name'] ?? null) ?: 'Bambang Sudarmono, S.E., Ak., M.Ak., BKP',
+            'author_role' => ($validated['author_role'] ?? null) ?: 'Managing Partner & Konsultan Pajak BKP',
+            'author_avatar' => ($validated['author_avatar'] ?? null) ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
             'tags' => $tags,
             'status' => $status,
             'is_featured' => $isFeatured,
@@ -364,6 +366,104 @@ class BlogController extends Controller
             'success' => true,
             'message' => "Artikel '{$title}' berhasil dihapus.",
         ]);
+    }
+
+    /**
+     * Public: Generate anti-spam CAPTCHA challenge for blog question box
+     */
+    public function generateCaptcha()
+    {
+        $a = random_int(3, 14);
+        $b = random_int(2, 9);
+        $operators = ['+', '×'];
+        $op = $operators[random_int(0, 1)];
+        $expected = $op === '+' ? ($a + $b) : ($a * $b);
+
+        $token = Str::random(32);
+        \Illuminate\Support\Facades\Cache::put('blog_captcha_' . $token, (string) $expected, 900);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'captcha_token' => $token,
+                'captcha_question' => "Berapa hasil dari {$a} {$op} {$b} ?",
+            ],
+        ]);
+    }
+
+    /**
+     * Public: Submit question from bottom of blog article to company_profile email via Queue
+     */
+    public function askQuestion(Request $request, $slugOrId)
+    {
+        // Honeypot check (if hidden website_trap field is filled by a bot, reject)
+        if (!empty($request->input('website_trap'))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Permintaan terdeteksi sebagai aktivitas otomatis (bot).',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:120',
+            'contact' => 'required|string|max:150',
+            'question' => 'required|string|min:10|max:3000',
+            'captcha_token' => 'required|string',
+            'captcha_answer' => 'required|string|max:20',
+        ]);
+
+        // Verify CAPTCHA from backend cache
+        $cacheKey = 'blog_captcha_' . $validated['captcha_token'];
+        $expectedAnswer = \Illuminate\Support\Facades\Cache::pull($cacheKey);
+
+        if ($expectedAnswer === null || trim($validated['captcha_answer']) !== trim((string) $expectedAnswer)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jawaban verifikasi keamanan (CAPTCHA) belum tepat atau sudah kedaluwarsa. Silakan hitung ulang.',
+            ], 422);
+        }
+
+        $post = BlogPost::where('slug', $slugOrId)->first();
+        if (!$post && is_numeric($slugOrId)) {
+            $post = BlogPost::find($slugOrId);
+        }
+
+        $articleTitle = $post?->title ?? 'Artikel Wawasan Pajak';
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+        $articleUrl = $post ? "{$frontendUrl}/blog/{$post->slug}" : "{$frontendUrl}/blog";
+
+        // Also store in contacts table for administrative log
+        try {
+            \App\Models\Contact::create([
+                'name' => $validated['name'],
+                'contact' => $validated['contact'],
+                'message' => "[Tanya Artikel: {$articleTitle}] " . $validated['question'],
+            ]);
+        } catch (\Throwable $e) {
+            // Non-blocking
+        }
+
+        // Dispatch email to CompanyProfile email via Queue (SendTemplateEmailJob)
+        $mailService = new \App\Services\MailService();
+        $result = $mailService->sendBlogInquiryToCompany([
+            'name' => $validated['name'],
+            'contact' => $validated['contact'],
+            'question' => $validated['question'],
+            'article_title' => $articleTitle,
+            'article_url' => $articleUrl,
+        ]);
+
+        $company = \App\Models\CompanyProfile::getCached();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Pertanyaan Anda berhasil dikirim ke {$company->company_name} ({$company->email}). Tim konsultan kami akan segera menghubungi Anda!",
+            'data' => [
+                'target_email' => $company->email,
+                'company_name' => $company->company_name,
+                'queued' => $result['success'] ?? true,
+            ],
+        ], 201);
     }
 
     /**

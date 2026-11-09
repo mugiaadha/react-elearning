@@ -43,7 +43,7 @@ export const AdminCertificatesPage = () => {
             Audit & Log Penerbitan Sertifikat Digital
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Daftar seluruh sertifikat resmi yang telah diterbitkan dan tersimpan di database QR validasi.
+            Daftar seluruh sertifikat kelulusan resmi yang telah diterbitkan dan dilengkapi kode QR validasi.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export const AdminCertificatesPage = () => {
       {loading ? (
         <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-12 text-center text-slate-400">
           <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-          <p className="text-xs">Memuat log pangkalan data sertifikat digital...</p>
+          <p className="text-xs">Memuat daftar sertifikat digital...</p>
         </div>
       ) : (
         <div className="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">

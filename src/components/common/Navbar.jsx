@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useCompanyProfile } from '../../context/CompanyProfileContext';
 import ProfileSettingsModal from './ProfileSettingsModal';
 import {
   Menu,
@@ -17,6 +18,7 @@ import {
 export const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { showToast } = useToast();
+  const { company } = useCompanyProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -271,14 +273,16 @@ export const Navbar = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group overflow-hidden">
               <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-nac-navy to-nac-primary flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform duration-200 shrink-0">
-                <span className="font-extrabold text-base sm:text-xl tracking-tight text-amber-400">NAC</span>
+                <span className="font-extrabold text-base sm:text-xl tracking-tight text-amber-400">
+                  {company.short_name || 'NAC'}
+                </span>
               </div>
               <div className="truncate">
-                <div className="font-extrabold text-sm sm:text-lg text-slate-900 tracking-tight leading-none truncate">
-                  NAC TAX CENTER
+                <div className="font-extrabold text-sm sm:text-lg text-slate-900 tracking-tight leading-none truncate uppercase">
+                  {company.company_name || 'NAC TAX CENTER'}
                 </div>
                 <div className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-wide mt-0.5 truncate hidden xs:block">
-                  Pusat Pelatihan & Sertifikasi Brevet Pajak
+                  {company.tagline || 'Pusat Pelatihan & Sertifikasi Brevet Pajak'}
                 </div>
               </div>
             </Link>

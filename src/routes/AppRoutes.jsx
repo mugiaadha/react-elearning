@@ -52,6 +52,7 @@ import AdminBrevetsPage from '../pages/admin/AdminBrevetsPage';
 import AdminCertificatesPage from '../pages/admin/AdminCertificatesPage';
 import AdminEmailTemplatesPage from '../pages/admin/AdminEmailTemplatesPage';
 import AdminBlogsPage from '../pages/admin/AdminBlogsPage';
+import AdminCompanyProfilePage from '../pages/admin/AdminCompanyProfilePage';
 
 export const AppRoutes = () => {
   return (
@@ -200,6 +201,7 @@ export const AppRoutes = () => {
         <Route path="blogs" element={<AdminBlogsPage />} />
         <Route path="certificates" element={<AdminCertificatesPage />} />
         <Route path="email-templates" element={<AdminEmailTemplatesPage />} />
+        <Route path="company-profile" element={<AdminCompanyProfilePage />} />
       </Route>
 
       {/* Fallback route */}

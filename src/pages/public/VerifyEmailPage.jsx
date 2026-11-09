@@ -151,7 +151,7 @@ export const VerifyEmailPage = () => {
 
     try {
       setResending(true);
-      showToast('Mengirimkan kode verifikasi baru via SMTP...', 'loading', 2000);
+      showToast('Mengirimkan kode verifikasi baru ke email Anda...', 'loading', 2000);
       const res = await userService.sendVerificationEmail(email.trim());
 
       if (res?.code) {

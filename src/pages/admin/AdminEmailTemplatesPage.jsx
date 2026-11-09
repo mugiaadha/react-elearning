@@ -37,7 +37,7 @@ export const AdminEmailTemplatesPage = () => {
         if (found) setSelectedTemplate(found);
       }
       if (isManual) {
-        showToast('Template email master berhasil diperbarui dari database.', 'info', 2500);
+        showToast('Daftar template email berhasil diperbarui.', 'info', 2500);
       }
     } catch (err) {
       console.error(err);
@@ -58,17 +58,17 @@ export const AdminEmailTemplatesPage = () => {
     }
 
     setSendingTest(true);
-    showToast(`Mengirim email uji coba "${selectedTemplate.name}" via SMTP...`, 'loading', 2500);
+    showToast(`Mengirim email uji coba "${selectedTemplate.name}"...`, 'loading', 2500);
     try {
       const res = await userService.testSendEmailTemplate(testEmail.trim(), selectedTemplate.slug);
       if (res.success) {
-        showToast(`Email berhasil dikirim ke ${testEmail}! (SMTP status: OK)`, 'success', 4000);
+        showToast(`Email uji coba berhasil dikirim ke ${testEmail}!`, 'success', 4000);
       } else {
-        showToast(res.message || 'Gagal mengirim email via SMTP.', 'warning', 4500);
+        showToast(res.message || 'Gagal mengirim email uji coba.', 'warning', 4500);
       }
     } catch (err) {
       console.error(err);
-      showToast(err.message || 'Kesalahan koneksi SMTP.', 'error', 4000);
+      showToast(err.message || 'Gagal mengirim email uji coba.', 'error', 4000);
     } finally {
       setSendingTest(false);
     }
@@ -126,17 +126,17 @@ export const AdminEmailTemplatesPage = () => {
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Mail className="w-5 h-5 text-amber-400" />
-            Master Template Email & Layanan SMTP
+            Template Email Notifikasi Otomatis
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Template email transaksional resmi tersimpan di database MariaDB & dikirim via transport SMTP.
+            Kelola desain dan isi pesan email resmi untuk verifikasi pendaftaran, sambutan siswa baru, dan undangan pengajar.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-xs text-slate-300 border border-slate-700">
             <Server className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Driver: SMTP / Mailer</span>
+            <span>Pengiriman Otomatis Aktif</span>
           </span>
 
           <button
@@ -153,14 +153,14 @@ export const AdminEmailTemplatesPage = () => {
       {loading && !selectedTemplate ? (
         <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-12 text-center text-slate-400">
           <Loader2 className="w-8 h-8 animate-spin text-amber-400 mx-auto mb-2" />
-          <p className="text-xs">Memuat master template email dari database...</p>
+          <p className="text-xs">Memuat daftar template email...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left: Template List */}
           <div className="lg:col-span-4 space-y-3">
             <div className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-              Daftar Master Template ({templates.length})
+              Daftar Template Email ({templates.length})
             </div>
 
             <div className="space-y-2">
@@ -195,10 +195,10 @@ export const AdminEmailTemplatesPage = () => {
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-white">
                   <Send className="w-4 h-4 text-sky-400" />
-                  <span>Uji Pengiriman SMTP Langsung</span>
+                  <span>Kirim Email Uji Coba</span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Kirim template <strong>{selectedTemplate.slug}</strong> ke alamat email tujuan untuk menguji fungsionalitas server SMTP.
+                  Kirim contoh tampilan <strong>{selectedTemplate.name}</strong> ke alamat email Anda untuk memeriksa hasil tampilan di kotak masuk.
                 </p>
 
                 <div className="space-y-2">
@@ -217,12 +217,12 @@ export const AdminEmailTemplatesPage = () => {
                     {sendingTest ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Mengirim via SMTP...</span>
+                        <span>Mengirim Email...</span>
                       </>
                     ) : (
                       <>
                         <Send className="w-3.5 h-3.5" />
-                        <span>Kirim Email Percobaan</span>
+                        <span>Kirim Contoh Email</span>
                       </>
                     )}
                   </button>

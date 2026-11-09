@@ -1,8 +1,11 @@
 import React from 'react';
-import { ShieldCheck, Award, BookOpen, Users, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCompanyProfile } from '../../context/CompanyProfileContext';
 
 export const AboutPage = () => {
+  const { company } = useCompanyProfile();
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-10 sm:space-y-12">
       <div className="text-center max-w-3xl mx-auto space-y-3">
@@ -10,21 +13,23 @@ export const AboutPage = () => {
           Tentang Lembaga
         </span>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Pusat Unggulan Pelatihan & Sertifikasi Brevet Perpajakan
+          {company.tagline || 'Pusat Unggulan Pelatihan & Sertifikasi Brevet Perpajakan'}
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-          NAC Tax Center didirikan sebagai wadah akselerasi kompetensi perpajakan praktis bagi mahasiswa, akuntan korporasi, dan calon konsultan pajak di Indonesia.
+          {company.company_name} didirikan sebagai wadah akselerasi kompetensi perpajakan praktis bagi mahasiswa, akuntan korporasi, dan calon konsultan pajak di Indonesia.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center bg-white p-5 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
         <div className="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900">Misi & Standar Kualitas NAC</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+            Misi & Standar Kualitas {company.short_name || company.company_name}
+          </h2>
           <p>
             Dengan disahkannya UU Harmonisasi Peraturan Perpajakan (UU HPP) serta peluncuran sistem Coretax DJP terintegrasi, lanskap administrasi pajak Indonesia mengalami revolusi digital terbesar dalam sejarah.
           </p>
           <p>
-            NAC Tax Center hadir memastikan setiap praktisi menguasai tidak hanya teori kepatuhan formal, tetapi juga keterampilan teknis pengoperasian aplikasi mutakhir (e-Faktur 4.0, e-Bupot Unifikasi, hingga Taxpayer Ledger Coretax).
+            {company.company_name} hadir memastikan setiap praktisi menguasai tidak hanya teori kepatuhan formal, tetapi juga keterampilan teknis pengoperasian aplikasi mutakhir (e-Faktur 4.0, e-Bupot Unifikasi, hingga Taxpayer Ledger Coretax).
           </p>
           <div className="pt-2 flex flex-col gap-2 font-medium text-slate-800">
             <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import brevetService from '../../services/brevetService';
+import { useCompanyProfile } from '../../context/CompanyProfileContext';
 import {
   ShieldCheck,
   Award,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export const HomePage = () => {
+  const { company } = useCompanyProfile();
   const [brevets, setBrevets] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +41,7 @@ export const HomePage = () => {
           <div className="text-center max-w-3xl mx-auto space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-amber-300">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Pusat Pelatihan Brevet Pajak Terakreditasi 2026</span>
+              <span>{company.accreditation_badge || 'Pusat Pelatihan Brevet Pajak Terakreditasi 2026'}</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
@@ -195,7 +197,7 @@ export const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-              Mengapa Memilih NAC Tax Center?
+              Mengapa Memilih {company.company_name}?
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
               Standar mutu tinggi untuk menjamin kesiapan Anda menjadi profesional perpajakan kompeten.

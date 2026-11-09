@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\BrevetController;
 use App\Http\Controllers\Api\CertificateController;
+use App\Http\Controllers\Api\CompanyProfileController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\PaymentController;
@@ -97,12 +98,18 @@ $registerRoutes = function () {
     Route::post('/contact', [ContactController::class, 'store']);
 
     // 9. Blog & Tax Insights CMS (Public & Backoffice)
+    Route::get('/blogs/captcha/challenge', [BlogController::class, 'generateCaptcha']);
     Route::get('/blogs', [BlogController::class, 'index']);
     Route::get('/blogs/{slugOrId}', [BlogController::class, 'show']);
+    Route::post('/blogs/{slugOrId}/ask', [BlogController::class, 'askQuestion']);
     Route::get('/admin/blogs', [BlogController::class, 'adminIndex']);
     Route::post('/admin/blogs', [BlogController::class, 'store']);
     Route::match(['put', 'post'], '/admin/blogs/{id}', [BlogController::class, 'update']);
     Route::delete('/admin/blogs/{id}', [BlogController::class, 'destroy']);
+
+    // 10. Company Profile (Cached Public & Admin Update)
+    Route::get('/company-profile', [CompanyProfileController::class, 'show']);
+    Route::match(['put', 'post'], '/admin/company-profile', [CompanyProfileController::class, 'update']);
 };
 
 // Register directly under /api/...

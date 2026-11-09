@@ -32,6 +32,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 │   ├── config/devMode.js             # Toggle dev-helper & test credentials
 │   ├── context/
 │   │   ├── AuthContext.jsx           # Global user state, login, register, switchRole, token management
+│   │   ├── CompanyProfileContext.jsx # Global cached company_profile state (nama perusahaan, email, kontak)
 │   │   └── ToastContext.jsx          # Toast notification provider
 │   ├── routes/
 │   │   ├── AppRoutes.jsx             # Definisi semua rute public, student, teacher, & admin
@@ -41,7 +42,8 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 │   │   │   ├── apiClient.js          # Axios instance, Bearer token interceptor, standard response unwrapper
 │   │   │   └── endpoints.js          # Centralized contract URL API backend
 │   │   ├── brevetService.js          # Fetch katalog program & detail kurikulum
-│   │   ├── blogService.js            # Fetch artikel blog publik & CRUD upload konten backoffice
+│   │   ├── blogService.js            # Fetch artikel blog publik, CAPTCHA, tanya artikel, & CRUD upload konten
+│   │   ├── companyProfileService.js  # Fetch & update company_profile dengan client/server cache
 │   │   ├── userService.js            # Profile, verification email, password, switch active brevet
 │   │   ├── paymentService.js         # Midtrans Snap Token, status sync, instant simulation, approval
 │   │   └── certificateService.js     # Validasi QR code & penerbitan sertifikat digital
@@ -113,6 +115,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 | **`email_templates`** | Template email dinamis SMTP (`template_key`, `subject`, `body_html`, `variables_json`). | Standalone CMS |
 | **`materials`** | Modul materi tambahan unggahan pengajar (`brevet_id`, `title`, `target_module`, `file_type`, `file_url`). | `belongsTo(Brevet)` |
 | **`blog_posts`** | Artikel blog & wawasan pajak (`id`, `title`, `slug`, `excerpt`, `content`, `category`, `image_url`, `attachment_url`, `attachment_name`, `read_time`, `author_name`, `author_role`, `tags`, `status`: `PUBLISHED`/`DRAFT`, `is_featured`, `views_count`). | Standalone CMS |
+| **`company_profile`** | Profil & identitas dinamis perusahaan (`company_name`, `short_name`, `tagline`, `description`, `email`, `admission_email`, `phone`, `whatsapp`, `address`, `director_name`, `copyright_text`) — di-cache 24 jam via `Cache::remember`. | Singleton (Cached) |
 
 ---
 
@@ -150,10 +153,14 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 - `GET  /certificates` : Daftar sertifikat (otomatis ter-filter per user jika siswa yang login).
 - `POST /certificates` : Terbitkan sertifikat kelulusan (nilai & yudisium dihitung dinamis dari submission).
 - `GET  /certificates/{certId}/verify` : Verifikasi keabsahan sertifikat publik via QR Code.
-- `GET  /blogs` : Katalog artikel blog & wawasan pajak publik (filter kategori & pencarian).
+- `GET  /blogs` : Katalog artikel blog & wawasan pajak publik (filter kategori & pencarian, 9 kajian pajak).
+- `GET  /blogs/captcha/challenge` : Generate tantangan CAPTCHA matematika anti-spam bot yang disimpan di Cache backend.
 - `GET  /blogs/{slugOrId}` : Detail artikel blog publik + increment `views_count` + 3 artikel terkait.
+- `POST /blogs/{slugOrId}/ask` : Kirim pertanyaan dari bawah artikel blog (divalidasi CAPTCHA & honeypot) ke alamat `email` pada tabel `company_profile` melalui antrean background worker (`SendTemplateEmailJob`).
 - `GET/POST /admin/blogs` : Manajemen & upload konten artikel blog baru di backoffice (mendukung upload file gambar sampul & lampiran dokumen PDF/Excel dengan proteksi Anti-Webshell).
 - `PUT/POST/DELETE /admin/blogs/{id}` : Edit konten/status publikasi atau hapus artikel blog.
+- `GET  /company-profile` : Ambil identitas profil perusahaan dari cache backend (`CompanyProfile::getCached()`).
+- `PUT/POST /admin/company-profile` : Perbarui identitas perusahaan di tabel `company_profile` dan otomatis flush cache.
 
 ### D. Midtrans Payments Gateway & Monitoring
 - `POST /payments/snap-token` : Inisiasi transaksi dan ambil Snap Token Midtrans untuk tagihan siswa.

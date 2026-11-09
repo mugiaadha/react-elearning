@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { useCompanyProfile } from '../../context/CompanyProfileContext';
 import apiClient from '../../services/api/apiClient';
 import ENDPOINTS from '../../services/api/endpoints';
 
 export const ContactPage = () => {
   const { showToast } = useToast();
+  const { company } = useCompanyProfile();
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [message, setMessage] = useState('');
@@ -32,7 +34,9 @@ export const ContactPage = () => {
         message: message.trim(),
       });
 
-      const successMsg = res.message || 'Pesan Anda telah berhasil dikirim! Tim admisi kami akan segera menghubungi Anda.';
+      const successMsg =
+        res.message ||
+        'Pesan Anda telah berhasil dikirim! Tim admisi kami akan segera menghubungi Anda.';
       setSuccess(successMsg);
       showToast(successMsg, 'success', 4500);
       setName('');
@@ -55,7 +59,7 @@ export const ContactPage = () => {
           Layanan Mahasiswa & Korporasi
         </span>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Hubungi Sekretariat NAC Tax Center
+          Hubungi Sekretariat {company.company_name}
         </h1>
         <p className="text-xs sm:text-sm text-slate-600">
           Konsultasi pendaftaran, permohonan in-house training perusahaan, dan informasi jadwal pelatihan.
@@ -70,7 +74,7 @@ export const ContactPage = () => {
               <MapPin className="w-4 h-4 text-amber-400 mt-1 shrink-0" />
               <div>
                 <strong className="block text-white">Alamat Kantor:</strong>
-                <p className="text-slate-400">NAC Tax Tower Lt. 8, Jl. HR Rasuna Said Kav. C-22, Kuningan, Jakarta Selatan 12920</p>
+                <p className="text-slate-400">{company.address}</p>
               </div>
             </div>
 
@@ -78,7 +82,9 @@ export const ContactPage = () => {
               <Phone className="w-4 h-4 text-amber-400 shrink-0" />
               <div>
                 <strong className="block text-white">Telepon / WhatsApp:</strong>
-                <p className="text-slate-400">+62 812-8890-4123 (Hotline Mahasiswa)</p>
+                <p className="text-slate-400">
+                  {company.whatsapp || company.phone} (Hotline Mahasiswa)
+                </p>
               </div>
             </div>
 
@@ -86,7 +92,12 @@ export const ContactPage = () => {
               <Mail className="w-4 h-4 text-amber-400 shrink-0" />
               <div>
                 <strong className="block text-white">Email Resmi:</strong>
-                <p className="text-slate-400">info@nactaxcenter.id / admisi@nactaxcenter.id</p>
+                <p className="text-slate-400">
+                  {company.email}
+                  {company.admission_email && company.admission_email !== company.email
+                    ? ` / ${company.admission_email}`
+                    : ''}
+                </p>
               </div>
             </div>
           </div>

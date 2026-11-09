@@ -94,7 +94,7 @@ export const AdminTeachersPage = () => {
 
     try {
       setSubmitting(true);
-      showToast('Mendaftarkan akun instruktur & menjadwalkan email via SMTP...', 'loading', 3000);
+      showToast('Mendaftarkan akun instruktur & mengirimkan email undangan...', 'loading', 3000);
 
       const res = await apiClient.post(ENDPOINTS.ADMIN_TEACHERS, {
         name: formData.name.trim(),
@@ -120,7 +120,7 @@ export const AdminTeachersPage = () => {
     if (!confirm(`Kirim ulang email kredensial kata sandi baru untuk ${teacher.name}?`)) return;
 
     try {
-      showToast(`Mengirim ulang kredensial ke ${teacher.email} via SMTP...`, 'loading', 2500);
+      showToast(`Mengirim ulang informasi login ke ${teacher.email}...`, 'loading', 2500);
       const res = await apiClient.post(ENDPOINTS.ADMIN_TEACHER_RESEND_INVITE(teacher.id));
       showToast(`Kredensial baru berhasil dikirim ke ${teacher.email}!`, 'success', 4000);
       setCreatedTeacherData({
@@ -177,7 +177,7 @@ export const AdminTeachersPage = () => {
             Manajemen Pengajar & Instruktur Pajak BKP
           </h2>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-            Sesuai kebijakan akademi, akun pengajar dibuat secara resmi oleh administrator. Kredensial login dikirim otomatis via SMTP ke email pengajar.
+            Sesuai kebijakan akademi, akun pengajar dibuat secara resmi oleh administrator. Informasi login dikirim otomatis ke email pengajar yang didaftarkan.
           </p>
         </div>
 
@@ -208,8 +208,10 @@ export const AdminTeachersPage = () => {
             <Mail className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xl font-black text-white">SMTP Queue</div>
-            <div className="text-[11px] text-slate-400">Email Undangan Kredensial</div>
+            <div className="text-xl font-black text-white">
+              {teachers.filter((t) => t.status === 'ACTIVE').length} Terverifikasi
+            </div>
+            <div className="text-[11px] text-slate-400">Undangan Email Terkirim</div>
           </div>
         </div>
 
@@ -218,8 +220,8 @@ export const AdminTeachersPage = () => {
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xl font-black text-white">100% Aktif</div>
-            <div className="text-[11px] text-slate-400">Hak Akses Portal Guru</div>
+            <div className="text-xl font-black text-white">Siap Mengajar</div>
+            <div className="text-[11px] text-slate-400">Akses Penilaian & Kelas Aktif</div>
           </div>
         </div>
       </div>
@@ -388,7 +390,7 @@ export const AdminTeachersPage = () => {
                         <button
                           type="button"
                           onClick={() => handleResendCredentials(t)}
-                          title="Kirim Ulang Kredensial via SMTP"
+                          title="Kirim Ulang Akses Login ke Email Pengajar"
                           className="p-1.5 rounded-lg bg-slate-900 border border-slate-700 text-teal-400 hover:text-white hover:bg-teal-700/40 transition inline-flex items-center gap-1 text-[11px]"
                         >
                           <Send className="w-3 h-3" />
@@ -528,7 +530,7 @@ export const AdminTeachersPage = () => {
 
               <div className="p-3 bg-teal-950/40 border border-teal-800/60 rounded-xl flex items-center gap-2 text-teal-300 text-xs">
                 <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
-                <span>Email resmi berisi tautan login & kata sandi akan otomatis dikirimkan via antrean SMTP.</span>
+                <span>Email resmi berisi tautan login & kata sandi akan langsung dikirimkan ke alamat email pengajar.</span>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-3">

@@ -315,7 +315,7 @@ export const AdminBlogsPage = () => {
       {loading ? (
         <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-12 text-center text-slate-400">
           <Loader2 className="w-8 h-8 animate-spin text-amber-400 mx-auto mb-2" />
-          <p className="text-xs">Memuat daftar artikel blog dari database...</p>
+          <p className="text-xs">Memuat daftar artikel...</p>
         </div>
       ) : (
         <div className="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">

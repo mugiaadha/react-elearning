@@ -50,7 +50,7 @@ class MailService
 
             return [
                 'success' => true,
-                'message' => 'Email telah dijadwalkan ke sistem antrean (queue) untuk dikirim.',
+                'message' => 'Email telah berhasil dikirimkan.',
                 'subject' => $rendered['subject'],
                 'body_html' => $rendered['body_html'],
             ];
@@ -60,7 +60,7 @@ class MailService
             // Non-blocking in local dev so registration flow doesn't crash if external SMTP credentials aren't configured
             return [
                 'success' => false,
-                'message' => 'Gagal mengirim email via SMTP: ' . $e->getMessage(),
+                'message' => 'Gagal mengirim email: ' . $e->getMessage(),
                 'subject' => $rendered['subject'],
                 'body_html' => $rendered['body_html'],
             ];
@@ -242,5 +242,93 @@ class MailService
             'body_html' => "<p>Halo {$name}, terima kasih telah bergabung bersama {$appName}.</p>",
             'body_text' => "Halo {$name}, terima kasih telah bergabung bersama {$appName}.",
         ];
+    }
+
+    /**
+     * Send blog question / consultation inquiry to the company profile email via Queue (SendTemplateEmailJob).
+     */
+    public function sendBlogInquiryToCompany(array $inquiryData): array
+    {
+        $company = \App\Models\CompanyProfile::getCached();
+        $targetEmail = $company->email ?: env('MAIL_FROM_ADDRESS', 'info@nactaxcenter.id');
+        $companyName = $company->company_name ?: config('app.name', 'NAC Tax Center');
+
+        $senderName = htmlspecialchars($inquiryData['name'] ?? 'Pembaca Artikel', ENT_QUOTES, 'UTF-8');
+        $senderContact = htmlspecialchars($inquiryData['contact'] ?? '-', ENT_QUOTES, 'UTF-8');
+        $questionText = nl2br(htmlspecialchars($inquiryData['question'] ?? '', ENT_QUOTES, 'UTF-8'));
+        $articleTitle = htmlspecialchars($inquiryData['article_title'] ?? 'Artikel Pajak', ENT_QUOTES, 'UTF-8');
+        $articleUrl = htmlspecialchars($inquiryData['article_url'] ?? '', ENT_QUOTES, 'UTF-8');
+        $timestamp = now()->format('d M Y, H:i') . ' WIB';
+
+        $subject = "[Pertanyaan Pembaca Blog] {$articleTitle} - dari {$senderName}";
+        $bodyHtml = "
+        <div style='font-family:Inter,Segoe UI,sans-serif;padding:24px;background:#f8fafc;color:#0f172a;'>
+          <div style='max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;'>
+            <div style='background:#0f172a;padding:20px 28px;color:#ffffff;'>
+              <div style='font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;'>Konsultasi & Pertanyaan Artikel Blog</div>
+              <h2 style='margin:6px 0 0;font-size:18px;color:#ffffff;'>{$companyName}</h2>
+            </div>
+            <div style='padding:28px;'>
+              <p style='margin-top:0;font-size:14px;color:#334155;'>Anda menerima pertanyaan baru dari pembaca pada halaman artikel:</p>
+              <div style='background:#f1f5f9;padding:14px 16px;border-radius:12px;border-left:4px solid #0284c7;margin-bottom:20px;'>
+                <div style='font-weight:700;font-size:14px;color:#0f172a;'>{$articleTitle}</div>
+                " . ($articleUrl ? "<a href='{$articleUrl}' style='font-size:12px;color:#0284c7;text-decoration:none;'>{$articleUrl}</a>" : "") . "
+              </div>
+              <table style='width:100%;font-size:13px;border-collapse:collapse;margin-bottom:20px;'>
+                <tr>
+                  <td style='padding:6px 0;color:#64748b;width:130px;'>Nama Penanya</td>
+                  <td style='padding:6px 0;font-weight:700;color:#0f172a;'>: {$senderName}</td>
+                </tr>
+                <tr>
+                  <td style='padding:6px 0;color:#64748b;'>Email / WhatsApp</td>
+                  <td style='padding:6px 0;font-weight:700;color:#0284c7;'>: {$senderContact}</td>
+                </tr>
+                <tr>
+                  <td style='padding:6px 0;color:#64748b;'>Waktu Kirim</td>
+                  <td style='padding:6px 0;color:#334155;'>: {$timestamp}</td>
+                </tr>
+              </table>
+              <div style='font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;margin-bottom:8px;'>Isi Pertanyaan / Diskusi:</div>
+              <div style='background:#fffbeb;border:1px solid #fde68a;padding:16px;border-radius:12px;font-size:14px;line-height:1.6;color:#1e293b;'>
+                {$questionText}
+              </div>
+            </div>
+            <div style='background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b;text-align:center;'>
+              Email otomatis dari Sistem Blog & Manajemen Konten {$companyName}
+            </div>
+          </div>
+        </div>";
+
+        $bodyText = "Pertanyaan Baru pada Artikel: {$articleTitle}\nPenanya: {$senderName} ({$senderContact})\nPertanyaan:\n" . ($inquiryData['question'] ?? '');
+
+        $uniqueTemplateSlug = 'blog-inquiry-' . substr(md5($senderContact . $questionText . microtime()), 0, 10);
+
+        try {
+            \App\Jobs\SendTemplateEmailJob::dispatch(
+                $targetEmail,
+                $uniqueTemplateSlug,
+                [
+                    'subject' => $subject,
+                    'body_html' => $bodyHtml,
+                    'body_text' => $bodyText,
+                ],
+                $companyName
+            );
+
+            Log::info("Blog inquiry email queued to company email {$targetEmail} via SendTemplateEmailJob.");
+
+            return [
+                'success' => true,
+                'target_email' => $targetEmail,
+                'company_name' => $companyName,
+            ];
+        } catch (Exception $e) {
+            Log::error("Failed to queue blog inquiry email: " . $e->getMessage());
+            return [
+                'success' => false,
+                'target_email' => $targetEmail,
+                'message' => $e->getMessage(),
+            ];
+        }
     }
 }

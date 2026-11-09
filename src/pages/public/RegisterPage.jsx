@@ -115,7 +115,7 @@ export const RegisterPage = () => {
     try {
       setSubmitting(true);
       setRegError('');
-      showToast('Mendaftarkan akun & mengirim email verifikasi via SMTP...', 'loading', 3000);
+      showToast('Mendaftarkan akun & mengirimkan kode verifikasi ke email Anda...', 'loading', 3000);
 
       try {
         localStorage.setItem('nac_pending_brevet_id', targetBrevetId);
@@ -152,7 +152,7 @@ export const RegisterPage = () => {
     if (resendCooldown > 0 || resending) return;
     try {
       setResending(true);
-      showToast('Mengirim ulang email verifikasi via SMTP...', 'loading', 2000);
+      showToast('Mengirim ulang kode verifikasi ke email Anda...', 'loading', 2000);
       const res = await userService.sendVerificationEmail(email.trim());
       if (res.code) {
         setOtpCode(res.code);
@@ -176,7 +176,7 @@ export const RegisterPage = () => {
     setVerifying(true);
     setRegError('');
     try {
-      showToast('Memverifikasi kode dengan database...', 'loading', 1500);
+      showToast('Memverifikasi kode OTP Anda...', 'loading', 1500);
       const verifyRes = await userService.verifyEmail(email.trim(), inputOtp.trim());
       try {
         Object.keys(localStorage).forEach((k) => {
@@ -479,7 +479,7 @@ export const RegisterPage = () => {
                 Verifikasi Alamat Email Anda
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Email verifikasi resmi dengan template master dari database telah dikirim via SMTP ke:
+                Kami telah mengirimkan 6-digit kode verifikasi resmi ke alamat email Anda:
                 <br />
                 <span className="font-bold text-slate-800">{email}</span>
               </p>

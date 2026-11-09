@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCompanyProfile } from '../../context/CompanyProfileContext';
 import paymentService from '../../services/paymentService';
 import {
   LayoutDashboard,
@@ -16,18 +17,20 @@ import {
   X,
   Mail,
   GraduationCap,
-  Newspaper
+  Newspaper,
+  Building2
 } from 'lucide-react';
 
 export const BackofficeSidebar = ({ isOpen = false, onClose }) => {
   const { user, logout } = useAuth();
+  const { company } = useCompanyProfile();
   const [pendingCount, setPendingCount] = useState(3);
 
   useEffect(() => {
     paymentService.getPendingPayments().then((payments) => {
       const pending = payments.filter((p) => p.status === 'PENDING_APPROVAL');
       setPendingCount(pending.length);
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const adminLinks = [
@@ -70,9 +73,14 @@ export const BackofficeSidebar = ({ isOpen = false, onClose }) => {
       icon: Award,
     },
     {
-      name: 'Master Template Email (SMTP)',
+      name: 'Template Email Notifikasi',
       path: '/admin/email-templates',
       icon: Mail,
+    },
+    {
+      name: 'Profil & Kontak Lembaga',
+      path: '/admin/company-profile',
+      icon: Building2,
     },
   ];
 
@@ -85,7 +93,9 @@ export const BackofficeSidebar = ({ isOpen = false, onClose }) => {
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
-            <div className="font-extrabold text-white text-sm tracking-tight">NAC BACKOFFICE</div>
+            <div className="font-extrabold text-white text-sm tracking-tight uppercase">
+              {company.short_name || 'NAC'} BACKOFFICE
+            </div>
             <div className="text-[11px] text-red-400 font-semibold tracking-wider uppercase">Admin Control</div>
           </div>
         </div>
@@ -130,10 +140,9 @@ export const BackofficeSidebar = ({ isOpen = false, onClose }) => {
               end={item.end}
               onClick={() => onClose && onClose()}
               className={({ isActive }) =>
-                `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r from-red-600 to-amber-700 text-white shadow-md font-semibold'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${isActive
+                  ? 'bg-gradient-to-r from-red-600 to-amber-700 text-white shadow-md font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
                 }`
               }
             >

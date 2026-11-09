@@ -6,7 +6,6 @@ import ProfileSettingsModal from '../common/ProfileSettingsModal';
 import {
   Bell,
   ShieldCheck,
-  Database,
   Server,
   Menu,
   LogOut,
@@ -61,14 +60,14 @@ export const BackofficeTopbar = ({ title = 'Panel Kontrol Admin', onToggleMobile
 
           <span className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 text-xs border border-slate-700">
             <Server className="w-3.5 h-3.5 text-emerald-400" />
-            Backend API: <span className="text-emerald-400 font-mono text-[11px]">Laravel 12 (Active)</span>
+            Status Layanan: <span className="text-emerald-400 font-semibold text-[11px]">Online & Terhubung</span>
           </span>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <div className="hidden sm:flex items-center gap-1.5 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700 text-xs text-slate-300">
-            <Database className="w-3.5 h-3.5 text-sky-400" />
-            <span>MariaDB 11.4</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+            <span>Terenkripsi SSL</span>
           </div>
 
           <button

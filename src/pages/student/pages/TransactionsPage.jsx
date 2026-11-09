@@ -102,7 +102,7 @@ export const TransactionsPage = () => {
       {loading ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400">
           <div className="w-8 h-8 border-4 border-nac-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-          <p className="text-xs">Memuat riwayat transaksi dari backend...</p>
+          <p className="text-xs">Memuat riwayat transaksi Anda...</p>
         </div>
       ) : (
         <>
@@ -212,7 +212,7 @@ export const TransactionsPage = () => {
                           }`}
                         >
                           {approved ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                          {approved ? 'LUNAS (APPROVED)' : 'MENUNGGU VERIFIKASI'}
+                          {approved ? 'LUNAS' : 'MENUNGGU PEMBAYARAN'}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-center">

@@ -32,7 +32,7 @@ export const AdminBrevetsPage = () => {
       {loading ? (
         <div className="p-12 text-center text-slate-400">
           <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-          <p className="text-xs">Memuat daftar silabus dari database...</p>
+          <p className="text-xs">Memuat daftar program & silabus...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -166,7 +166,7 @@ class AdminController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Akun instruktur untuk {$teacher->name} berhasil dibuat! Email kredensial telah dijadwalkan ke {$teacher->email}.",
+            'message' => "Akun instruktur untuk {$teacher->name} berhasil dibuat! Informasi login telah dikirimkan ke {$teacher->email}.",
             'data' => [
                 'id' => $teacher->id,
                 'name' => $teacher->name,

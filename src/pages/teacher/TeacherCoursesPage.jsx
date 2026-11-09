@@ -364,10 +364,10 @@ export const TeacherCoursesPage = () => {
         <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <h4 className="font-bold text-white text-sm">
-            Arsitektur Bebas Kuota: Seluruh Bahan Ajar Berupa Tautan Cloud (Google Drive & YouTube)
+            Panduan Penyematan Materi & Soal Ujian (YouTube & Google Drive)
           </h4>
           <p className="text-slate-300 text-xs leading-relaxed">
-            Sistem dirancang tanpa penyimpanan lokal file server. Semua bahan (Video YouTube, PDF Handout, Template Excel/Kertas Kerja, Word, PPT) serta Lembar Soal Ujian ditautkan via URL Google Drive / YouTube yang dapat dibuka langsung oleh mahasiswa.
+            Seluruh bahan pembelajaran (Video YouTube, Modul PDF, Kertas Kerja Excel, Word, Slide Presentasi) serta Lembar Soal Ujian cukup ditautkan melalui tautan Google Drive atau YouTube agar langsung dapat diakses oleh mahasiswa di ruang kelas.
           </p>
         </div>
       </div>
@@ -480,14 +480,14 @@ export const TeacherCoursesPage = () => {
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                   <Users className="w-5 h-5 text-amber-600" />
-                  Angkatan Kelas & Kurikulum Terkunci (Cohort Batches)
+                  Daftar Angkatan Kelas & Jadwal Pelaksanaan
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
                   {batches.length} Angkatan
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Setiap angkatan memiliki snapshot kurikulum mandiri. Murid lama tidak akan terpengaruh modul tambahan baru di masa depan.
+                Setiap angkatan memiliki silabus dan daftar materi tersendiri sehingga progres mahasiswa pada angkatan berjalan tetap terjaga.
               </p>
             </div>
 

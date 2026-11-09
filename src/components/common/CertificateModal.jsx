@@ -12,7 +12,7 @@ export const CertificateModal = ({ isOpen, onClose, certificate }) => {
           origin: { y: 0.6 },
           colors: ['#D97706', '#059669', '#0284C7', '#F59E0B']
         });
-      } catch (e) {}
+      } catch (e) { }
     }
   }, [isOpen]);
 
@@ -153,7 +153,7 @@ export const CertificateModal = ({ isOpen, onClose, certificate }) => {
         {/* Modal footer toolbar & note */}
         <div className="bg-slate-50 px-4 sm:px-6 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <p className="text-[11px] text-slate-500 text-center sm:text-left leading-relaxed">
-            Sertifikat resmi terdaftar di database NAC Tax Center & diakui mitra industri.
+            Sertifikat resmi terverifikasi oleh NAC Tax Center & diakui mitra industri.
           </p>
           <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
             <button

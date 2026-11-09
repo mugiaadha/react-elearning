@@ -75,9 +75,15 @@ export const ENDPOINTS = {
 
   // Blog & Tax Insights CMS
   BLOGS: '/blogs',
+  BLOG_CAPTCHA: '/blogs/captcha/challenge',
   BLOG_DETAIL: (slugOrId) => `/blogs/${slugOrId}`,
+  BLOG_ASK: (slugOrId) => `/blogs/${slugOrId}/ask`,
   ADMIN_BLOGS: '/admin/blogs',
   ADMIN_BLOG_DETAIL: (id) => `/admin/blogs/${id}`,
+
+  // Company Profile (Cached Public & Admin)
+  COMPANY_PROFILE: '/company-profile',
+  ADMIN_COMPANY_PROFILE: '/admin/company-profile',
 };
 
 export default ENDPOINTS;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import blogService from '../../services/blogService';
+import { useCompanyProfile } from '../../context/CompanyProfileContext';
 import {
   BookOpen,
   Calendar,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 
 export const BlogPage = () => {
+  const { company } = useCompanyProfile();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
@@ -81,7 +83,7 @@ export const BlogPage = () => {
           Artikel, Bedah Regulasi & Kebijakan Pajak Indonesia
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-          Ulasan hukum pajak, panduan teknis Coretax DJP, kertas kerja rekonsiliasi, dan studi kasus perpajakan yang disusun langsung oleh konsultan terdaftar NAC Tax Center.
+          Ulasan hukum pajak, panduan teknis Coretax DJP, kertas kerja rekonsiliasi, dan studi kasus perpajakan yang disusun langsung oleh konsultan terdaftar {company.company_name}.
         </p>
       </div>
 

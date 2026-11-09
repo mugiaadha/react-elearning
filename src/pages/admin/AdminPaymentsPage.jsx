@@ -143,10 +143,10 @@ export const AdminPaymentsPage = () => {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
             <CreditCard className="w-6 h-6 text-sky-400" />
-            Manajemen & Audit Pembayaran Midtrans
+            Manajemen & Verifikasi Pembayaran
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Pantau transaksi masuk, sinkronisasi gateway Midtrans real-time, dan status aktivasi kelas siswa.
+            Pantau transaksi pendaftaran masuk, status pelunasan tagihan, dan aktivasi akses kelas siswa.
           </p>
         </div>
 
@@ -168,21 +168,21 @@ export const AdminPaymentsPage = () => {
             <Receipt className="w-4 h-4 text-sky-400" />
           </div>
           <div className="text-2xl font-black text-white">{totalTransactions}</div>
-          <p className="text-[11px] text-slate-500 mt-1">Keseluruhan order tagihan</p>
+          <p className="text-[11px] text-slate-500 mt-1">Keseluruhan tagihan terdaftar</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-medium">Menunggu Bayar</span>
+            <span className="text-xs font-medium">Menunggu Pembayaran</span>
             <Clock className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-2xl font-black text-amber-400">{pendingCount}</div>
-          <p className="text-[11px] text-slate-500 mt-1">Status pending Midtrans</p>
+          <p className="text-[11px] text-slate-500 mt-1">Belum diselesaikan peserta</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-medium">Lunas / Settlement</span>
+            <span className="text-xs font-medium">Pembayaran Lunas</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-black text-emerald-400">{approvedCount}</div>
@@ -337,12 +337,12 @@ export const AdminPaymentsPage = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
-                  <tr>
+                  <tr className="bg-slate-950 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
                     <th className="py-3.5 px-4">No. Invoice & Waktu</th>
                     <th className="py-3.5 px-4">Mahasiswa</th>
                     <th className="py-3.5 px-4">Program Brevet</th>
                     <th className="py-3.5 px-4">Nominal (IDR)</th>
-                    <th className="py-3.5 px-4">Saluran Bayar Midtrans</th>
+                    <th className="py-3.5 px-4">Metode Pembayaran</th>
                     <th className="py-3.5 px-4">Status Transaksi</th>
                     <th className="py-3.5 px-4 text-center">Aksi & Detail</th>
                   </tr>
@@ -373,10 +373,10 @@ export const AdminPaymentsPage = () => {
                         Rp {Number(item.amount).toLocaleString('id-ID')}
                       </td>
                       <td className="py-3.5 px-4 text-slate-300">
-                        <div className="font-medium text-white">{item.payment_method || 'Midtrans Gateway'}</div>
+                        <div className="font-medium text-white">{item.payment_method || 'Pembayaran Online'}</div>
                         {item.payment_type && (
                           <div className="text-[10px] text-slate-500 font-mono uppercase">
-                            Type: {item.payment_type}
+                            Saluran: {item.payment_type}
                           </div>
                         )}
                       </td>
@@ -390,7 +390,11 @@ export const AdminPaymentsPage = () => {
                               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
                           }`}
                         >
-                          {item.status === 'APPROVED' ? 'LUNAS (SETTLEMENT)' : item.status}
+                          {item.status === 'APPROVED'
+                            ? 'LUNAS'
+                            : item.status === 'REJECTED'
+                            ? 'DIBATALKAN'
+                            : 'MENUNGGU BAYAR'}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-center">
