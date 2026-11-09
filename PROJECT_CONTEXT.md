@@ -157,6 +157,7 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 - `GET  /blogs/captcha/challenge` : Generate tantangan CAPTCHA matematika anti-spam bot yang disimpan di Cache backend.
 - `GET  /blogs/{slugOrId}` : Detail artikel blog publik + increment `views_count` + 3 artikel terkait.
 - `POST /blogs/{slugOrId}/ask` : Kirim pertanyaan dari bawah artikel blog (divalidasi CAPTCHA & honeypot) ke alamat `email` pada tabel `company_profile` melalui antrean background worker (`SendTemplateEmailJob`).
+- `POST /contact` : Kirim pesan dari halaman Hubungi Kami (divalidasi CAPTCHA & honeypot), simpan ke tabel `contacts`, dan teruskan ke alamat `email` pada tabel `company_profile` melalui antrean background worker (`SendTemplateEmailJob`).
 - `GET/POST /admin/blogs` : Manajemen & upload konten artikel blog baru di backoffice (mendukung upload file gambar sampul & lampiran dokumen PDF/Excel dengan proteksi Anti-Webshell).
 - `PUT/POST/DELETE /admin/blogs/{id}` : Edit konten/status publikasi atau hapus artikel blog.
 - `GET  /company-profile` : Ambil identitas profil perusahaan dari cache backend (`CompanyProfile::getCached()`).
