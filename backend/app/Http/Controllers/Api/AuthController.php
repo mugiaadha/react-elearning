@@ -1521,4 +1521,108 @@ class AuthController extends Controller
 
         return redirect($frontendUrl . '/login?error=' . urlencode($data['message'] ?? 'Gagal masuk dengan Google.'));
     }
+
+    /**
+     * Request 6-digit OTP code for Forgot Password flow
+     */
+    public function forgotPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+        ], [
+            'email.required' => 'Alamat email wajib diisi.',
+            'email.email' => 'Format alamat email tidak valid.',
+        ]);
+
+        $email = strtolower(trim($validated['email']));
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Alamat email tidak ditemukan dalam sistem kami.',
+            ], 404);
+        }
+
+        $code = (string) mt_rand(100000, 999999);
+        $expiresAt = now()->addMinutes(15);
+
+        $user->email_verification_code = $code;
+        $user->email_verification_expires_at = $expiresAt;
+        $user->save();
+
+        \Illuminate\Support\Facades\Cache::put('password_reset_otp_' . $email, $code, $expiresAt);
+
+        $mailService = new \App\Services\MailService();
+        $mailService->sendPasswordResetEmail($user, $code);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Kode keamanan 6-digit untuk mengatur ulang kata sandi telah dikirimkan ke {$email}.",
+            'data' => [
+                'email' => $email,
+                'expires_in_minutes' => 15,
+            ],
+        ]);
+    }
+
+    /**
+     * Reset password using 6-digit OTP code
+     */
+    public function resetPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|min:4|max:10',
+            'password' => 'required|string|min:6',
+        ], [
+            'email.required' => 'Alamat email wajib diisi.',
+            'code.required' => 'Kode OTP wajib diisi.',
+            'password.required' => 'Kata sandi baru wajib diisi.',
+            'password.min' => 'Kata sandi baru minimal 6 karakter.',
+        ]);
+
+        $email = strtolower(trim($validated['email']));
+        $cleanCode = trim($validated['code']);
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun dengan alamat email tersebut tidak ditemukan.',
+            ], 404);
+        }
+
+        $cachedCode = \Illuminate\Support\Facades\Cache::get('password_reset_otp_' . $email);
+        $dbCodeValid = !empty($user->email_verification_code)
+            && $user->email_verification_code === $cleanCode
+            && (!$user->email_verification_expires_at || !$user->email_verification_expires_at->isPast());
+
+        if ($cachedCode !== $cleanCode && !$dbCodeValid) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kode keamanan tidak sesuai atau telah kedaluwarsa. Silakan minta kode baru.',
+            ], 422);
+        }
+
+        $user->password = Hash::make($validated['password']);
+        $user->email_verification_code = null;
+        $user->email_verification_expires_at = null;
+        if (!$user->email_verified_at) {
+            $user->email_verified_at = now();
+        }
+        $user->save();
+
+        \Illuminate\Support\Facades\Cache::forget('password_reset_otp_' . $email);
+
+        $user->tokens()->delete();
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kata sandi Anda berhasil diperbarui! Anda kini telah masuk.',
+            'token' => $token,
+            'data' => $this->formatUserProfile($user->fresh()),
+        ]);
+    }
 }

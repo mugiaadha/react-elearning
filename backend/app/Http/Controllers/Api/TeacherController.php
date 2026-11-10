@@ -655,10 +655,17 @@ class TeacherController extends Controller
             'REJECTED' => 'DITOLAK',
         };
 
+        $freshSubmission = $submission->fresh();
+        try {
+            (new \App\Services\MailService())->sendExamReviewEmail($freshSubmission);
+        } catch (\Throwable $e) {
+            // Non-blocking email dispatch
+        }
+
         return response()->json([
             'success' => true,
-            'message' => "Hasil evaluasi untuk {$submission->student_name} berhasil disimpan: {$statusLabel}.",
-            'data' => $submission->fresh(),
+            'message' => "Hasil evaluasi untuk {$submission->student_name} berhasil disimpan ({$statusLabel}) dan notifikasi email telah dikirimkan.",
+            'data' => $freshSubmission,
         ]);
     }
 
@@ -700,10 +707,17 @@ class TeacherController extends Controller
             }
         }
 
+        $freshSubmission = $submission->fresh();
+        try {
+            (new \App\Services\MailService())->sendExamReviewEmail($freshSubmission);
+        } catch (\Throwable $e) {
+            // Non-blocking email dispatch
+        }
+
         return response()->json([
             'success' => true,
-            'message' => "Tugas dari {$submission->student_name} berhasil dinilai: {$score}/100.",
-            'data' => $submission,
+            'message' => "Tugas dari {$submission->student_name} berhasil dinilai ({$score}/100) dan notifikasi email telah dikirimkan.",
+            'data' => $freshSubmission,
         ]);
     }
 

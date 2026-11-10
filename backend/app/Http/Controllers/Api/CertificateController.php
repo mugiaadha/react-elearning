@@ -92,6 +92,9 @@ class CertificateController extends Controller
                     $uniqueNumber = rand(10000, 99999);
                     $certId = 'NAC-CERT-' . date('Y') . '-' . $prefix . '-' . $uniqueNumber;
 
+                    $directorName = \App\Models\CompanyProfile::getCached()->director_name
+                        ?: 'Dr. Hendrawan Kartiko, S.E., S.H., LL.M., BKP C';
+
                     Certificate::create([
                         'certificate_id' => $certId,
                         'user_id' => $user->id,
@@ -101,7 +104,7 @@ class CertificateController extends Controller
                         'expiry_date' => 'Seumur Hidup',
                         'grade' => $grade,
                         'score' => $score,
-                        'director_name' => 'Dr. Hendrawan Kartiko, S.E., S.H., LL.M., BKP C',
+                        'director_name' => $directorName,
                         'status' => 'VALID',
                         'verification_url' => url("/verify-certificate/{$certId}"),
                     ]);
@@ -251,6 +254,9 @@ class CertificateController extends Controller
         $uniqueNumber = rand(10000, 99999);
         $certId = 'NAC-CERT-' . date('Y') . '-' . $prefix . '-' . $uniqueNumber;
 
+        $directorName = \App\Models\CompanyProfile::getCached()->director_name
+            ?: 'Dr. Hendrawan Kartiko, S.E., S.H., LL.M., BKP C';
+
         $cert = Certificate::create([
             'certificate_id' => $certId,
             'user_id' => $user?->id,
@@ -260,7 +266,7 @@ class CertificateController extends Controller
             'expiry_date' => 'Seumur Hidup',
             'grade' => $grade,
             'score' => $score,
-            'director_name' => 'Dr. Hendrawan Kartiko, S.E., S.H., LL.M., BKP C',
+            'director_name' => $directorName,
             'status' => 'VALID',
             'verification_url' => url("/verify-certificate/{$certId}"),
         ]);

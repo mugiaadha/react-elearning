@@ -331,4 +331,123 @@ class MailService
             ];
         }
     }
+
+    /**
+     * Send notification email to student when teacher grades or requests revision on an exam submission.
+     */
+    public function sendExamReviewEmail(\App\Models\Submission $submission): array
+    {
+        $targetEmail = $submission->student_email ?: $submission->user?->email;
+        if (!$targetEmail) {
+            return ['success' => false, 'message' => 'Student email not available.'];
+        }
+
+        $company = \App\Models\CompanyProfile::getCached();
+        $companyName = $company->company_name ?: config('app.name', 'NAC Tax Center');
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+        $portalUrl = "{$frontendUrl}/dashboard/student";
+
+        $studentName = htmlspecialchars($submission->student_name ?: 'Peserta Brevet', ENT_QUOTES, 'UTF-8');
+        $courseTitle = htmlspecialchars($submission->course ?: 'Brevet Pajak', ENT_QUOTES, 'UTF-8');
+        $moduleTitle = htmlspecialchars($submission->module_title ?: ($submission->task ?: 'Ujian Modul'), ENT_QUOTES, 'UTF-8');
+        $feedback = nl2br(htmlspecialchars($submission->teacher_feedback ?: 'Tidak ada catatan tambahan dari pengajar.', ENT_QUOTES, 'UTF-8'));
+        $scoreText = $submission->score !== null ? "{$submission->score}/100" : '-';
+
+        $isApproved = $submission->status === 'APPROVED';
+        $badgeBg = $isApproved ? '#dcfce7' : '#ffedd5';
+        $badgeColor = $isApproved ? '#166534' : '#9a3412';
+        $statusHeadline = $isApproved ? 'LULUS EVALUASI' : 'PERLU REVISI / PERBAIKAN';
+
+        $subject = $isApproved
+            ? "[Hasil Evaluasi Ujian: LULUS] {$moduleTitle} - {$companyName}"
+            : "[Permintaan Revisi Ujian] {$moduleTitle} - {$companyName}";
+
+        $bodyHtml = "
+        <div style='font-family:Inter,Segoe UI,sans-serif;padding:24px;background:#f8fafc;color:#0f172a;'>
+          <div style='max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;'>
+            <div style='background:#0f172a;padding:20px 28px;color:#ffffff;'>
+              <div style='font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;'>Evaluasi Akademik & Ujian Modul</div>
+              <h2 style='margin:6px 0 0;font-size:18px;color:#ffffff;'>{$companyName}</h2>
+            </div>
+            <div style='padding:28px;'>
+              <p style='margin-top:0;font-size:14px;color:#334155;'>Halo <strong>{$studentName}</strong>,</p>
+              <p style='font-size:14px;color:#334155;'>Lembar jawaban ujian Anda untuk program <strong>{$courseTitle}</strong> pada modul <strong>{$moduleTitle}</strong> telah selesai dievaluasi oleh Tim Instruktur.</p>
+              <div style='background:{$badgeBg};color:{$badgeColor};padding:14px 16px;border-radius:12px;margin:18px 0;font-weight:700;font-size:14px;'>
+                Status Evaluasi: {$statusHeadline} &nbsp;|&nbsp; Nilai: {$scoreText}
+              </div>
+              <div style='font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;margin-bottom:8px;'>Catatan & Evaluasi Pengajar:</div>
+              <div style='background:#f8fafc;border:1px solid #e2e8f0;padding:16px;border-radius:12px;font-size:14px;line-height:1.6;color:#1e293b;margin-bottom:22px;'>
+                {$feedback}
+              </div>
+              <a href='{$portalUrl}' style='display:inline-block;background:#0284c7;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:700;font-size:13px;'>
+                Buka Ruang Belajar & Lihat Hasil
+              </a>
+            </div>
+          </div>
+        </div>";
+
+        $bodyText = "Halo {$studentName}, hasil evaluasi {$moduleTitle} ({$courseTitle}): {$statusHeadline} (Nilai: {$scoreText}). Catatan: " . ($submission->teacher_feedback ?: '-') . " | Buka portal: {$portalUrl}";
+        $uniqueSlug = 'exam-review-' . $submission->id . '-' . substr(md5((string) $submission->status . (string) $submission->score . microtime()), 0, 8);
+
+        try {
+            \App\Jobs\SendTemplateEmailJob::dispatch(
+                $targetEmail,
+                $uniqueSlug,
+                [
+                    'subject' => $subject,
+                    'body_html' => $bodyHtml,
+                    'body_text' => $bodyText,
+                ],
+                $submission->student_name
+            );
+            return ['success' => true];
+        } catch (Exception $e) {
+            Log::warning("Failed to queue exam review email: " . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Send 6-digit password reset OTP email to user.
+     */
+    public function sendPasswordResetEmail(User $user, string $code): array
+    {
+        $company = \App\Models\CompanyProfile::getCached();
+        $companyName = $company->company_name ?: config('app.name', 'NAC Tax Center');
+        $name = htmlspecialchars($user->name ?: 'Pengguna', ENT_QUOTES, 'UTF-8');
+
+        $subject = "Kode Reset Kata Sandi: {$code} - {$companyName}";
+        $bodyHtml = "
+        <div style='font-family:Inter,Segoe UI,sans-serif;padding:24px;background:#f8fafc;color:#1e293b;'>
+          <div style='max-width:520px;margin:0 auto;background:#ffffff;padding:32px;border-radius:16px;border:1px solid #e2e8f0;'>
+            <h2 style='color:#0284c7;margin-top:0;'>{$companyName}</h2>
+            <p>Halo, <strong>{$name}</strong>!</p>
+            <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun pembelajaran Anda. Gunakan 6-digit kode keamanan berikut:</p>
+            <div style='background:#f1f5f9;border:2px dashed #0284c7;padding:16px;text-align:center;border-radius:12px;margin:20px 0;'>
+              <span style='font-size:32px;font-weight:bold;letter-spacing:6px;color:#0284c7;'>{$code}</span>
+            </div>
+            <p style='font-size:12px;color:#64748b;'>Kode ini berlaku selama 15 menit. Abaikan email ini jika Anda tidak merasa melakukan permintaan reset kata sandi.</p>
+          </div>
+        </div>";
+
+        $bodyText = "Halo {$user->name}, kode reset kata sandi akun {$companyName} Anda adalah: {$code} (berlaku 15 menit).";
+        $uniqueSlug = 'password-reset-' . $user->id . '-' . substr(md5($code . microtime()), 0, 8);
+
+        try {
+            \App\Jobs\SendTemplateEmailJob::dispatch(
+                $user->email,
+                $uniqueSlug,
+                [
+                    'subject' => $subject,
+                    'body_html' => $bodyHtml,
+                    'body_text' => $bodyText,
+                ],
+                $user->name
+            );
+            return ['success' => true];
+        } catch (Exception $e) {
+            Log::warning("Failed to queue password reset email: " . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
 }

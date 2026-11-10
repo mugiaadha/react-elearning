@@ -36,6 +36,14 @@ export const LoginPage = () => {
   const [loginError, setLoginError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // Forgot password modal state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1); // 1 = request OTP, 2 = verify OTP & set new password
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+
   const from = location.state?.from?.pathname || '/dashboard/student';
   const hasProcessedGoogleRef = React.useRef(false);
 
@@ -275,7 +283,11 @@ export const LoginPage = () => {
               <label className="font-semibold text-slate-700">Kata Sandi</label>
               <button
                 type="button"
-                onClick={() => showToast('Gunakan kredensial akun bawaan: password123', 'info')}
+                onClick={() => {
+                  setForgotEmail(email || '');
+                  setForgotStep(1);
+                  setShowForgotModal(true);
+                }}
                 className="text-[11px] text-nac-primary hover:underline font-medium"
               >
                 Lupa sandi?
@@ -447,6 +459,139 @@ export const LoginPage = () => {
             Daftar Brevet di sini
           </Link>
         </p>
+
+        {/* Modal Lupa Sandi Mandiri */}
+        {showForgotModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-nac-primary" />
+                  {forgotStep === 1 ? 'Atur Ulang Kata Sandi' : 'Masukkan Kode OTP'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {forgotStep === 1 ? (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!forgotEmail) return;
+                    setForgotLoading(true);
+                    try {
+                      await apiClient.post(ENDPOINTS.AUTH_FORGOT_PASSWORD, { email: forgotEmail });
+                      showToast('Kode OTP 6-digit telah dikirimkan ke email Anda!', 'success');
+                      setForgotStep(2);
+                    } catch (err) {
+                      showToast(err.message || 'Gagal mengirim kode reset kata sandi', 'error');
+                    } finally {
+                      setForgotLoading(false);
+                    }
+                  }}
+                  className="space-y-3 text-xs"
+                >
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Masukkan email akun Anda. Kami akan mengirimkan 6-digit kode keamanan untuk mereset kata sandi.
+                  </p>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Email Terdaftar</label>
+                    <input
+                      type="email"
+                      required
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="nama@email.com"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-nac-primary focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-full btn-primary py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
+                  >
+                    {forgotLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Kirim Kode OTP'}
+                  </button>
+                </form>
+              ) : (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setForgotLoading(true);
+                    try {
+                      const res = await apiClient.post(ENDPOINTS.AUTH_RESET_PASSWORD, {
+                        email: forgotEmail,
+                        code: forgotOtp,
+                        password: forgotNewPassword,
+                      });
+                      if (res.token) {
+                        localStorage.setItem('nac_auth_token', res.token);
+                      }
+                      showToast('Kata sandi berhasil diperbarui! Anda telah masuk.', 'success');
+                      setShowForgotModal(false);
+                      await refreshProfile();
+                      navigate('/dashboard/student');
+                    } catch (err) {
+                      showToast(err.message || 'Gagal mengatur ulang kata sandi', 'error');
+                    } finally {
+                      setForgotLoading(false);
+                    }
+                  }}
+                  className="space-y-3 text-xs"
+                >
+                  <p className="text-slate-500 text-[11px] leading-relaxed">
+                    Kode OTP telah dikirim ke <strong>{forgotEmail}</strong>. Masukkan kode tersebut dan buat kata sandi baru.
+                  </p>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Kode OTP 6-Digit</label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      value={forgotOtp}
+                      onChange={(e) => setForgotOtp(e.target.value)}
+                      placeholder="123456"
+                      className="w-full text-center tracking-widest font-mono text-base font-bold rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-nac-primary focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Kata Sandi Baru (Min. 6 Karakter)</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={6}
+                      value={forgotNewPassword}
+                      onChange={(e) => setForgotNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-nac-primary focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setForgotStep(1)}
+                      className="w-1/3 py-2.5 rounded-xl border border-slate-300 font-semibold text-slate-600 hover:bg-slate-50 text-xs"
+                    >
+                      Kembali
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="w-2/3 btn-primary py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2"
+                    >
+                      {forgotLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Simpan Sandi Baru'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -50,7 +50,7 @@ Platform e-learning perpajakan terapan terintegrasi UU HPP & Coretax DJP (Brevet
 │   ├── layouts/
 │   │   ├── FrontofficePublicLayout   # Navbar publik + footer institusi
 │   │   ├── FrontofficePortalLayout   # Sidebar dashboard untuk Student & Teacher
-│   │   └── BackofficeLayout          # Admin CMS management layout
+│   │   └── BackofficeLayout          # Admin CMS management layout (dengan BackofficeSidebar sistem Accordion terkelompok)
 │   ├── pages/
 │   │   ├── public/                   # HomePage, BrevetCatalog, BrevetDetail, BlogPage, BlogDetailPage, Login, Register, VerifyEmail
 │   │   ├── onboarding/               # PaymentPendingPage (Midtrans Snap multi-channel payment gateway)
@@ -126,6 +126,8 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 ### A. Auth, Profile & Student Course Actions
 - `POST /auth/login` : Autentikasi email & password, mengembalikan token Sanctum & profil.
 - `POST /auth/register` : Pendaftaran siswa baru + auto-enroll brevet pilihan + kirim OTP.
+- `POST /auth/forgot-password` : Permintaan kode 6-digit OTP reset sandi via email.
+- `POST /auth/reset-password` : Verifikasi OTP dan set kata sandi baru.
 - `GET  /auth/google/url` : Ambil URL otorisasi Google OAuth (membawa `state` program brevet).
 - `GET  /auth/google/callback` : Callback redirect Google OAuth, menukarkan code menjadi login token.
 - `POST /auth/google` : Otentikasi langsung kredensial / simulated Google Account.
@@ -158,6 +160,9 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
 - `GET  /blogs/{slugOrId}` : Detail artikel blog publik + increment `views_count` + 3 artikel terkait.
 - `POST /blogs/{slugOrId}/ask` : Kirim pertanyaan dari bawah artikel blog (divalidasi CAPTCHA & honeypot) ke alamat `email` pada tabel `company_profile` melalui antrean background worker (`SendTemplateEmailJob`).
 - `POST /contact` : Kirim pesan dari halaman Hubungi Kami (divalidasi CAPTCHA & honeypot), simpan ke tabel `contacts`, dan teruskan ke alamat `email` pada tabel `company_profile` melalui antrean background worker (`SendTemplateEmailJob`).
+- `GET  /admin/contacts` : Daftar seluruh pesan konsultasi masuk dengan filter status (`UNREAD`, `REPLIED`, `ARCHIVED`).
+- `PATCH /admin/contacts/{id}/status` : Perbarui status tindak lanjut pesan konsultasi.
+- `DELETE /admin/contacts/{id}` : Hapus pesan konsultasi dari kotak masuk admin.
 - `GET/POST /admin/blogs` : Manajemen & upload konten artikel blog baru di backoffice (mendukung upload file gambar sampul & lampiran dokumen PDF/Excel dengan proteksi Anti-Webshell).
 - `PUT/POST/DELETE /admin/blogs/{id}` : Edit konten/status publikasi atau hapus artikel blog.
 - `GET  /company-profile` : Ambil identitas profil perusahaan dari cache backend (`CompanyProfile::getCached()`).

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts
@@ -15,48 +15,57 @@ import {
   OnboardingGuard,
 } from './RouteGuards';
 
-// Public Pages
-import HomePage from '../pages/public/HomePage';
-import BrevetCatalogPage from '../pages/public/BrevetCatalogPage';
-import BrevetDetailPage from '../pages/public/BrevetDetailPage';
-import AboutPage from '../pages/public/AboutPage';
-import BlogPage from '../pages/public/BlogPage';
-import BlogDetailPage from '../pages/public/BlogDetailPage';
-import ContactPage from '../pages/public/ContactPage';
-import LoginPage from '../pages/public/LoginPage';
-import RegisterPage from '../pages/public/RegisterPage';
-import VerifyEmailPage from '../pages/public/VerifyEmailPage';
-import CertificateVerifyPage from '../pages/public/CertificateVerifyPage';
+// Public Pages (Lazy Loaded)
+const HomePage = lazy(() => import('../pages/public/HomePage'));
+const BrevetCatalogPage = lazy(() => import('../pages/public/BrevetCatalogPage'));
+const BrevetDetailPage = lazy(() => import('../pages/public/BrevetDetailPage'));
+const AboutPage = lazy(() => import('../pages/public/AboutPage'));
+const BlogPage = lazy(() => import('../pages/public/BlogPage'));
+const BlogDetailPage = lazy(() => import('../pages/public/BlogDetailPage'));
+const ContactPage = lazy(() => import('../pages/public/ContactPage'));
+const LoginPage = lazy(() => import('../pages/public/LoginPage'));
+const RegisterPage = lazy(() => import('../pages/public/RegisterPage'));
+const VerifyEmailPage = lazy(() => import('../pages/public/VerifyEmailPage'));
+const CertificateVerifyPage = lazy(() => import('../pages/public/CertificateVerifyPage'));
 
-// Onboarding Pre-Approval Page
-import PaymentPendingPage from '../pages/onboarding/PaymentPendingPage';
+// Onboarding Pre-Approval / Payment Gateway Screen
+const PaymentPendingPage = lazy(() => import('../pages/onboarding/PaymentPendingPage'));
 
-// Student Pages (Modular Architecture)
-import StudentDashboard from '../pages/student/StudentDashboard';
-import MyCoursesPage from '../pages/student/pages/MyCoursesPage';
-import CourseLearningPage from '../pages/student/pages/course/CourseLearningPage';
-import CertificatesPage from '../pages/student/pages/CertificatesPage';
-import TransactionsPage from '../pages/student/pages/TransactionsPage';
+// Student Pages (Modular Architecture - Lazy Loaded)
+const StudentDashboard = lazy(() => import('../pages/student/StudentDashboard'));
+const MyCoursesPage = lazy(() => import('../pages/student/pages/MyCoursesPage'));
+const CourseLearningPage = lazy(() => import('../pages/student/pages/course/CourseLearningPage'));
+const CertificatesPage = lazy(() => import('../pages/student/pages/CertificatesPage'));
+const TransactionsPage = lazy(() => import('../pages/student/pages/TransactionsPage'));
 
-// Teacher Pages
-import TeacherDashboardPage from '../pages/teacher/TeacherDashboardPage';
-import TeacherCoursesPage from '../pages/teacher/TeacherCoursesPage';
-import TeacherStudentsPage from '../pages/teacher/TeacherStudentsPage';
+// Teacher Pages (Lazy Loaded)
+const TeacherDashboardPage = lazy(() => import('../pages/teacher/TeacherDashboardPage'));
+const TeacherCoursesPage = lazy(() => import('../pages/teacher/TeacherCoursesPage'));
+const TeacherStudentsPage = lazy(() => import('../pages/teacher/TeacherStudentsPage'));
 
-// Admin CMS Pages
-import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
-import AdminPaymentsPage from '../pages/admin/AdminPaymentsPage';
-import AdminStudentsPage from '../pages/admin/AdminStudentsPage';
-import AdminTeachersPage from '../pages/admin/AdminTeachersPage';
-import AdminBrevetsPage from '../pages/admin/AdminBrevetsPage';
-import AdminCertificatesPage from '../pages/admin/AdminCertificatesPage';
-import AdminEmailTemplatesPage from '../pages/admin/AdminEmailTemplatesPage';
-import AdminBlogsPage from '../pages/admin/AdminBlogsPage';
-import AdminCompanyProfilePage from '../pages/admin/AdminCompanyProfilePage';
+// Admin CMS Pages (Lazy Loaded)
+const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'));
+const AdminPaymentsPage = lazy(() => import('../pages/admin/AdminPaymentsPage'));
+const AdminStudentsPage = lazy(() => import('../pages/admin/AdminStudentsPage'));
+const AdminTeachersPage = lazy(() => import('../pages/admin/AdminTeachersPage'));
+const AdminBrevetsPage = lazy(() => import('../pages/admin/AdminBrevetsPage'));
+const AdminCertificatesPage = lazy(() => import('../pages/admin/AdminCertificatesPage'));
+const AdminEmailTemplatesPage = lazy(() => import('../pages/admin/AdminEmailTemplatesPage'));
+const AdminBlogsPage = lazy(() => import('../pages/admin/AdminBlogsPage'));
+const AdminContactsPage = lazy(() => import('../pages/admin/AdminContactsPage'));
+const AdminCompanyProfilePage = lazy(() => import('../pages/admin/AdminCompanyProfilePage'));
+
+const PageLoader = () => (
+  <div className="min-h-[50vh] flex items-center justify-center p-8 text-center text-slate-500">
+    <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+    <span className="text-xs font-semibold">Memuat halaman...</span>
+  </div>
+);
 
 export const AppRoutes = () => {
   return (
-    <Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
       {/* ========================================================
           1. FRONTOFFICE PUBLIC NAVIGATION (Unauthenticated)
           ======================================================== */}
@@ -199,6 +208,7 @@ export const AppRoutes = () => {
         <Route path="teachers" element={<AdminTeachersPage />} />
         <Route path="brevets" element={<AdminBrevetsPage />} />
         <Route path="blogs" element={<AdminBlogsPage />} />
+        <Route path="contacts" element={<AdminContactsPage />} />
         <Route path="certificates" element={<AdminCertificatesPage />} />
         <Route path="email-templates" element={<AdminEmailTemplatesPage />} />
         <Route path="company-profile" element={<AdminCompanyProfilePage />} />
@@ -207,6 +217,7 @@ export const AppRoutes = () => {
       {/* Fallback route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+  </Suspense>
   );
 };
 

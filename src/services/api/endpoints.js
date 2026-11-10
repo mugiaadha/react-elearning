@@ -11,6 +11,8 @@ export const ENDPOINTS = {
   // Auth & User Profile
   AUTH_LOGIN: '/auth/login',
   AUTH_REGISTER: '/auth/register',
+  AUTH_FORGOT_PASSWORD: '/auth/forgot-password',
+  AUTH_RESET_PASSWORD: '/auth/reset-password',
   AUTH_GOOGLE: '/auth/google',
   AUTH_GOOGLE_URL: '/auth/google/url',
   AUTH_LOGOUT: '/auth/logout',
@@ -70,8 +72,11 @@ export const ENDPOINTS = {
   USER_SUBMISSIONS: '/user/submissions',
   USER_SUBMIT_EXAM: '/user/submissions',
 
-  // Public Contact
+  // Public Contact & Admin Inbox
   CONTACT: '/contact',
+  ADMIN_CONTACTS: '/admin/contacts',
+  ADMIN_CONTACT_STATUS: (id) => `/admin/contacts/${id}/status`,
+  ADMIN_CONTACT_DELETE: (id) => `/admin/contacts/${id}`,
 
   // Blog & Tax Insights CMS
   BLOGS: '/blogs',

@@ -24,28 +24,40 @@ class AdminController extends Controller
         $avgProgress = \App\Models\Enrollment::where('payment_status', 'APPROVED')->avg('progress_percentage');
         $completionRate = $avgProgress !== null ? round($avgProgress, 1) : 0;
 
-        // Dynamic course popularity based on real enrollments
-        $brevets = Brevet::all();
+        // Dynamic course popularity based on real enrollments (single optimized query with withCount)
+        $brevets = Brevet::withCount([
+            'enrollments',
+            'enrollments as active_enrollments_count' => function ($query) {
+                $query->where('is_active', true);
+            },
+        ])->get();
+
         $coursePopularity = $brevets->map(function ($b) {
             return [
                 'id' => $b->id,
                 'title' => $b->title,
-                'enrolled' => \App\Models\Enrollment::where('brevet_id', $b->id)->count(),
-                'active' => \App\Models\Enrollment::where('brevet_id', $b->id)->where('is_active', true)->count(),
+                'enrolled' => (int) $b->enrollments_count,
+                'active' => (int) $b->active_enrollments_count,
             ];
         });
 
-        // Dynamic monthly revenue from approved payments
+        // Dynamic monthly revenue from approved payments (compatible with both MariaDB/MySQL and SQLite)
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $monthExpr = $driver === 'sqlite'
+            ? "strftime('%Y-%m', COALESCE(transaction_time, created_at))"
+            : "DATE_FORMAT(COALESCE(transaction_time, created_at), '%Y-%m')";
+
         $monthlyRevenue = Payment::where('status', 'APPROVED')
-            ->selectRaw("strftime('%Y-%m', transaction_time) as month_key, sum(amount) as revenue")
+            ->selectRaw("{$monthExpr} as month_key, sum(amount) as revenue")
             ->groupBy('month_key')
             ->orderBy('month_key', 'asc')
             ->get()
             ->map(function ($row) {
-                $time = strtotime($row->month_key . '-01');
+                $monthKey = $row->month_key ?: date('Y-m');
+                $time = strtotime($monthKey . '-01');
                 return [
-                    'month' => date('M Y', $time),
-                    'revenue' => (float)$row->revenue,
+                    'month' => date('M Y', $time ?: time()),
+                    'revenue' => (float) $row->revenue,
                 ];
             });
 
