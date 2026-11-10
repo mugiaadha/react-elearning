@@ -271,6 +271,15 @@ class MidtransService
             }
         }
 
+        // Send payment confirmation / classroom opened email when status changes to APPROVED
+        if ($appStatus === 'APPROVED') {
+            try {
+                (new \App\Services\MailService())->sendPaymentApprovedEmail($payment);
+            } catch (\Throwable $e) {
+                Log::warning('Failed sending payment approved email in processStatusUpdate: ' . $e->getMessage());
+            }
+        }
+
         return [
             'payment' => $payment->fresh(),
             'status' => $appStatus,

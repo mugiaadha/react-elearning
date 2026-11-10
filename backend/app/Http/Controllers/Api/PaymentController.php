@@ -284,6 +284,13 @@ class PaymentController extends Controller
             }
         }
 
+        // Send payment approved email when manually verified by admin
+        try {
+            (new \App\Services\MailService())->sendPaymentApprovedEmail($payment);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed sending payment approved email on manual verify: ' . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
             'message' => "Pembayaran {$id} berhasil disetujui secara manual oleh admin.",

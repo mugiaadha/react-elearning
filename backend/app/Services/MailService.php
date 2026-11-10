@@ -211,6 +211,124 @@ class MailService
     }
 
     /**
+     * Send payment approved and classroom unlocked notification email.
+     *
+     * @param Payment $payment
+     * @return array
+     */
+    public function sendPaymentApprovedEmail(\App\Models\Payment $payment): array
+    {
+        $targetEmail = $payment->student_email ?: $payment->user?->email;
+        if (!$targetEmail) {
+            return ['success' => false, 'message' => 'Email siswa tidak ditemukan.'];
+        }
+
+        $studentName = $payment->student_name ?: ($payment->user?->name ?? 'Mahasiswa NAC');
+        $brevetTitle = $payment->brevet_title ?: 'Program Pelatihan Brevet Pajak';
+        $brevetSlug = $payment->brevet?->slug ?: ($payment->brevet_id ?: 'brevet-ab-terpadu');
+        $amountFormatted = number_format($payment->amount, 0, ',', '.');
+        $invoiceId = $payment->invoice_number ?: $payment->id;
+
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+
+        $variables = [
+            'name' => $studentName,
+            'brevet_title' => $brevetTitle,
+            'invoice_id' => $invoiceId,
+            'amount' => $amountFormatted,
+            'brevet_slug' => $brevetSlug,
+            'app_name' => config('app.name', 'NAC Tax Center'),
+            'app_url' => $frontendUrl,
+            'year' => date('Y'),
+        ];
+
+        return $this->sendTemplateEmail($targetEmail, 'payment-approved', $variables, $studentName);
+    }
+
+    /**
+     * Send payment invoice pending notification email upon registration.
+     *
+     * @param Payment $payment
+     * @return array
+     */
+    public function sendPaymentInvoiceEmail(\App\Models\Payment $payment): array
+    {
+        $targetEmail = $payment->student_email ?: $payment->user?->email;
+        if (!$targetEmail) {
+            return ['success' => false, 'message' => 'Email siswa tidak ditemukan.'];
+        }
+
+        $studentName = $payment->student_name ?: ($payment->user?->name ?? 'Mahasiswa NAC');
+        $brevetTitle = $payment->brevet_title ?: 'Program Pelatihan Brevet Pajak';
+        $amountFormatted = number_format($payment->amount, 0, ',', '.');
+        $invoiceId = $payment->invoice_number ?: $payment->id;
+
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
+        $paymentUrl = "{$frontendUrl}/onboarding/payment-pending";
+
+        $company = \App\Models\CompanyProfile::getCached();
+        $companyName = $company->company_name ?: config('app.name', 'NAC Tax Center');
+
+        $subject = "Tagihan Pembayaran Pendaftaran: {$invoiceId} - {$companyName}";
+        $bodyHtml = "
+        <div style='font-family:Inter,Segoe UI,sans-serif;padding:24px;background:#f8fafc;color:#0f172a;'>
+          <div style='max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;'>
+            <div style='background:linear-gradient(135deg, #091e42 0%, #0284c7 100%);padding:28px 24px;text-align:center;color:#ffffff;'>
+              <div style='font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;'>Konfirmasi Tagihan Pendaftaran</div>
+              <h2 style='margin:0;font-size:20px;color:#ffffff;'>{$companyName}</h2>
+            </div>
+            <div style='padding:28px;'>
+              <p style='margin-top:0;font-size:14px;color:#334155;'>Halo <strong>{$studentName}</strong>,</p>
+              <p style='font-size:14px;color:#334155;'>Terima kasih telah mendaftar pada program pelatihan kami. Tagihan pendaftaran resmi Anda telah dibuat dengan rincian sebagai berikut:</p>
+              
+              <div style='background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #0284c7;border-radius:12px;padding:18px;margin:20px 0;'>
+                <div style='font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;'>Program Pelatihan</div>
+                <div style='font-size:16px;font-weight:800;color:#0f172a;margin-top:2px;'>{$brevetTitle}</div>
+                <div style='font-size:13px;color:#475569;margin-top:8px;'>Nomor Invoice: <strong style='font-family:monospace;color:#0f172a;'>{$invoiceId}</strong></div>
+                <div style='font-size:13px;color:#475569;'>Total Tagihan: <strong style='color:#0284c7;font-size:15px;'>Rp {$amountFormatted}</strong></div>
+                <div style='font-size:12px;color:#94a3b8;margin-top:4px;'>Metode: QRIS Dinamis, Virtual Account Bank (BCA, Mandiri, BNI, BRI, Permata), Kartu Kredit & Gerai Retail</div>
+              </div>
+
+              <p style='font-size:14px;color:#334155;'>Untuk menyelesaikan proses administrasi dan mengaktifkan akses kelas, silakan lanjutkan pembayaran melalui portal resmi:</p>
+              
+              <div style='text-align:center;margin:28px 0;'>
+                <a href='{$paymentUrl}' style='display:inline-block;background:#0284c7;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:10px;font-weight:700;font-size:13px;box-shadow:0 4px 6px -1px rgba(2,132,199,0.3);'>
+                  Bayar Tagihan Sekarang &rarr;
+                </a>
+              </div>
+
+              <p style='font-size:12px;color:#64748b;line-height:1.5;'>
+                Setelah pembayaran terverifikasi otomatis oleh payment gateway Midtrans, seluruh video perkuliahan, modul pembelajaran, dan jadwal sesi tatap muka daring akan langsung terbuka.
+              </p>
+            </div>
+            <div style='background:#f8fafc;padding:16px 24px;text-align:center;font-size:11px;color:#64748b;border-top:1px solid #e2e8f0;'>
+              &copy; " . date('Y') . " {$companyName}. Seluruh hak cipta dilindungi.
+            </div>
+          </div>
+        </div>";
+
+        $bodyText = "Halo {$studentName},\n\nTagihan pendaftaran Anda untuk {$brevetTitle} telah diterbitkan.\nNomor Invoice: {$invoiceId}\nTotal: Rp {$amountFormatted}\n\nSilakan selesaikan pembayaran di: {$paymentUrl}\n\nSalam hangat,\nTim Keuangan {$companyName}";
+        $uniqueSlug = 'payment-invoice-' . $payment->id . '-' . substr(md5($invoiceId . (string) $payment->amount), 0, 8);
+
+        try {
+            \App\Jobs\SendTemplateEmailJob::dispatch(
+                $targetEmail,
+                $uniqueSlug,
+                [
+                    'subject' => $subject,
+                    'body_html' => $bodyHtml,
+                    'body_text' => $bodyText,
+                ],
+                $studentName
+            );
+            return ['success' => true];
+        } catch (Exception $e) {
+            Log::warning("Failed to queue payment invoice email: " . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Hardcoded fallback templates in case database template is temporarily missing
      */
     protected function getFallbackTemplate(string $slug, array $variables): array

@@ -205,10 +205,10 @@ Prefix default: `/api/...` (dan fallback kompatibel `/api/v1/...`).
    - Seluruh request Axios otomatis menginjeksi header `Authorization: Bearer <token>` melalui [apiClient.js](file:///c:/workspace/belajar-react/elearning-react/src/services/api/apiClient.js).
 
 3. **Onboarding Gatekeeper Flow**:
-   - Tahap 1: Registrasi -> Akun dibuat dengan status `PENDING_APPROVAL`.
-   - Tahap 2: `VERIFY_EMAIL` -> Siswa diarahkan ke `/verify-email` sampai OTP terverifikasi.
+   - Tahap 1: Registrasi -> Akun dibuat dengan status `PENDING_APPROVAL`, tagihan pendaftaran otomatis dibuat, dan email invoice tagihan pembayaran (`sendPaymentInvoiceEmail`) serta email OTP verifikasi akun langsung dikirimkan ke email siswa via queue worker.
+   - Tahap 2: `VERIFY_EMAIL` -> Siswa diarahkan ke `/verify-email` sampai OTP terverifikasi. Setelah verifikasi sukses, email selamat datang (`welcome-student`) dikirimkan.
    - Tahap 3: `PAYMENT` -> Siswa diarahkan ke `/onboarding/payment-pending` untuk membayar via popup Midtrans Snap (QRIS Dinamis, Virtual Account BCA/Mandiri/BNI/BRI/Permata, Kartu Kredit 3DS, Gerai Retail).
-   - Tahap 4: `COMPLETED` -> Midtrans memvalidasi pembayaran secara real-time via webhook callback (`settlement` / `capture` accept -> `status: APPROVED`), seluruh rute `/dashboard/student/*` terbuka penuh secara otomatis.
+   - Tahap 4: `COMPLETED` -> Midtrans memvalidasi pembayaran secara real-time via webhook callback (`settlement` / `capture` accept -> `status: APPROVED`) atau approval admin manual, email konfirmasi pembayaran & pembukaan kelas (`sendPaymentApprovedEmail` template `payment-approved`) otomatis dikirimkan ke email siswa, dan seluruh rute `/dashboard/student/*` terbuka penuh secara otomatis.
 
 4. **Locking Silabus & Kurikulum (Sequential Locking)**:
    - **Antar Modul**: Modul ke-`N` terkunci sampai ujian lembar kerja Modul ke-`N-1` dikumpulkan oleh siswa.

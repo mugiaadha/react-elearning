@@ -150,7 +150,7 @@ class AuthController extends Controller
         );
 
         // Create or update pending payment invoice
-        Payment::updateOrCreate(
+        $paymentRecord = Payment::updateOrCreate(
             ['user_id' => $user->id, 'brevet_id' => $brevetId, 'status' => 'PENDING_APPROVAL'],
             [
                 'id' => 'PAY-' . date('Y') . '-' . rand(1000, 9999),
@@ -171,6 +171,13 @@ class AuthController extends Controller
 
         $mailService = new \App\Services\MailService();
         $mailResult = $mailService->sendVerificationEmail($user);
+
+        // Also dispatch pending payment invoice email so student receives invoice details on register
+        try {
+            $mailService->sendPaymentInvoiceEmail($paymentRecord);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed sending payment invoice email on register: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
@@ -922,6 +929,13 @@ class AuthController extends Controller
             'sender_account_name' => $user->name,
             'notes' => 'Pendaftaran program brevet tambahan oleh mahasiswa',
         ]);
+
+        // Also dispatch pending payment invoice email for newly registered brevet
+        try {
+            (new \App\Services\MailService())->sendPaymentInvoiceEmail($payment);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed sending invoice email on enrollBrevet: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
